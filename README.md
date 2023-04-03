@@ -1,68 +1,103 @@
-# OPENRNDR template project
+# Flow template 
 
-A feature rich template for creating OPENRNDR programs based on [Gradle/Kts](https://en.wikipedia.org/wiki/Gradle).
+___ Forked from  https://github.com/openrndr/openrndr-template ___
 
-The template consists of a configuration for Gradle and two example OPENRNDR programs. The Gradle configuration should serve as the
-go-to starting point for writing OPENRNDR-based software.
+An OPENRNDR template to visualize music. Batteries included.
 
-If you are looking at this from IntelliJ IDEA you can start by expanding the _project_ tab on the left. You will find a template program in `src/main/kotlin/TemplateProgram.kt` and a live-coding example in `src/main/kotlin/TemplateLiveProgram.kt`.
+Use the prepared tools and wire them together as you please.
+The result should be stunning visuals. Audio reactive and in sync.
 
-You will find some [basic instructions](https://guide.openrndr.org/setUpYourFirstProgram.html) in the [OPENRNDR guide](https://guide.openrndr.org)
+Many of my VJ projects start similar 
+and I wanted to create my own expansion of OPENRNDR that suits my needs.
 
-## Gradle tasks
+## OPENRNDR
 
- - `run` runs the TemplateProgram
- - `jar` creates an executable platform specific jar file with all dependencies
- - `jpackageZip` creates a zip with a stand-alone executable for the current platform (works with Java 14 only)
+The OPENRNDR framework is powerful and concise out-of-the-box.
 
-## Cross builds
+It combines the feature-richness of Processing.org and the expression freedom of Kotlin.
+At first glance, it's a render engine like many other, like Skia or Processing.
 
-To create a runnable jar for a platform different from your current platform, use `./gradlew jar -PtargetPlatform=<platform>`, where `<platform>` is either `windows`, `macos`, `linux-x64`, or `linux-arm64`. 
+But the access to the different computer graphics ins-and-outs 
+lets you wire anything in the graphics pipeline together.
 
-## Updating OPENRNDR, ORX and other dependencies
+It was called "a tool to make tools". And I sympathize with that idea:
+It allows for many great creative-coding applications. 
+However, there are so many paths to continue, that it gets difficult to pick one.
 
-The openrndr-template depends on various packages including the core [openrndr](https://github.com/openrndr/openrndr/) and the [orx](https://github.com/openrndr/orx/) extensions. The version numbers of these dependencies are specified in your [libs.versions.toml](gradle/libs.versions.toml) file. If you want to learn about file format visit the [Gradle documentation](https://docs.gradle.org/current/userguide/platforms.html#sub:conventional-dependencies-toml) website.
+This template is my spin on the formula. Fewer ingredients, higher integration.
 
-Newer versions of OPENRNDR and ORX bring useful features and bug fixes. The most recent versions are
-<br>![openrndr version](https://maven-badges.herokuapp.com/maven-central/org.openrndr/openrndr-application/badge.svg) for OPENRNDR. 
-<br>![orx version](https://maven-badges.herokuapp.com/maven-central/org.openrndr.extra/orx-parameters-jvm/badge.svg) for ORX.
+## Tools 
 
-You can use those version numbers in your toml file. They can look like "0.4.3" or "0.4.3-alpha4". Use the complete string, as in:
+### BPM
 
-    openrndr = "0.4.3-alpha4"
-    orx = "0.4.3-alpha4"
+Start with `val bpm = extend(BPM()) { … }` and access the bpm repo builder.
 
-You can add other dependencies needed by your project to your [build.gradle.kts](build.gradle.kts) file, inside the `dependencies { }` block. 
+Use `bpm.phase` to query the relative phase since program start 
+or use `val cubicInOut = bpm.bindEnvelope { … }` to bind an envelope to the phase 
+and sample it with `cubicInOut.sample()`. No time travel allowed.
 
-Remember to reload the Gradle configuration after changing any dependencies.
+### FFT
 
-## Run other Kotlin programs from the command line
+Start with `val fft = extend(FFT()) { … }` and access the minim-based FFT builder.
 
-By default `./gradlew run` runs a program called `TemplateProgram.kt` but a different one can be provided as an argument:
+Access to the original "orx-minim" minim. 
+For example, query the equidistant frequency bands with `fft.minim.getBand(i: Int)`.
+This makes no sense for acoustics, 
+as the perception of frequencies depend on ratio, not on absolute difference.
 
-To run `src/main/kotlin/myProgram.kt`
+Use `fft.sample(AcousticRanges.BASS, 20)` 
+to get the 20 frequencies samples from the audio bytes in the bass range, namely 160Hz to 320Hz.
+Try `fft.volume`, `fft.multisample(vararg ranges...)` and `fft.waveform`.
 
-    ./gradlew -Popenrndr.application=MyProgramKt
+### Color Repo
 
-To run `src/main/kotlin/foo/bar/myProgram.kt` (assuming `package foo.bar` in myProgram.kt)
+Start with `val colorRepo = extend(colorRepo()) { … }` and configure your color repository.
 
-    ./gradlew -Popenrndr.application=foo.bar.MyProgramKt
+Define palettes, color paths and blend procedures.
+Use `ColorRGBa`, `ColorXSVa` or the color model of your choice. 
+Then use `color { c1: DOuble, c2: Double, c3: Double }` as the unit-cube color builder.
 
-## Github Actions
+### Tools I want
 
-This repository contains a number of Github Actions under `./github/workflows`.
+* Compositor-like `FxFunnel` builder
+* FFMPEG Video-controls API
+* `InputBind` API to set binds for keyboard, mouse or MIDI device inputs.
+* Param Picker
+  * Like gui, but in a different application / interface
+  * Live program or similar to change values on the fly
 
-[build-on-commit.yaml](.github/workflows/build-on-commit.yaml) runs a basic build on every commit, 
-which can help detect issues in the source code.
+## Paradigms
 
-[publish-binaries.yaml](.github/workflows/publish-binaries.yaml) publishes binaries for Linux, Mac and Windows 
-any time a commit is tagged with a version number like `v1.*`. 
+### Bring your own constants
 
-For example, we can create and push a tag with these git commands:
+Take `fft.sample(AcousticRanges.BASS, 20)` for example.
+You can go to the file where they are stored and change `BASS = 160.0 ..< 320.0` to whatever you like,
+if you find a sound range that works for you.
 
-    git tag -a v1.0.0 -m "v1.0.0"
-    git push origin v1.0.0
+The same is true for the other template constants. Use and re-use your favorite ones.
 
-The progress of the running actions can be followed under the Actions tab in GitHub. 
-Once complete, the executables will be found under the Releases section.
+### No Time Travel
+
+I repeat:
+No time travel.
+
+Time travel, like sampling the past or the future of an envelope, is difficult to get right.
+
+Treat new samples like playing cards you add to a deck of them.
+Usually, you add to the top or to the bottom so consider an `ArrayDeque`.
+Then use the collection to perform effects based on the buffered values.
+
+### Calculate, Don't accumulate
+
+TL;DR: Floating point error sucks. 
+Calculate values on every frame, don't rely on accumulation as it propagates the error. 
+If possible, use explicit formulas.
+
+Even 2 digits behind the floating point for values of type Double can lead to catastrophe.
+I've created an example on play.kotlinlang.org showcasing this:
+https://pl.kotl.in/q7dn_abzS
+
+If you accumulate, you might get a crash, or skip a video or audio frame from time to time.
+Being 1 frame or 1 pixel off, can make the difference.
+
 
