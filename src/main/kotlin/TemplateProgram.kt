@@ -60,9 +60,9 @@ fun main() = application {
         // Init colors
         val colorRepo = ColorRepo {
             palette = listOf(
-                ColorXSVa(0.0, 1.0, 1.0),
-                ColorXSVa(0.5, 0.8, 1.0),
-                ColorXSVa(0.9, 0.2, 0.1, 0.8)
+                ColorXSVa(000.0, 1.0, 0.8),
+                ColorXSVa(060.0, 0.8, 1.0),
+                ColorXSVa(120.0, 0.2, 0.1, 0.8)
             )
         }
 
@@ -103,11 +103,13 @@ fun main() = application {
 
         val diamondGroup = object: VisualGroup() {
             override fun draw(drawer: Drawer, program: Program) {
-                drawer.fill = colorRepo.palette[1].toRGBa().shade(kick)
-                drawer.stroke = null
-                drawer.translate(width/2.0, height/2.0)
-                drawer.rotate(45.0)
-                drawer.rectangle(-100.0, -100.0, 200.0, 200.0)
+                drawer.isolated {
+                    fill = colorRepo.palette[1].toRGBa().shade(kick*0.5 + 0.5)
+                    stroke = null
+                    translate(width/2.0, height/2.0)
+                    rotate(45.0)
+                    rectangle(-100.0, -100.0, 200.0, 200.0)
+                }
             }
         }
 

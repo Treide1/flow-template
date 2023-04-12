@@ -1,24 +1,25 @@
 package flow.colorRepo
 
 /**
- * TODO: Color Repository.
+ * Color repository.
  *
- * Start with `val colorRepo = extend(ColorRepo()) { … }` and configure your color repository.
+ * Defines a [palette] within a color model of your choice, like ColorXSVa.
  *
- * Define a [palette].
+ * @constructor Create empty Color repo, configure with the [config] lambda.
  */
-class ColorRepo<M>(config: ColorRepo<M>.() -> Unit) {
-
+class ColorRepo<ColorModel>(config: ColorRepo<ColorModel>.() -> Unit) {
 
     /**
      * Palette of colors.
      */
-    var palette = listOf<M>()
+    var palette = listOf<ColorModel>()
 
     init {
         config()
     }
 
+    // OPT: Define blend procedures, provide palette builders like from Adobe website
+    // (See Adobe Kuler color wheel: https://color.adobe.com/create/color-wheel)
 }
 
 
