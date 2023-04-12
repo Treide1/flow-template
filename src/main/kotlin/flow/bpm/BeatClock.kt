@@ -65,6 +65,7 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
         phase = (now - startedAt) * bpm / 60.0
         var updatePhase = phase
 
+        // Should a transition exist, perform interpolation and consume it if it's done.
         transition?.run {
             val targetPhase = (now - targetStartedAt) * targetBpm / 60.0
             val transitionProgres = now.map(targetStartedAt, targetEndAt, 0.0, 1.0)
@@ -77,6 +78,7 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
             }
         }
 
+        // Update all samplers with the new phase
         samplerList.forEach { it.update(updatePhase) }
     }
 
