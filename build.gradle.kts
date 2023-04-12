@@ -3,7 +3,7 @@ import org.gradle.internal.os.OperatingSystem
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-group = "org.openrndr.template"
+group = "vjhenke.template"
 version = "1.0.0"
 
 val applicationMainClass = "TemplateProgramKt"
@@ -32,8 +32,8 @@ val orxFeatures = setOf<String>(
 //  "orx-kinect-v1",
 //  "orx-kotlin-parser",
 //  "orx-mesh-generators",
-//  "orx-midi",
-//  "orx-minim",
+    "orx-midi",
+    "orx-minim",
     "orx-no-clear",
     "orx-noise",
 //  "orx-obj-loader",
@@ -52,7 +52,7 @@ val orxFeatures = setOf<String>(
 //  "orx-syphon",
 //  "orx-temporal-blur",
 //  "orx-tensorflow",    
-//  "orx-time-operators",
+    "orx-time-operators",
 //  "orx-timer",
 //  "orx-triangulation",
     "orx-video-profiles",
