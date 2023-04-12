@@ -1,29 +1,77 @@
 package flow.input
 
+import org.openrndr.KeyEvent
 import org.openrndr.KeyEvents
+import org.openrndr.Program
 
-class InputScheme {
+// TODO: Generalize to not just keyboard.keyDown (keyUp, ... / mouse, midi, ...)
+class InputScheme(program: Program) {
+
+    // Keybinds
+    val keyBinder = KeyBinder()
+
+    init {
+        program.keyboard.keyDown.listen {
+            keyBinder.handleKeyEvent(it)
+        }
+    }
 
     class KeyBinder {
-        val binds = mutableListOf<KeyBinding>()
+        val bindList = mutableListOf<KeyBinding>()
 
         fun unbind(keyCode: Int) {
-            binds.removeIf { it.keyCode == keyCode }
+            bindList.removeIf { it.keyCode == keyCode }
         }
 
-        fun handleKeyDown(keyCode: Int) {
-            binds.filter { it.keyCode == keyCode }.forEach { it.action() }
+        fun handleKeyEvent(event: KeyEvent) {
+            val options = listOf(event.key, event.name.hashCode())
+            bindList.filter { it.keyCode in options }.forEach {
+                it.action()
+            }
+            event.cancelPropagation()
         }
 
-        //fun bind(keyString: String, action: () -> Unit) = bind(keyString.hashCode(), action)
-        fun unbind(keyString: String) = unbind(keyString.hashCode())
-        fun handleKeyDown(keyString: String) = handleKeyDown(keyString.hashCode())
+        fun unbind(keyName: String) = unbind(keyName.hashCode())
 
-        fun Int.bind(action: () -> Unit) = binds.add(KeyBinding(this, action))
+        fun Int.bind(action: () -> Unit) = bindList.add(KeyBinding(this, action))
         fun String.bind(action: () -> Unit) = this.hashCode().bind(action)
     }
 
-    fun KeyEvents.keyDown(bindConfig: InputScheme.KeyBinder.() -> Unit) {
+    fun keyboardKeyDown(bindConfig: KeyBinder.() -> Unit) {
+        keyBinder.bindConfig()
+    }
+
+    // Tracking
+    // TODO: allow for isActive access
+    fun KeyEvents.track(toggle: TrackTypes, vararg keyNames: String) {
+
+    }
+
+    fun KeyEvents.track(toggle: TrackTypes, keyNames: List<String>) {
+
+    }
+
+    /**
+     * Track types for key events.
+     * Defines what pressing behaviour turns a key "active" or "inactive", aka on/off.
+     */
+    enum class TrackTypes {
+        /**
+         * Pressing toggles active on/off.
+         */
+        TOGGLE,
+        /**
+         * Key is active as long as its pressed.
+         */
+        PIANO
+    }
+
+    // TODO: get the active state of the key
+    fun isKeyActive(keyCode: Int) {
+
+    }
+
+    fun isKeyActive(keyName: String) {
 
     }
 
@@ -36,6 +84,10 @@ class InputScheme {
  */
 data class KeyBinding(val keyCode: Int, val action: () -> Unit)
 
-fun inputScheme(config: InputScheme.() -> Unit): InputScheme {
-    return InputScheme().also { config(it) }
+/**
+ * Setup of an [InputScheme] for a [Program].
+ * Configure it with the [config] lambda.
+ */
+fun Program.inputScheme(config: InputScheme.() -> Unit): InputScheme {
+    return InputScheme(this).also { config(it) }
 }

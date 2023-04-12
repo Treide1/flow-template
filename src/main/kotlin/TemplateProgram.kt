@@ -3,6 +3,8 @@ import flow.bpm.BeatClock
 import flow.colorRepo.ColorRepo
 import flow.content.VisualGroup
 import flow.fx.FxRepo
+import flow.input.InputScheme.TrackTypes.PIANO
+import flow.input.InputScheme.TrackTypes.TOGGLE
 import flow.input.inputScheme
 import org.openrndr.*
 import org.openrndr.color.ColorRGBa
@@ -28,8 +30,8 @@ fun main() = application {
         // Input Scheme (1st half)
         val inputScheme = inputScheme {
             // Tracked keys
-            keyboard.track(TrackTypes.TOGGLE, "qe".split(""))
-            keyboard.track(TrackTypes.PIANO, "wasd".split(""))
+            keyboard.track(TOGGLE, "qe".split(""))
+            keyboard.track(PIANO, "wasd".split(""))
         }
 
         // Init beatClock
@@ -124,7 +126,7 @@ fun main() = application {
         // Input Scheme (2nd half)
         inputScheme.apply {
             // Hard-coded input bindings
-            keyboard.keyDown {
+            keyboardKeyDown {
                 KEY_ESCAPE.bind { application.exit() }
                 KEY_SPACEBAR.bind { beatClock.reset() }
                 "k".bind { beatClock.animateTo(bpm = 132.0, 1.0) }
@@ -134,20 +136,3 @@ fun main() = application {
     }
 }
 
-// TODO: track key events with track type
-private fun KeyEvents.track(toggle: TrackTypes, split: List<String>) {
-
-}
-
-enum class TrackTypes {
-    TOGGLE, PIANO
-}
-
-// TODO: get the active state of the key
-fun Program.isKeyActive(keyCode: Int) {
-
-}
-
-fun Program.isKeyActive(keyString: String) {
-
-}
