@@ -39,7 +39,8 @@ fun main() = application {
 
         // Init beat-based values
         val kick by beatClock.bindEnvelope { phase ->
-            2.0.pow(-(phase % 1.0))
+            val relPhase = phase % 1.0
+            4.0.pow(-relPhase)
         }
         val flash by beatClock.bindEnvelope { phase ->
             val interval = 1.0 / 4.0
@@ -88,7 +89,7 @@ fun main() = application {
         // Init visual groups
         val circleGroup = object: VisualGroup() {
             override fun draw(drawer: Drawer, program: Program) {
-                drawer.fill = colorRepo.palette[0].toRGBa()
+                drawer.fill = colorRepo.palette[0].toRGBa().opacify(flash)
                 drawer.stroke = null
                 listOf(
                     Vector2(0.2, 0.2),
@@ -104,7 +105,7 @@ fun main() = application {
         val diamondGroup = object: VisualGroup() {
             override fun draw(drawer: Drawer, program: Program) {
                 drawer.isolated {
-                    fill = colorRepo.palette[1].toRGBa().shade(kick*0.5 + 0.5)
+                    fill = colorRepo.palette[1].toRGBa().opacify(kick*0.5 + 0.5)
                     stroke = null
                     translate(width/2.0, height/2.0)
                     rotate(45.0)
@@ -130,11 +131,10 @@ fun main() = application {
             // Hard-coded input bindings
             keyboardKeyDown {
                 KEY_ESCAPE.bind { application.exit() }
-                KEY_SPACEBAR.bind { beatClock.reset() }
+                KEY_SPACEBAR.bind { beatClock.resetTime(program.seconds) }
                 "k".bind { beatClock.animateTo(bpm = 132.0, 1.0) }
             }
         }
 
     }
 }
-

@@ -4,7 +4,10 @@ import flow.envelope.EnvelopeBuilder
 import org.openrndr.Extension
 import org.openrndr.Program
 import org.openrndr.draw.Drawer
+import org.openrndr.math.map
 
+// TODO: make transitions not interpolating through potentially
+//  large phase diff from org phase to target phase
 /**
  * BeatClock repository.
  *
@@ -23,7 +26,7 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
     override var enabled = true
 
     /**
-     * Current phase.
+     * Current phase. Recalculated on every frame.
      */
     var phase = 0.0
         private set
@@ -39,10 +42,13 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
      */
     var transition: Transition? = null
 
+    /**
+     * Data holder for a transition.
+     */
     data class Transition(
         val targetBpm: Double,
         val targetStartedAt: Double,
-        var remainingTime: Double
+        var targetEndAt: Double
     )
 
     /**
@@ -54,7 +60,24 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
      * Update the phase. Should a transition be present, update the remaining time.
      */
     override fun beforeDraw(drawer: Drawer, program: Program) {
+        // Update the phase
+        val now = program.seconds
+        phase = (now - startedAt) * bpm / 60.0
+        var updatePhase = phase
 
+        transition?.run {
+            val targetPhase = (now - targetStartedAt) * targetBpm / 60.0
+            val transitionProgres = now.map(targetStartedAt, targetEndAt, 0.0, 1.0)
+            updatePhase = updatePhase * (1.0 - transitionProgres) + targetPhase * transitionProgres
+
+            if (targetEndAt >= now) {
+                bpm = targetBpm
+                startedAt = targetStartedAt
+                transition = null
+            }
+        }
+
+        samplerList.forEach { it.update(updatePhase) }
     }
 
     /**
@@ -68,17 +91,6 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
     }
 
     /**
-     * WIP: Bind an envelope to the beat clock.
-     */
-    /*
-    fun bindEnvelope(config: EnvelopeBuilder.() -> Unit): Sampler {
-        val builder = EnvelopeBuilder()
-        builder.config()
-        return builder.build()
-    }
-     */
-
-    /**
      * Animate to a new bpm rate.
      *
      * @param bpm The new bpm rate.
@@ -88,12 +100,14 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
         transition = Transition(
             targetBpm = bpm,
             targetStartedAt = startedAt,
-            remainingTime = duration
+            targetEndAt = startedAt + duration
         )
     }
 
-    // TODO: Set startedAt to current time
-    fun reset() {
-
+    /**
+     * Reset the beat clock. Starts at [now].
+     */
+    fun resetTime(now: Double) {
+        startedAt = now
     }
 }
