@@ -18,8 +18,8 @@ class ColorRepo<ColorModel>(config: ColorRepo<ColorModel>.() -> Unit) {
         config()
     }
 
-    // OPT: Define blend procedures, provide palette builders like from Adobe website
-    // (See Adobe Kuler color wheel: https://color.adobe.com/create/color-wheel)
+    // TODO-OPT: Define blend procedures, provide palette builders like from Adobe website
+    //  (See Adobe Kuler color wheel: https://color.adobe.com/create/color-wheel)
 }
 
 
