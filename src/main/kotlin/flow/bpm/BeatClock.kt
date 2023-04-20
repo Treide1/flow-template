@@ -113,3 +113,8 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
         startedAt = now
     }
 }
+
+/**
+ * Convert a Double to an Int representing the number of completed [interval]s it contains.
+ */
+fun Double.toIntervalCount(interval: Double): Int = (this/interval).toInt()
