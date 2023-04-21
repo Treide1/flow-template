@@ -1,5 +1,6 @@
 import flow.audio.Audio
 import flow.bpm.BeatClock
+import flow.bpm.toIntervalCount
 import flow.colorRepo.ColorRepo
 import flow.content.VisualGroup
 import flow.fx.FxRepo
@@ -38,11 +39,11 @@ fun main() = application {
         val beatClock = extend(BeatClock(bpm = 120.0))
 
         // Init beat-based values
-        val kick by beatClock.bindEnvelope { phase ->
+        val kick by beatClock.bindEnvelope(length = 1.0) { phase ->
             val relPhase = phase % 1.0
             4.0.pow(-relPhase)
         }
-        val flash by beatClock.bindEnvelope { phase ->
+        val flash by beatClock.bindEnvelope(1/2.0) { phase ->
             val interval = 1.0 / 4.0
             val count = phase.toIntervalCount(interval)
             if (count % 2 == 0) 1.0 else 0.0

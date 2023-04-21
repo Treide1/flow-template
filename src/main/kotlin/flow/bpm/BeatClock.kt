@@ -1,6 +1,7 @@
 package flow.bpm
 
-import flow.envelope.EnvelopeBuilder
+import flow.bpm.envelope.Envelope
+import flow.bpm.envelope.EnvelopeBuilder
 import org.openrndr.Extension
 import org.openrndr.Program
 import org.openrndr.draw.Drawer
@@ -83,11 +84,11 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
     }
 
     /**
-     * Bind an envelope to the beat clock.
-     * @return A [Sampler] to access the envelope value. Goes well with delegation.
+     * Creates a [Sampler] with the corresponding [Envelope] to the beat clock.
+     * @return A [Sampler] to access the envelope value. Best used with delegation.
      */
-    fun bindEnvelope(eval: (phase: Double) -> Double): Sampler {
-        val sampler = Sampler(eval)
+    fun bindEnvelope(length: Double = 4.0, eval: (phase: Double) -> Double): Sampler {
+        val sampler = Sampler(Envelope(length, eval))
         samplerList.add(sampler)
         return sampler
     }
