@@ -9,13 +9,11 @@ import flow.input.InputScheme.TrackTypes.TOGGLE
 import flow.input.inputScheme
 import org.openrndr.*
 import org.openrndr.color.ColorRGBa
-import org.openrndr.color.ColorXSVa
 import org.openrndr.draw.*
 import org.openrndr.extra.fx.blur.ApproximateGaussianBlur
 import org.openrndr.extra.fx.blur.FrameBlur
 import org.openrndr.extra.fx.blur.GaussianBloom
 import org.openrndr.math.Vector2
-import util.toIntervalCount
 import kotlin.math.pow
 
 /**
@@ -39,9 +37,9 @@ fun main() = application {
         val beatClock = extend(BeatClock(bpm = 120.0))
 
         // Init beat-based values
-        val kick by beatClock.bindEnvelope(length = 1.0) { phase ->
-            val relPhase = phase % 1.0
-            4.0.pow(-relPhase)
+        val kick by beatClock.bindEnvelopeBySegments(length = 1.0) {
+            segmentJoin(0.01, 1.0)
+            segmentJoin(1.0, 0.0) via { x: Double -> x.pow(3.0) }
         }
         val flash by beatClock.bindEnvelope(1/2.0) { phase ->
             val interval = 1.0 / 4.0
@@ -62,10 +60,10 @@ fun main() = application {
         // Init colors
         val colorRepo = ColorRepo {
             palette = listOf(
-                ColorXSVa(000.0, 1.0, 0.8),
-                ColorXSVa(060.0, 0.8, 1.0),
-                ColorXSVa(120.0, 0.2, 0.1, 0.8)
-            )
+                "#90F0CB", // primary
+                "#A38641", // secondary
+                "#CE60F0", // tertiary
+            ).map { ColorRGBa.fromHex(it) }
         }
 
         // Init pipeline
@@ -90,14 +88,15 @@ fun main() = application {
         // Init visual groups
         val circleGroup = object: VisualGroup() {
             override fun draw(drawer: Drawer, program: Program) {
-                drawer.fill = colorRepo.palette[0].toRGBa().opacify(flash)
-                drawer.stroke = null
                 listOf(
                     Vector2(0.2, 0.2),
                     Vector2(0.2, 0.8),
-                    Vector2(0.8, 0.2),
-                    Vector2(0.8, 0.8)
-                ).forEach { (x, y) ->
+                    Vector2(0.8, 0.8),
+                    Vector2(0.8, 0.2)
+                ).forEachIndexed { i, (x, y) ->
+                    val colorIndex = i % 2 + 1
+                    drawer.fill = colorRepo.palette[colorIndex].opacify(flash)
+                    drawer.stroke = null
                     drawer.circle(x * width, y * height, kick * 50.0 + 100.0)
                 }
             }
@@ -106,7 +105,7 @@ fun main() = application {
         val diamondGroup = object: VisualGroup() {
             override fun draw(drawer: Drawer, program: Program) {
                 drawer.isolated {
-                    fill = colorRepo.palette[1].toRGBa().opacify(kick*0.5 + 0.5)
+                    fill = colorRepo.palette[0].opacify(kick*0.5 + 0.5)
                     stroke = null
                     translate(width/2.0, height/2.0)
                     rotate(45.0)
@@ -133,7 +132,7 @@ fun main() = application {
             keyboardKeyDown {
                 KEY_ESCAPE.bind { application.exit() }
                 KEY_SPACEBAR.bind { beatClock.resetTime(program.seconds) }
-                "k".bind { beatClock.animateTo(bpm = 132.0, 1.0) }
+                "k".bind { beatClock.animateTo(bpm = 60.0, program.seconds, 1.0) }
             }
         }
 

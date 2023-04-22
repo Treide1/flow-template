@@ -7,8 +7,6 @@ import org.openrndr.Program
 import org.openrndr.draw.Drawer
 import org.openrndr.math.map
 
-// TODO: make transitions not interpolating through potentially
-//  large phase diff from org phase to target phase
 /**
  * BeatClock repository.
  *
@@ -33,9 +31,15 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
         private set
 
     /**
-     * Time stamp where the current beat started
+     * Time stamp where the beat counting started. This is treated like t = 0.
      */
-    var startedAt = 0.0
+    var t0 = 0.0
+        private set
+
+    /**
+     * Time stamp of the last frame.
+     */
+    var lastNow = 0.0
         private set
 
     /**
@@ -48,8 +52,9 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
      */
     data class Transition(
         val targetBpm: Double,
-        val targetStartedAt: Double,
-        var targetEndAt: Double
+        val targetT0: Double,
+        val transitionBegin: Double,
+        val transitionEnd: Double
     )
 
     /**
@@ -61,20 +66,23 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
      * Update the phase. Should a transition be present, update the remaining time.
      */
     override fun beforeDraw(drawer: Drawer, program: Program) {
-        // Update the phase
+        // Update the 'now' time stamp
         val now = program.seconds
-        phase = (now - startedAt) * bpm / 60.0
+        lastNow = now
+
+        // Calculate the phase
+        phase = (now - t0) * bpm / 60.0
         var updatePhase = phase
 
         // Should a transition exist, perform interpolation and consume it if it's done.
         transition?.run {
-            val targetPhase = (now - targetStartedAt) * targetBpm / 60.0
-            val transitionProgres = now.map(targetStartedAt, targetEndAt, 0.0, 1.0)
-            updatePhase = updatePhase * (1.0 - transitionProgres) + targetPhase * transitionProgres
+            val targetPhase = (now - targetT0) * targetBpm / 60.0
+            val transitionProgress = now.map(transitionBegin, transitionEnd, 0.0, 1.0)
+            updatePhase = updatePhase * (1.0 - transitionProgress) + targetPhase * transitionProgress
 
-            if (targetEndAt >= now) {
+            if (transitionEnd >= now) {
                 bpm = targetBpm
-                startedAt = targetStartedAt
+                t0 = targetT0
                 transition = null
             }
         }
@@ -94,16 +102,39 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
     }
 
     /**
-     * Animate to a new bpm rate.
+     * Creates a [Sampler] with the corresponding [Envelope] to the beat clock.
+     * @return A [Sampler] to access the envelope value. Best used with delegation.
+     */
+    fun bindEnvelope(envelope: Envelope): Sampler {
+        val sampler = Sampler(envelope)
+        samplerList.add(sampler)
+        return sampler
+    }
+
+    fun bindEnvelopeBySegments(length: Double, build: EnvelopeBuilder.() -> Unit): Sampler {
+        val envelope = EnvelopeBuilder.buildBySegments(length, build)
+        val sampler = Sampler(envelope)
+        samplerList.add(sampler)
+        return sampler
+    }
+    /**
+     * Animate to a new [bpm] rate and [t0].
      *
+     * If you want to avoid a large shift in phase,
+     * you should try to satisfy the following equation:
+     * ```
+     * bpm * (now - t0) ≈ _bpm * (now - _t0)
+     * ```
      * @param bpm The new bpm rate.
+     * @param t0 The new t0 time stamp.
      * @param duration The duration of the transition.
      */
-    fun animateTo(bpm: Double, duration: Double) {
+    fun animateTo(bpm: Double, t0: Double, duration: Double) {
         transition = Transition(
             targetBpm = bpm,
-            targetStartedAt = startedAt,
-            targetEndAt = startedAt + duration
+            targetT0 = t0,
+            transitionBegin = lastNow,
+            transitionEnd = lastNow + duration
         )
     }
 
@@ -111,7 +142,7 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
      * Reset the beat clock. Starts at [now].
      */
     fun resetTime(now: Double) {
-        startedAt = now
+        t0 = now
     }
 }
 
