@@ -1,3 +1,4 @@
+import flow.audio.Audio
 import flow.bpm.BeatClock
 import flow.bpm.envelope.Envelope
 import flow.bpm.toIntervalCount
@@ -56,6 +57,16 @@ fun main() = application {
 
         // Init audio input
         // TODO: AUDIO
+        val audio = extend(Audio()) {
+            buildVolumeProcessor()
+
+            val ranges = listOf(
+                Audio.BASS,
+                Audio.MID,
+                Audio.TREBLE,
+            )
+            // buildVolumeRangeProcessor(ranges)
+        }
 
         // Init colors
         val colorRepo = ColorRepo {
@@ -139,7 +150,7 @@ fun main() = application {
                 val ringOpacity = Capacitor(0.0, 0.8).apply {
                     onGateOpen = Envelope(1.0) { t ->
                         if (t < 0.4) (t / 0.4).pow(1/2.0) // Reaches 1.0
-                        else 1.0.lerp(holdValue, (t - 0.4) / 0.1)
+                        else 1.0.lerp(holdValue, (t - 0.4) / 0.6)
                     }
                     onGateClosed = Envelope (0.5) { t ->
                         holdValue.lerp(offValue, t / 0.2)
