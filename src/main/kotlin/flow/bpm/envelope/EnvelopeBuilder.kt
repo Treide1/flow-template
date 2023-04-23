@@ -42,7 +42,7 @@ class EnvelopeBuilder internal constructor(){
                     "Found fromT=$fromT, toT=$toT instead."
         )
 
-        val seg =  EnvelopeSegment(fromT, toT, fromX, toX)
+        val seg =  EnvelopeSegment(fromT, fromX, toT, toX)
         if (seg.hasTimelineOverlap()) throw IllegalArgumentException(
             "Illegal segment(fromT=$fromT, ..., toT=$toT, ...). This overlaps with the existing timeline."
         )
@@ -51,7 +51,6 @@ class EnvelopeBuilder internal constructor(){
         lastT = seg.toT
         lastX = seg.toX
         return seg
-
     }
 
     /**
