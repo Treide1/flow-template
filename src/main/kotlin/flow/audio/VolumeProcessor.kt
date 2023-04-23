@@ -1,29 +1,52 @@
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+
 package flow.audio
 
 import be.tarsos.dsp.AudioEvent
 import be.tarsos.dsp.AudioProcessor
+import flow.audio.Audio.Companion.HIGHEST_SPL
+import flow.audio.Audio.Companion.LOWEST_SPL
 import org.openrndr.math.clamp
 
+/**
+ * Audio processor that calculates the decibel value of the signal.
+ * Also calculates the dynamic range of the signal, which is updated with each event.
+ * Stores the last [eventBufferSize] values in [volumeBuffer] and [dynRangeBuffer].
+ *
+ * @param eventBufferSize The size of the buffer that stores the decibel values.
+ */
+// TODO: refactor to be event rate independent (see per-event rangeContraction)
 class VolumeProcessor internal constructor(val eventBufferSize: Int): AudioProcessor {
 
     // Buffer to store the last decibel values
     private val _volumeBuffer = mutableListOf<Double>()
+
+    /**
+     * The last [eventBufferSize] decibel values.
+     */
     val volumeBuffer: List<Double>
         get() = _volumeBuffer.toList()
 
     // Dynamic range values
-    var loRange = LOWEST_RANGE
-    var hiRange = HIGHEST_RANGE
+    private var loLevel = LOWEST_SPL
+    private var hiLevel = HIGHEST_SPL
+
+    /**
+     * The dynamic range update factor.
+     */
     var rangeContraction = 0.98
 
     // Buffer to store dynamic range, as it changes over time
-    private val _rangeBuffer = mutableListOf<ClosedFloatingPointRange<Double>>()
-    val rangeBuffer: List<ClosedFloatingPointRange<Double>>
-        get() = _rangeBuffer.toList()
+    private val _dynRangeBuffer = mutableListOf<ClosedFloatingPointRange<Double>>()
+    val dynRangeBuffer: List<ClosedFloatingPointRange<Double>>
+        get() = _dynRangeBuffer.toList()
 
+    /**
+     * Processes any incoming audio event.
+     */
     override fun process(audioEvent: AudioEvent): Boolean {
         // Add the decibel value to the volume buffer
-        val db = audioEvent.getdBSPL().clamp(LOWEST_RANGE, HIGHEST_RANGE)
+        val db = audioEvent.getdBSPL().clamp(LOWEST_SPL, HIGHEST_SPL)
         _volumeBuffer.add(db)
         // If the buffer is full, remove the oldest value
         if (_volumeBuffer.size > eventBufferSize) {
@@ -31,13 +54,13 @@ class VolumeProcessor internal constructor(val eventBufferSize: Int): AudioProce
         }
         // Update the dynamic range
         // The range is contracted by a factor of rangeContraction, or expanded by the new value
-        loRange = if (db < loRange) db else loRange * rangeContraction + db * (1 - rangeContraction)
-        hiRange = if (db > hiRange) db else hiRange * rangeContraction + db * (1 - rangeContraction)
+        loLevel = if (db < loLevel) db else loLevel * rangeContraction + db * (1 - rangeContraction)
+        hiLevel = if (db > hiLevel) db else hiLevel * rangeContraction + db * (1 - rangeContraction)
         // Add the range to the range buffer
-        _rangeBuffer.add(loRange..hiRange)
+        _dynRangeBuffer.add(loLevel..hiLevel)
         // If the buffer is full, remove the oldest value
-        if (_rangeBuffer.size > eventBufferSize) {
-            _rangeBuffer.removeAt(0)
+        if (_dynRangeBuffer.size > eventBufferSize) {
+            _dynRangeBuffer.removeAt(0)
         }
 
         // Return true to signal that this operation was "ok"
@@ -46,8 +69,4 @@ class VolumeProcessor internal constructor(val eventBufferSize: Int): AudioProce
 
     override fun processingFinished() {}
 
-    companion object {
-        const val LOWEST_RANGE = -160.0
-        const val HIGHEST_RANGE = 0.0
-    }
 }
