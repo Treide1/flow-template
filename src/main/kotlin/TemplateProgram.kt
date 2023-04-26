@@ -8,10 +8,7 @@ import flow.fx.FxRepo
 import flow.input.InputScheme.TrackTypes.PIANO
 import flow.input.InputScheme.TrackTypes.TOGGLE
 import flow.input.inputScheme
-import org.openrndr.Fullscreen
-import org.openrndr.KEY_ESCAPE
-import org.openrndr.KEY_SPACEBAR
-import org.openrndr.application
+import org.openrndr.*
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.*
 import org.openrndr.extra.fx.blur.ApproximateGaussianBlur
@@ -20,6 +17,7 @@ import org.openrndr.extra.fx.blur.GaussianBloom
 import org.openrndr.math.Vector2
 import org.openrndr.math.map
 import util.Capacitor
+import util.displayLinesOfText
 import util.lerp
 import kotlin.math.*
 
@@ -33,12 +31,8 @@ fun main() = application {
     }
     program {
 
-        // Input Scheme (1st half)
-        val inputScheme = inputScheme(keyboard) {
-            // Tracked keys
-            track(TOGGLE, "q", "e")
-            track(PIANO, "wasd".split(""))
-        }
+        // Init inputScheme
+        val inputScheme = inputScheme(keyboard)
 
         // Init beatClock
         val beatClock = extend(BeatClock(bpm = 125.0))
@@ -121,7 +115,7 @@ fun main() = application {
                 // Draw a circle in each diamond direction on screen
                 val flashGate = if (inputScheme.isKeyActive("e")) flash else 0.0
                 val relR = max(kick, flashGate).map(0.0, 1.0, 0.15, 0.35)
-                "wasd".split("").forEachIndexed { i, key ->
+                "w,a,s,d".split(",").forEachIndexed { i, key ->
                     val isActive = inputScheme.isKeyActive(key)
                     if (!isActive) return@forEachIndexed
                     val pos = drawer.bounds.center + Vector2(0.0, -height*relR).rotate(90 - i * 90.0)
@@ -162,7 +156,6 @@ fun main() = application {
                 // Draw a ring of diamonds around the main diamond
                 ringRot += kick * 0.05
                 val size = ringSize * if (inputScheme.isKeyActive("e")) flash else 1.0
-                //drawDiamondRing(bounds.center, ringCount, ringRadius, size, ringRot)
                 val center = bounds.center
                 val angleStep = PI * 2 / ringCount
                 for (i in 0 until ringCount) {
@@ -188,26 +181,41 @@ fun main() = application {
 
         // Draw loop
         extend {
+
+            // Draw visual groups
             drawer.isolatedWithTarget(rt) {
                 clear(ColorRGBa.TRANSPARENT)
 
-                // Draw visual groups
                 circleGroup.draw()
                 diamondGroup.draw()
             }
+
             // Apply Fx and draw to screen
             fxRepo.applyChain()
             drawer.image(joinBuffer)
+
+            // Draw controls
+            if (inputScheme.isKeyActive("f1")) {
+                drawer.displayLinesOfText(inputScheme.getControlsText().split("\n"))
+            }
+            inputScheme.printPressedKeys()
         }
 
-        // Input Scheme (2nd half)
+        // Define controls for Input Scheme
         inputScheme.apply {
+            // Tracked keys
+            track(TOGGLE, "q", "Toggle diamond ring")
+            track(TOGGLE, "e", "Toggle flash")
+            track(TOGGLE, "f1", "Toggle this controls display")
+            track(PIANO, "w,a,s,d".split(","), "Bouncy balls")
+
+
             // Hard-coded input bindings
-            keyboardKeyDown {
-                KEY_ESCAPE.bind { application.exit() }
-                KEY_SPACEBAR.bind { beatClock.resetTime(program.seconds) }
-                "k".bind { beatClock.animateTo(bpm = beatClock.bpm / 2.0, program.seconds, 0.1) }
-                "l".bind { beatClock.animateTo(bpm = beatClock.bpm * 2.0, program.seconds, 0.1) }
+            keyDown {
+                KEY_ESCAPE.bind("Exit Application") { application.exit() }
+                KEY_SPACEBAR.bind("Reset Beat Clock") { beatClock.resetTime(program.seconds) }
+                "k".bind("BPM x0.5") { beatClock.animateTo(bpm = beatClock.bpm / 2.0, program.seconds, 0.1) }
+                "l".bind("BPM x2.0") { beatClock.animateTo(bpm = beatClock.bpm * 2.0, program.seconds, 0.1) }
             }
         }
 
