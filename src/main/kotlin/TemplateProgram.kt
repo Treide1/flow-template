@@ -198,7 +198,6 @@ fun main() = application {
             if (inputScheme.isKeyActive("f1")) {
                 drawer.displayLinesOfText(inputScheme.getControlsText().split("\n"))
             }
-            inputScheme.printPressedKeys()
         }
 
         // Define controls for Input Scheme
