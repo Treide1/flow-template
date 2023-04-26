@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
+
 package flow.bpm
 
 import flow.bpm.envelope.Envelope
@@ -46,6 +48,7 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
      * Should a transition take place, this will be non-null data holder.
      */
     var transition: Transition? = null
+        private set
 
     /**
      * Data holder for a transition.
@@ -92,8 +95,7 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
     }
 
     /**
-     * Creates a [Sampler] with the corresponding [Envelope] to the beat clock.
-     * @return A [Sampler] to access the envelope value. Best used with delegation.
+     * Creates a [Sampler] with the an [Envelope] to the beat clock.
      */
     fun bindEnvelope(length: Double = 4.0, eval: (phase: Double) -> Double): Sampler {
         val sampler = Sampler(Envelope(length, eval))
@@ -103,7 +105,6 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
 
     /**
      * Creates a [Sampler] with the corresponding [Envelope] to the beat clock.
-     * @return A [Sampler] to access the envelope value. Best used with delegation.
      */
     fun bindEnvelope(envelope: Envelope): Sampler {
         val sampler = Sampler(envelope)
@@ -111,12 +112,17 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
         return sampler
     }
 
+    /**
+     * Creates a [Sampler] using a [build] block on an [EnvelopeBuilder].
+     * Requires a [length] to be specified.
+     */
     fun bindEnvelopeBySegments(length: Double, build: EnvelopeBuilder.() -> Unit): Sampler {
         val envelope = EnvelopeBuilder.buildBySegments(length, build)
         val sampler = Sampler(envelope)
         samplerList.add(sampler)
         return sampler
     }
+
     /**
      * Animate to a new [bpm] rate and [t0].
      *
