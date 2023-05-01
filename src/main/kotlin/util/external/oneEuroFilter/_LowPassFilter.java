@@ -8,7 +8,7 @@ package util.external.oneEuroFilter;
  * This code is licensed under a BSD license.
  * See the LICENSE file for more information.
  */
-class LowPassFilter {
+class _LowPassFilter {
 
     double y, a, s;
     boolean initialized;
@@ -20,11 +20,11 @@ class LowPassFilter {
         a = alpha;
     }
 
-    public LowPassFilter(double alpha) throws Exception {
+    public _LowPassFilter(double alpha) throws Exception {
         init(alpha, 0);
     }
 
-    public LowPassFilter(double alpha, double initval) throws Exception {
+    public _LowPassFilter(double alpha, double initval) throws Exception {
         init(alpha, initval);
     }
 

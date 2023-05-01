@@ -8,14 +8,14 @@ package util.external.oneEuroFilter;
  * This code is licensed under a BSD license.
  * See the LICENSE file for more information.
  */
-public class OneEuroFilter {
+public class _OneEuroFilter {
 
     double freq;
     double mincutoff;
     double beta_;
     double dcutoff;
-    LowPassFilter x;
-    LowPassFilter dx;
+    _LowPassFilter x;
+    _LowPassFilter dx;
     double lasttime;
     static double UndefinedTime = -1;
 
@@ -50,19 +50,19 @@ public class OneEuroFilter {
         dcutoff = dc;
     }
 
-    public OneEuroFilter(double freq) throws Exception {
+    public _OneEuroFilter(double freq) throws Exception {
         init(freq, 1.0, 0.0, 1.0);
     }
 
-    public OneEuroFilter(double freq, double mincutoff) throws Exception {
+    public _OneEuroFilter(double freq, double mincutoff) throws Exception {
         init(freq, mincutoff, 0.0, 1.0);
     }
 
-    public OneEuroFilter(double freq, double mincutoff, double beta_) throws Exception {
+    public _OneEuroFilter(double freq, double mincutoff, double beta_) throws Exception {
         init(freq, mincutoff, beta_, 1.0);
     }
 
-    public OneEuroFilter(double freq, double mincutoff, double beta_, double dcutoff) throws Exception {
+    public _OneEuroFilter(double freq, double mincutoff, double beta_, double dcutoff) throws Exception {
         init(freq, mincutoff, beta_, dcutoff);
     }
 
@@ -72,8 +72,8 @@ public class OneEuroFilter {
         setMinCutoff(mincutoff);
         setBeta(beta_);
         setDerivateCutoff(dcutoff);
-        x = new LowPassFilter(alpha(mincutoff));
-        dx = new LowPassFilter(alpha(dcutoff));
+        x = new _LowPassFilter(alpha(mincutoff));
+        dx = new _LowPassFilter(alpha(dcutoff));
         lasttime = UndefinedTime;
     }
 
@@ -110,7 +110,7 @@ public class OneEuroFilter {
                         + "#CFG {'beta': " + beta + ", 'freq': " + frequency + ", 'dcutoff': " + dcutoff + ", 'mincutoff': " + mincutoff + "}" + "\n"
                         + "#LOG timestamp, signal, noisy, filtered" + "\n");
 
-        OneEuroFilter f = new OneEuroFilter(frequency,
+        _OneEuroFilter f = new _OneEuroFilter(frequency,
                 mincutoff,
                 beta,
                 dcutoff);
