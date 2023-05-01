@@ -13,7 +13,10 @@ class InputScheme(keyEvents: KeyEvents) {
 
     // Pressed keys
     private val mutablePressedKeys = mutableSetOf<String>()
-    // Set containing the names of the currently pressed keys
+
+    /**
+     * Set containing the names of the currently pressed keys.
+     */
     val pressedKeys: Set<String> = mutablePressedKeys
 
     // Keybinds
@@ -84,6 +87,9 @@ class InputScheme(keyEvents: KeyEvents) {
         }
     }
 
+    /**
+     * Access the [KeyBinder] to bind keys on keyDown to actions.
+     */
     fun keyDown(bindConfig: KeyBinder.() -> Unit) {
         keyBinder.bindConfig()
     }
