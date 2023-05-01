@@ -53,14 +53,15 @@ fun main() = application {
         // Init audio input
         // TODO: AUDIO
         val audio = extend(Audio()) {
-            buildVolumeProcessor()
-
-            val ranges = listOf(
+            /*
+            withVolumeProcessor = VolumeProcessorType.DEFAULT
+            withVolumeRangeProcessor = listOf(
                 Audio.BASS,
                 Audio.MID,
                 Audio.TREBLE,
+                20.0 .. 20000.0
             )
-            // buildVolumeRangeProcessor(ranges)
+             */
         }
 
         // Init colors
@@ -139,8 +140,8 @@ fun main() = application {
                     if (t < 0.4) (t / 0.4).pow(1/2.0) // Reaches 1.0
                     else 1.0.lerp(holdValue, (t - 0.4) / 0.6)
                 }
-                onGateClosed = Envelope (0.5) { t ->
-                    holdValue.lerp(offValue, t / 0.2)
+                onGateClosed = Envelope (0.1) { t ->
+                    holdValue.lerp(offValue, t / 0.1)
                 }
             }
             val ringOpacity by capacitor
@@ -204,7 +205,7 @@ fun main() = application {
         uiDisplay.controlTextLines = inputScheme.getControlsText().split("\n")
         uiDisplay.trackValue("BPM") { "${beatClock.bpm}" }
         uiDisplay.trackValue("Phase") { "${beatClock.phase.round(2)}" }
-        uiDisplay.trackValue("ringOpacity") { "${diamondGroup.ringOpacity.round(2)}" }
+        uiDisplay.trackValue("RingOpacity") { "${diamondGroup.ringOpacity.round(2)}" }
 
         // Draw loop
         extend {
