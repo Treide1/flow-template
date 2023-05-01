@@ -14,6 +14,7 @@ import org.openrndr.resourceText
  *
  * @param stencilBuffer The stencil buffer to use for the mirror effect. Has to be of format ColorFormat.R, type ColorType.UINT8.
  */
+// TODO: use in TemplateProgram.kt
 class MirrorFilter(
     stencilBuffer: ColorBuffer
 ) : Filter(
