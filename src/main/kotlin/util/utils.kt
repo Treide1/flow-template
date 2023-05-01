@@ -89,7 +89,7 @@ fun Double.lerp(other: Double, perc: Double): Double {
 /**
  * Displays multiple [lines] of text.
  *
- * The lines are offset vertically by [yOff]. The fill color is [color].
+ * The lines are offset vertically from each other by [yOff]. The fill color is [color].
  */
 fun Drawer.displayLinesOfText(lines: List<String>, yOff: Double = 25.0, color: ColorRGBa = ColorRGBa.WHITE) {
     val x = 10.0
