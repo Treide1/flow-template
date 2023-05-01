@@ -1,5 +1,6 @@
 import flow.audio.Audio
 import flow.bpm.BeatClock
+import flow.bpm.envelope.Capacitor
 import flow.bpm.envelope.Envelope
 import flow.bpm.toIntervalCount
 import flow.colorRepo.ColorRepo
@@ -18,7 +19,6 @@ import org.openrndr.extra.fx.blur.GaussianBloom
 import org.openrndr.math.Vector2
 import org.openrndr.math.map
 import org.openrndr.panel.elements.round
-import util.Capacitor
 import util.lerp
 import kotlin.math.*
 
@@ -134,7 +134,7 @@ fun main() = application {
             val ringSize = 10.0
             var ringRot = 0.0
             // Opacity of the ring is controlled by a capacitor.
-            val ringOpacity = Capacitor(0.0, 0.8).apply {
+            val capacitor = Capacitor(0.0, 0.8).apply {
                 onGateOpen = Envelope(1.0) { t ->
                     if (t < 0.4) (t / 0.4).pow(1/2.0) // Reaches 1.0
                     else 1.0.lerp(holdValue, (t - 0.4) / 0.6)
@@ -143,6 +143,7 @@ fun main() = application {
                     holdValue.lerp(offValue, t / 0.2)
                 }
             }
+            val ringOpacity by capacitor
 
             override fun Drawer.draw() {
                 // Center diamond
@@ -153,7 +154,7 @@ fun main() = application {
 
                 // If "q" is pressed, draw a ring of diamonds around the center diamond.
                 // TODO: get deltaSeconds
-                ringOpacity.update(0.016, inputScheme.isKeyActive("q"))
+                capacitor.update(0.016, inputScheme.isKeyActive("q"))
 
                 // Draw a ring of diamonds around the main diamond.
                 ringRot += kick * 0.05
@@ -164,7 +165,7 @@ fun main() = application {
                     val angle = i * angleStep + ringRot
                     val x = center.x + ringRadius * cos(angle)
                     val y = center.y + ringRadius * sin(angle)
-                    fill = colorRepo.palette[i%2 + 1].opacify(ringOpacity.value)
+                    fill = colorRepo.palette[i%2 + 1].opacify(ringOpacity)
                     stroke = null
                     drawDiamond(x, y, size)
                 }
@@ -203,6 +204,7 @@ fun main() = application {
         uiDisplay.controlTextLines = inputScheme.getControlsText().split("\n")
         uiDisplay.trackValue("BPM") { "${beatClock.bpm}" }
         uiDisplay.trackValue("Phase") { "${beatClock.phase.round(2)}" }
+        uiDisplay.trackValue("ringOpacity") { "${diamondGroup.ringOpacity.round(2)}" }
 
         // Draw loop
         extend {
