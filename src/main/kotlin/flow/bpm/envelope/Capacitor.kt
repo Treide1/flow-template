@@ -49,9 +49,9 @@ data class Capacitor(
         time += dt
 
         value = if (gate) {
-            if (time < onGateOpen.length) onGateOpen.sample(dt) else holdValue
+            if (time < onGateOpen.length) onGateOpen.sample(time) else holdValue
         } else {
-            if (time < onGateClosed.length) onGateClosed.sample(dt) else offValue
+            if (time < onGateClosed.length) onGateClosed.sample(time) else offValue
         }
     }
 
