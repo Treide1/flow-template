@@ -1,5 +1,3 @@
-package util.external.oneEuroFilter;
-
 /**
  * LowPassFilter is a simple filter for noisy signals.
  * <p>

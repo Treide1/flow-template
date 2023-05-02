@@ -1,5 +1,3 @@
-package util.external.oneEuroFilter;
-
 /**
  * OneEuroFilter is a simple filter for noisy signals.
  * <p>
@@ -97,7 +95,6 @@ public class _OneEuroFilter {
         return x.filterWithAlpha(value, alpha(cutoff));
     }
 
-    /*
     public static void main(String[] args) throws Exception {
         //randSeed();
         double duration = 10.0; // seconds
@@ -125,5 +122,4 @@ public class _OneEuroFilter {
                     + filtered);
         }
     }
-     */
 }
