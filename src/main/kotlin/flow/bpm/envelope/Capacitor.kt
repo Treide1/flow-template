@@ -11,8 +11,8 @@ import kotlin.reflect.KProperty
  * the capacitor discharges from [holdValue] to [offValue] over the duration of [onGateClosed].
  */
 data class Capacitor(
-    val offValue:Double,
-    val holdValue: Double
+    val offValue:Double = 0.0,
+    val holdValue: Double = 1.0
 ) {
 
     var value = offValue
