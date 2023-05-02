@@ -6,7 +6,12 @@ import kotlin.reflect.KProperty
 /**
  * Sampler data class. Holds a reference to an [Envelope] and
  * provides a [value] property that is updated on every [update] call.
- * The [value] property can be accessed via delegation.
+ * The [value] property can be accessed directly, or via delegation.
+ *
+ * Example:
+ * ```
+ * val sampler = Sampler(EnvelopeBuilder(...).build())
+ * ```
  */
 data class Sampler(val envelope: Envelope) {
 

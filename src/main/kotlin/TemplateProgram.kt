@@ -3,7 +3,7 @@ import flow.bpm.BeatClock
 import flow.bpm.envelope.Capacitor
 import flow.bpm.envelope.Envelope
 import flow.bpm.toIntervalCount
-import flow.colorRepo.ColorRepo
+import flow.color.colorRepo
 import flow.content.VisualGroup
 import flow.fx.FxRepo
 import flow.input.InputScheme.TrackTypes.PIANO
@@ -37,7 +37,7 @@ fun main() = application {
         val inputScheme = inputScheme(keyboard)
 
         // Init beatClock
-        val beatClock = extend(BeatClock(125.0))
+        val beatClock = extend(BeatClock(125.0)) // <- Play your favorite song. Set its bpm here.
 
         // Init beat-based values
         val kick by beatClock.bindEnvelopeBySegments(1.0) {
@@ -70,7 +70,7 @@ fun main() = application {
         audio.start()
 
         // Init colors
-        val colorRepo = ColorRepo {
+        val colorRepo = colorRepo {
             palette = listOf(
                 "#90F0CB", // primary
                 "#A38641", // secondary
@@ -78,7 +78,7 @@ fun main() = application {
             ).map { ColorRGBa.fromHex(it) }
         }
 
-        // Init pipeline
+        // Init graphics pipeline
         val rt = renderTarget(width, height) {
             colorBuffer(ColorFormat.RGBa, ColorType.FLOAT32)
             depthBuffer()
@@ -155,6 +155,7 @@ fun main() = application {
             }
             val ringOpacity by capacitor
 
+            // If active, draw a center diamond and/or a ring of diamonds around it.
             override fun Drawer.draw() {
                 isShowingMain = inputScheme.isKeyActive("c").not()
                 isShowingRing = inputScheme.isKeyActive("q")
@@ -195,8 +196,11 @@ fun main() = application {
 
         }
 
+        // Draws a grid of rectangles on the screen, with height based on the volume of the
+        // corresponding frequency bands, or their wide-ranged values.
         val audioGroup = object: VisualGroup(program) {
 
+            // Opacity saturate on (towards 1.0) and off (towards 0.0)
             val capacitor = Capacitor().apply {
                 onGateOpen = Envelope(0.5) {
                     it / 0.5
@@ -207,17 +211,17 @@ fun main() = application {
             }
             val alphaFac by capacitor
 
+            // Audio mode
             val audioMode = CyclicFlag(listOf(
                 "Magnitudes", "Ranges"
             ))
 
-            // Draws equidistant rectangles on the screen, with height based on the volume of the
-            // corresponding band passed volume processor.
-            // The volumeProcessor is drawn above it with alpha = 0.5 and with PINK fill color.
+            // Draws rectangles based on the volume of the corresponding frequency bands (raw magnitudes/by range).
+            // Draws a rectangle for the overall volume on top.
             override fun Drawer.draw() {
                 capacitor.update(0.016, inputScheme.isKeyActive("v"))
 
-                val baseVol =  volProcessor.filteredLastVolume // volProcessor.volumeBuffer.lastOrNull() ?: return
+                val baseVol =  volProcessor.filteredLastVolume
 
                 val loX = width * 0.25
                 val hiX = width * 0.75
@@ -249,8 +253,8 @@ fun main() = application {
                     volList.forEachIndexed { i, vol ->
                         val volY = loY.lerp(hiY, vol)
 
-                        val x0 = (i+0.0) / volList.size * (hiX - loX) + loX
-                        val x1 = (i+1.0) / volList.size * (hiX - loX) + loX
+                        val x0 = (i+0.1) / volList.size * (hiX - loX) + loX
+                        val x1 = (i+0.9) / volList.size * (hiX - loX) + loX
 
                         val mixPerc = i * 1.0 / volList.size
                         fill = colorRepo.palette[0].mix(colorRepo.palette[2], mixPerc).opacify(0.5 * alphaFac)

@@ -6,12 +6,21 @@ import org.openrndr.draw.Drawer
 /**
  * Visual group that can be drawn.
  * Inherit as object and implement [draw].
+ *
+ * Define group properties as object's properties.
  */
 abstract class VisualGroup(program: Program) {
 
-    val drawer = program.drawer
+    private val drawer = program.drawer
+
+    /**
+     * The draw procedure to be implemented.
+     */
     abstract fun Drawer.draw()
 
+    /**
+     * Draw the visual group.
+     */
     fun draw() {
         drawer.pushStyle()
         drawer.draw()

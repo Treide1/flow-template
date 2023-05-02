@@ -20,9 +20,9 @@ import org.openrndr.math.map
  * For example `animateTo(bpm = 132.0, 1.0)` to start the new beat on keystroke "k",
  * gradually changing the phase and speed to 132.0 over 1.0 second.
  *
- * @param bpm The initial bpm.
+ * @param bpm The initial bpm. Can be modified during runtime, e.g. during a playlist run.
  */
-class BeatClock(var bpm: Double = 120.0) : Extension {
+class BeatClock(var bpm: Double) : Extension {
 
     override var enabled = true
 
@@ -135,6 +135,7 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
      * @param t0 The new t0 time stamp.
      * @param duration The duration of the transition.
      */
+    // TODO: Refactor this to be derived from a general Animation or Blend API.
     fun animateTo(bpm: Double, t0: Double, duration: Double) {
         transition = Transition(
             targetBpm = bpm,
@@ -153,6 +154,13 @@ class BeatClock(var bpm: Double = 120.0) : Extension {
 }
 
 /**
- * Convert a Double to an Int representing the number of completed [interval]s it contains.
+ * Calculates how often an interval of length [intervalLength] fits into this Double.
+ *
+ * Example:
+ * ```
+ * 1.0.toIntervalCount(0.25) // 4
+ * 1.0.toIntervalCount(0.5)  // 2
+ * 1.5.toIntervalCount(1.0)  // 1
+ * ```
  */
-fun Double.toIntervalCount(interval: Double): Int = (this/interval).toInt()
+fun Double.toIntervalCount(intervalLength: Double): Int = (this/intervalLength).toInt()

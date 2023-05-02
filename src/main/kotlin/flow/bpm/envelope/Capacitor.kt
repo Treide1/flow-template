@@ -10,6 +10,7 @@ import kotlin.reflect.KProperty
  * over the duration of [onGateOpen] with the given envelope. If the gate is closed,
  * the capacitor discharges from [holdValue] to [offValue] over the duration of [onGateClosed].
  */
+// TODO: Write program extension binder, to put the update logic in the definition.
 data class Capacitor(
     val offValue:Double = 0.0,
     val holdValue: Double = 1.0
