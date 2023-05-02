@@ -18,6 +18,7 @@ import kotlin.math.abs
  *
  * @author Lukas Henke
  */
+// TODO: Fix stuck-at-zero bug (hitting 0.0 and not recovering)
 class OneEuroFilter(
     var minCutoff: Double = 1.0,
     var beta: Double = 0.0,
