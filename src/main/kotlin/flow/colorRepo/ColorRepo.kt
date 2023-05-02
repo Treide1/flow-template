@@ -3,9 +3,9 @@ package flow.colorRepo
 /**
  * Color repository.
  *
- * Defines a [palette] within a color model [ColorModel] of your choice, like ColorRGBa or ColorXSVa.
+ * Defines a [palette] using a color model [ColorModel] of your choice, like ColorRGBa or ColorXSVa.
  *
- * @constructor Create empty Color repo, configure with the `config` block.
+ * @param config Configuration block for the Color repo.
  */
 class ColorRepo<ColorModel>(config: ColorRepo<ColorModel>.() -> Unit) {
 
