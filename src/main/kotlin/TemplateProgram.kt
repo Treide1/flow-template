@@ -52,11 +52,11 @@ fun main() = application {
         }
 
         // Init audio input
-        val audio = Audio().apply {
-            sampleRate = 44100
-            bufferSize = 8192
-            overlap = bufferSize - 1024
-        }
+        val audio = Audio(
+            sampleRate = 44100,
+            bufferSize = 8192,
+            overlap = 8192 - 1024,
+        )
         val volProcessor = audio.createVolumeProcessor()
 
         val ranges = listOf(
@@ -66,8 +66,8 @@ fun main() = application {
             Audio.TREBLE,
             Audio.BRILLIANCE,
         )
-        val constantQ = audio.createConstantQProcessor(ranges, 40, 2)
-        audio.run()
+        val constantQ = audio.createConstantQProcessor(2, ranges, 40)
+        audio.start()
 
         // Init colors
         val colorRepo = ColorRepo {

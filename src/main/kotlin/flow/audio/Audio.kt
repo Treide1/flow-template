@@ -6,30 +6,49 @@ import be.tarsos.dsp.AudioDispatcher
 import be.tarsos.dsp.AudioProcessor
 import be.tarsos.dsp.io.jvm.AudioDispatcherFactory
 import kotlinx.coroutines.*
+import kotlin.math.log10
 
 /**
  * Audio extension.
  *
- * Start with `val audio = Audio().apply { … }` and configure your audio extension.
- * Uses the system audio device in combination with TarsosDSP.
+ * Start with `val audio = Audio()` and create processors using your system's default microphone.
+ *
+ * Performs audio processing (called 'Digital Signal Processing' or 'DSP')
+ * with [TarsosDSP](https://github.com/JorenSix/TarsosDSP).
+ *
+ * @param bufferSize Size of the audio buffer. Default is 1024. Larger buffers are more accurate, but increase lag.
+ * @param overlap Size of the overlap between audio buffers. Default is 0.
+ * @param sampleRate Sample rate of the audio. Default is 44100. Deviations from system device *will* cause problems.
  */
-class Audio {
+class Audio(
+    val bufferSize: Int = 1024,
+    val overlap: Int = 0,
+    val sampleRate: Int = 44100,
+) {
 
-    var bufferSize = 1024
-    var overlap = 0
-    var sampleRate = 44100
     private lateinit var dispatcher: AudioDispatcher
 
+    // List of processors for which the audio events should be cloned
     private val audioCloneList = mutableListOf<AudioProcessor>()
+    // Processor pair for cloning audio events
     private lateinit var resetProcessorPair: ResetProcessorPair
-
+    // Audio thread. Sometimes a little bitch (not closing audio stream).
     private lateinit var audioThread: Thread
 
-    // Runtime setup
-    fun run() {
+    /**
+     * Does setup of immutable audio chain and starts digital signal processing (DSP) on a separate thread.
+     *
+     * Gracefully terminate with [stop].
+     */
+    fun start() {
+        // Setup
         dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate, bufferSize, overlap)
         resetProcessorPair = ResetProcessorPair(bufferSize)
 
+        // Cloning and processing procedure
+        // - Clone the raw audio event
+        // - For each processor, process the audio event. Then clone it back to the current audioEvent.
+        // This is necessary, as some processors (namely IIRFilters) alter the audio data. This serves as a rollback.
         dispatcher.addAudioProcessor(resetProcessorPair.read)
         audioCloneList.forEach {
             dispatcher.addAudioProcessor(it)
@@ -39,6 +58,9 @@ class Audio {
         audioThread.start()
     }
 
+    /**
+     * Stops the audio chain and (attempts to) gracefully terminate the DSP process. Only makes sense after [start].
+     */
     fun stop() {
         dispatcher.stop()
         runBlocking {
@@ -52,15 +74,22 @@ class Audio {
         }
     }
 
-    // Audio processors
+    /**
+     * Creates a [VolumeProcessor] and adds it to the audio chain.
+     *
+     * @param eventBufferSize The size of the buffer for the [VolumeProcessor] to store audio events.
+     */
     fun createVolumeProcessor(eventBufferSize: Int = 40): VolumeProcessor {
         return VolumeProcessor(eventBufferSize, sampleRate).also { audioCloneList.add(it) }
     }
 
+    /**
+     * Creates a [ConstantQProcessor] and adds it to the audio chain.
+     */
     fun createConstantQProcessor(
+        binsPerOctave: Int,
         rangeList: List<ClosedFloatingPointRange<Double>>,
         eventBufferSize: Int = 40,
-        binsPerOctave: Int,
     ): ConstantQProcessor {
         return ConstantQProcessor(binsPerOctave, rangeList, sampleRate, eventBufferSize).also {
             audioCloneList.add(it)
@@ -93,4 +122,13 @@ class Audio {
 
 }
 
-
+/**
+ * Converts a magnitude value (usually from FFTs) to decibels.
+ *
+ * Coerced to be at least [Audio.LOWEST_SPL].
+ * Should the value be more than [Audio.HIGHEST_SPL], you are doing something wrong anyway.
+ */
+fun Double.toDb(): Double {
+    if (this <= 0) return Audio.LOWEST_SPL
+    return (20 * log10(this)).coerceAtLeast(Audio.LOWEST_SPL)
+}

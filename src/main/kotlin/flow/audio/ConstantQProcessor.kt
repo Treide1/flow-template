@@ -9,10 +9,29 @@ import flow.realtime.filters.OneEuroFilter
 import org.openrndr.math.clamp
 import org.openrndr.math.map
 import util.QueueCache
-import kotlin.math.log10
 import kotlin.math.log2
 import kotlin.math.sqrt
 
+/**
+ * Audio processor that uses the [ConstantQ](http://academics.wellesley.edu/Physics/brown/pubs/cq1stPaper.pdf)
+ * algorithm from [TarsosDSP](https://github.com/JorenSix/TarsosDSP)
+ * to calculate the magnitudes of the signal.
+ *
+ * You can access the magnitudes directly from [magnitudes],
+ * or use [filteredMagnitudes] to get smoothed version ranging from 0.0 to 1.0.
+ *
+ * Similarly, you specify the frequency ranges you want to analyze with [rangeList].
+ * Access the cached result list with [rangedVolumesList],
+ * or use the current smoothed value list [filteredRangedVolumesList].
+ *
+ * @param binsPerOctave The number of bins per octave. This enforces a certain [Audio.bufferSize] !
+ * @param rangeList The frequency ranges to analyze. Should be from 20Hz to 20kHz each.
+ * @param sampleRate The sample rate of the audio signal.
+ * @param eventBufferSize The size of the buffer that stores the magnitudes.
+ */
+// TODO: Refactor data caching and filtering out of this class.
+//  It is overburdened and should only provide magnitude/volume data.
+//  Also, the naming scheme is _very confusing_.
 class ConstantQProcessor(
     val binsPerOctave: Int,
     val rangeList: List<ClosedFloatingPointRange<Double>>,
@@ -90,17 +109,6 @@ class ConstantQProcessor(
     }
 
     override fun processingFinished() {}
-}
-
-/**
- * Converts a magnitude value to decibels.
- *
- * Coerced to be at least [Audio.LOWEST_SPL].
- * Should the value be more than [Audio.HIGHEST_SPL], you are doing something wrong anyway.
- */
-fun Double.toDb(): Double {
-    if (this <= 0) return Audio.LOWEST_SPL
-    return (20 * log10(this)).coerceAtLeast(Audio.LOWEST_SPL)
 }
 
 /**

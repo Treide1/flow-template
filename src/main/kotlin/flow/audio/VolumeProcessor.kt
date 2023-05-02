@@ -17,7 +17,10 @@ import util.QueueCache
  * Stores the last [eventBufferSize] values in [volumeBuffer] and [dynRangeBuffer].
  *
  * @param eventBufferSize The size of the buffer that stores the decibel values.
+ * @param sampleRate The sample rate of the audio signal.
  */
+// TODO: Refactor data caching and filtering out of this class.
+//  It is overburdened and should only provide volume data.
 class VolumeProcessor internal constructor(
     val eventBufferSize: Int,
     val sampleRate: Int,
@@ -32,12 +35,16 @@ class VolumeProcessor internal constructor(
      */
     val volumeBuffer by volumeCache
 
-    val volumeFilter = OneEuroFilter(1.0, 0.01, 1.0, 0.0)
+    private val volumeFilter = OneEuroFilter(1.0, 0.01, 1.0, 0.0)
+
+    /**
+     * The last decibel value, adjusted by a [OneEuroFilter].
+     */
     var filteredLastVolume = 0.0
 
-    // Dynamic volume range values
-    var loLevel = LOWEST_SPL
-    var hiLevel = HIGHEST_SPL
+    // Dynamic volume range values, starting at outer bounds and contracting
+    private var loLevel = LOWEST_SPL
+    private var hiLevel = HIGHEST_SPL
 
     /**
      * The last dynamic ranges. Buffer size is [eventBufferSize]. Latest event is at the end of the list.
