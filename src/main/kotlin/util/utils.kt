@@ -2,9 +2,6 @@
 
 package util
 
-import org.openrndr.color.ColorRGBa
-import org.openrndr.draw.Drawer
-import org.openrndr.draw.isolated
 import kotlin.reflect.KProperty
 
 /**
@@ -30,24 +27,6 @@ class CyclicFlag<T>(val options: List<T>) {
  */
 fun Double.lerp(other: Double, perc: Double): Double {
     return this + (other - this) * perc
-}
-
-/**
- * Displays multiple [lines] of text.
- *
- * The lines are offset vertically from each other by [yOff]. The fill color is [color].
- */
-fun Drawer.displayLinesOfText(lines: List<String>, yOff: Double = 25.0, color: ColorRGBa = ColorRGBa.WHITE) {
-    val x = 10.0
-    var y = 20.0
-    this.isolated {
-        fill = color
-        stroke = color
-        lines.forEach {  line ->
-            text(line, x, y)
-            y += yOff
-        }
-    }
 }
 
 class QueueCache<T>(val size: Int){
