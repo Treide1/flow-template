@@ -4,6 +4,10 @@ package util
 
 import kotlin.reflect.KProperty
 
+// This file is a dump for common utility functions and data structures.
+// It is not meant to be included in the final build.
+// But "miscellaneous" doesn't sound that good...
+
 /**
  * Data class for storing [options] and cycling through them with [next].
  * Initial value is the first element of [options]. Repeats after the last one.
