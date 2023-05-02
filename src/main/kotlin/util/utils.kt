@@ -5,6 +5,7 @@ package util
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.Drawer
 import org.openrndr.draw.isolated
+import kotlin.reflect.KProperty
 
 /**
  * Data class for storing [options] and cycling through them with [next].
@@ -46,5 +47,24 @@ fun Drawer.displayLinesOfText(lines: List<String>, yOff: Double = 25.0, color: C
             text(line, x, y)
             y += yOff
         }
+    }
+}
+
+class QueueCache<T>(val size: Int){
+
+    private val _cache = emptyList<T>().toMutableList()
+
+    val cache: List<T>
+        get() = _cache.toList()
+
+    fun add(element: T) {
+        _cache.add(element)
+        if (_cache.size > size) {
+            _cache.removeAt(0)
+        }
+    }
+
+    operator fun getValue(requester: Any, property: KProperty<*>): List<T> {
+        return cache
     }
 }
