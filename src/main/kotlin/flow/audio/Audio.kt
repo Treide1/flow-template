@@ -26,6 +26,7 @@ class Audio(
     val sampleRate: Int = 44100,
 ) {
 
+    // Actual dispatcher running the audio process chain
     private lateinit var dispatcher: AudioDispatcher
 
     // List of processors for which the audio events should be cloned
@@ -80,7 +81,7 @@ class Audio(
      * @param eventBufferSize The size of the buffer for the [VolumeProcessor] to store audio events.
      */
     fun createVolumeProcessor(eventBufferSize: Int = 40): VolumeProcessor {
-        return VolumeProcessor(eventBufferSize, sampleRate).also { audioCloneList.add(it) }
+        return VolumeProcessor(sampleRate, bufferSize, eventBufferSize).also { audioCloneList.add(it) }
     }
 
     /**

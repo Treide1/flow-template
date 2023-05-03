@@ -22,8 +22,9 @@ import util.QueueCache
 // TODO: Refactor data caching and filtering out of this class.
 //  It is overburdened and should only provide volume data.
 class VolumeProcessor internal constructor(
-    val eventBufferSize: Int,
     val sampleRate: Int,
+    val bufferSize: Int,
+    val eventBufferSize: Int,
 ): AudioProcessor {
 
     // Cache to store the last decibel values
@@ -35,27 +36,30 @@ class VolumeProcessor internal constructor(
      */
     val volumeBuffer by volumeCache
 
-    private val volumeFilter = OneEuroFilter(1.0, 0.01, 1.0, 0.0)
-
-    /**
-     * The last decibel value, adjusted by a [OneEuroFilter].
-     */
-    var filteredLastVolume = 0.0
-
-    // Dynamic volume range values, starting at outer bounds and contracting
-    private var loLevel = LOWEST_SPL
-    private var hiLevel = HIGHEST_SPL
-
     /**
      * The last dynamic ranges. Buffer size is [eventBufferSize]. Latest event is at the end of the list.
      */
     val dynRangeBuffer by dynRangeCache
 
-    // TODO: refactor contraction to be event rate independent, currently updates by factor every event
+    private val volumeFilter = OneEuroFilter(1.0, 0.01, 1.0, 0.0)
+
+    /**
+     * The last decibel value, adjusted by a [OneEuroFilter]. Ranges from 0.0 to 1.0.
+     */
+    var filteredLastVolume = 0.0
+
+    // Dynamic volume range values, starting at outer bounds. They contract towards actual volume.
+    private var loLevel = LOWEST_SPL
+    private var hiLevel = HIGHEST_SPL
+
+    // TODO: rework contraction to be event rate independent, currently updates by factor every event
     /**
      * The update factor for dynamic volume range.
      */
     var rangeContraction = 0.98
+
+    // Time delta between audio events.
+    private val filterDt = bufferSize.toDouble() / sampleRate.toDouble()
 
     /**
      * Processes any incoming audio event.
@@ -65,7 +69,7 @@ class VolumeProcessor internal constructor(
         val db = audioEvent.getdBSPL().clamp(LOWEST_SPL, HIGHEST_SPL)
         volumeCache.add(db)
         val y = db.map(LOWEST_SPL, HIGHEST_SPL, 0.0, 1.0)
-        filteredLastVolume = volumeFilter.filter(y, 0.01)
+        filteredLastVolume = volumeFilter.filter(y, filterDt)
 
         // Update the dynamic range
         // The range is contracted by a factor of rangeContraction, or expanded by the new value

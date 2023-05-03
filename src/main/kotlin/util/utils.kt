@@ -13,6 +13,9 @@ import kotlin.reflect.KProperty
  * Initial value is the first element of [options]. Repeats after the last one.
  */
 class CyclicFlag<T>(val options: List<T>) {
+
+    constructor(vararg options: T): this(options.toList())
+
     var index = 0
     private var _value = options[index]
 

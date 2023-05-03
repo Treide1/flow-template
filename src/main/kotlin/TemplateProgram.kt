@@ -212,16 +212,12 @@ fun main() = application {
             val alphaFac by capacitor
 
             // Audio mode
-            val audioMode = CyclicFlag(listOf(
-                "Magnitudes", "Ranges"
-            ))
+            val audioMode = CyclicFlag("Magnitudes", "Bands")
 
             // Draws rectangles based on the volume of the corresponding frequency bands (raw magnitudes/by range).
             // Draws a rectangle for the overall volume on top.
             override fun Drawer.draw() {
                 capacitor.update(0.016, inputScheme.isKeyActive("v"))
-
-                val baseVol =  volProcessor.filteredLastVolume
 
                 val loX = width * 0.25
                 val hiX = width * 0.75
@@ -229,22 +225,22 @@ fun main() = application {
                 val hiY = height * 0.25
 
                 // Draw rectangles
-                if (audioMode.value == "Ranges") {
-                    val rangedVolList = constantQ.filteredRangedVolumesList
-                    rangedVolList.forEachIndexed { i, vol ->
+                if (audioMode.value == "Bands") {
+                    val bandedVolList = constantQ.filteredBandedVolumes
+                    bandedVolList.forEachIndexed { i, vol ->
                         val volY = loY.lerp(hiY, vol)
 
-                        val freqRange = constantQ.rangeList[i]
-                        val xList = listOf(freqRange.start, freqRange.endInclusive).map {
-                            log2(it)
-                        }.map {
-                            it.map(log2(Audio.LOWEST_FQ), log2(Audio.HIGHEST_FQ), loX, hiX)
-                        }
-                        val x0 = xList[0]
-                        val x1 = xList[1]
+                        val freqBand = constantQ.freqBands[i]
 
-                        val mixPerc = i * 1.0 / rangedVolList.size
-                        fill = colorRepo.palette[0].mix(colorRepo.palette[2], mixPerc).opacify(0.5 * alphaFac)
+                        val x0 = log2(freqBand.start)
+                            .map(log2(Audio.LOWEST_FQ), log2(Audio.HIGHEST_FQ), loX, hiX)
+                        val x1 = log2(freqBand.endInclusive)
+                            .map(log2(Audio.LOWEST_FQ), log2(Audio.HIGHEST_FQ), loX, hiX)
+
+                        val mixPerc = i.toDouble() / bandedVolList.size
+                        fill = colorRepo.palette[0]
+                            .mix(colorRepo.palette[2], mixPerc)
+                            .opacify(0.5 * alphaFac)
                         stroke = null
                         rectangle(x0, loY, x1 - x0, volY - loY)
                     }
@@ -257,15 +253,17 @@ fun main() = application {
                         val x1 = (i+0.9) / volList.size * (hiX - loX) + loX
 
                         val mixPerc = i * 1.0 / volList.size
-                        fill = colorRepo.palette[0].mix(colorRepo.palette[2], mixPerc).opacify(0.5 * alphaFac)
+                        fill = colorRepo.palette[0]
+                            .mix(colorRepo.palette[2], mixPerc)
+                            .opacify(0.5 * alphaFac)
                         stroke = null
                         rectangle(x0, loY, x1 - x0, volY - loY)
                     }
                 }
 
                 // Draw general volume as bar
-                val relVol = baseVol.map(Audio.LOWEST_SPL, Audio.HIGHEST_SPL, 0.0, 1.0)
-                val volY = loY.lerp(hiY, relVol)
+                val baseVol = volProcessor.filteredLastVolume
+                val volY = loY.lerp(hiY, baseVol)
 
                 fill = colorRepo.palette[1].opacify(0.2 * alphaFac)
                 stroke = null
@@ -304,11 +302,11 @@ fun main() = application {
 
         // Draw loop
         extend {
-
-            // Draw visual groups
             drawer.isolatedWithTarget(rt) {
+                // Clear buffer from last frame
                 clear(ColorRGBa.TRANSPARENT)
 
+                // Draw visual groups
                 audioGroup.draw()
                 circleGroup.draw()
                 diamondGroup.draw()

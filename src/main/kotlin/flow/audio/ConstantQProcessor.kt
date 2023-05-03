@@ -17,15 +17,15 @@ import kotlin.math.sqrt
  * algorithm from [TarsosDSP](https://github.com/JorenSix/TarsosDSP)
  * to calculate the magnitudes of the signal.
  *
- * You can access the magnitudes directly from [magnitudes],
+ * You can access the magnitudes directly from [magnitudesCache],
  * or use [filteredMagnitudes] to get smoothed version ranging from 0.0 to 1.0.
  *
- * Similarly, you specify the frequency ranges you want to analyze with [rangeList].
- * Access the cached result list with [rangedVolumesList],
- * or use the current smoothed value list [filteredRangedVolumesList].
+ * Similarly, you specify the frequency ranges you want to analyze with [freqBands].
+ * Access the cached result list with [bandedVolumeCache],
+ * or use the current smoothed value list [filteredBandedVolumes].
  *
  * @param binsPerOctave The number of bins per octave. This enforces a certain [Audio.bufferSize] !
- * @param rangeList The frequency ranges to analyze. Should be from 20Hz to 20kHz each.
+ * @param freqBands The frequency bands to analyze. Each band should be within 20Hz to 20kHz.
  * @param sampleRate The sample rate of the audio signal.
  * @param eventBufferSize The size of the buffer that stores the magnitudes.
  */
@@ -34,73 +34,98 @@ import kotlin.math.sqrt
 //  Also, the naming scheme is _very confusing_.
 class ConstantQProcessor(
     val binsPerOctave: Int,
-    val rangeList: List<ClosedFloatingPointRange<Double>>,
+    val freqBands: List<ClosedFloatingPointRange<Double>>,
     val sampleRate: Int,
     val eventBufferSize: Int,
 ): AudioProcessor {
 
-    // Exact power of 2 for ConstantQ lo-hi factor
-    private val loFq = 20.0
-    private val hiFq = 20000.0
+    // Shorthand for audio constants
+    private val loFq = Audio.LOWEST_FQ
+    private val hiFq = Audio.HIGHEST_FQ
 
+    // ConstantQ runner (processor for TarsosDSP)
     private val constantQ = ConstantQ(sampleRate.toFloat(), loFq.toFloat(), hiFq.toFloat(), binsPerOctave.toFloat())
 
+    // MAGNITUDES
+    private val _magnitudesCache = QueueCache<FloatArray>(eventBufferSize)
+
+    /**
+     * The cached list of magnitudes. Size is [eventBufferSize]. Latest event is at the end of the list.
+     */
+    val magnitudesCache by _magnitudesCache
+
+    // (Magnitude -> Db) Filtered
+    /**
+     * The total number of bins in the [ConstantQ] output.
+     * After an audio event process, each bin is calculated to a magnitude.
+     */
+    val numberOfBins = constantQ.magnitudes.size
+    private val magnitudeFilterList = List(numberOfBins) {
+        OneEuroFilter(0.5, 0.01, 5.0, 0.0)
+    }
+
+    /**
+     * The current list of magnitudes, adjusted by [OneEuroFilter]. Range is 0.0 to 1.0.
+     */
+    var filteredMagnitudes = List(numberOfBins) { 0.0 }
+
+
+    // BANDS
     private fun frequencyToIndex(frequency: Double): Int {
         val fq = frequency.clamp(loFq, hiFq)
         val index = binsPerOctave * log2(fq / loFq)
         return index.toInt()
     }
 
-    // MAGNITUDES
-    private val magnitudesCache = QueueCache<FloatArray>(eventBufferSize)
-    val magnitudes by magnitudesCache
-
-    // Magnitudes -> Db Filtered
-    val numberOfBins = constantQ.magnitudes.size
-    private val magnitudeFilterList = List(numberOfBins) {
-        OneEuroFilter(0.5, 0.01, 5.0, 0.0)
-    }
-    var filteredMagnitudes = List(numberOfBins) { 0.0 }
-
-
-    // RANGES
-    private val indexRangeList = rangeList.map { range ->
+    private val bandIndexList = freqBands.map { range ->
         val loIndex = frequencyToIndex(range.start)
         val hiIndex = frequencyToIndex(range.endInclusive)
         loIndex until hiIndex
     }
 
-    private val rangedVolumeCache = QueueCache<List<Double>>(eventBufferSize)
-    val rangedVolumesList by rangedVolumeCache
 
-    // Ranges -> Db Filtered
-    private val rangedVolumeFilterList = List(rangeList.size) {
+    private val _bandedVolumeCache = QueueCache<List<Double>>(eventBufferSize)
+
+    /**
+     * The cached list of banded passed volumes.
+     */
+    val bandedVolumeCache by _bandedVolumeCache
+
+    // (Freq Band -> Db) Filtered
+    private val rangedVolumeFilterList = List(freqBands.size) {
         OneEuroFilter(0.6, 0.01, 2.0, 0.0)
     }
-    var filteredRangedVolumesList = List(rangeList.size) { 0.0 }
 
-    // On each event, update all values
+    /**
+     * The current list of volumes by frequency band, adjusted by [OneEuroFilter]. Range is 0.0 to 1.0.
+     */
+    var filteredBandedVolumes = List(freqBands.size) { 0.0 }
+
+    // Time delta between audio events.
     private val filterDt = constantQ.ffTlength * 1.0 / sampleRate
 
+    /**
+     * Process the incoming audio event.
+     */
     override fun process(audioEvent: AudioEvent?): Boolean {
 
         constantQ.process(audioEvent)
 
         val magnitudes = constantQ.magnitudes!!.clone()
-        magnitudesCache.add(magnitudes)
+        _magnitudesCache.add(magnitudes)
         filteredMagnitudes = magnitudeFilterList.mapIndexed { index, filter ->
             val y = magnitudes[index].toDouble().toDb()
                 .map(Audio.LOWEST_SPL, Audio.HIGHEST_SPL, 0.0, 1.0)
             filter.filter(y, filterDt)
         }
 
-        val rangedVolumes = indexRangeList.map { range ->
+        val rangedVolumes = bandIndexList.map { range ->
             magnitudes.sliceArray(range).map { it.toDouble().toDb() }.rms()
                 .times(-1.0) // Correction to be negative db again
         }
-        rangedVolumeCache.add(rangedVolumes.toList())
+        _bandedVolumeCache.add(rangedVolumes.toList())
 
-        filteredRangedVolumesList = rangedVolumeFilterList.mapIndexed { index, filter ->
+        filteredBandedVolumes = rangedVolumeFilterList.mapIndexed { index, filter ->
             val y = rangedVolumes[index].map(Audio.LOWEST_SPL, Audio.HIGHEST_SPL, 0.0, 1.0)
             filter.filter(y, filterDt)
         }
