@@ -60,12 +60,12 @@ Press `F1` to toggle the available commands. The other keys are used for the exa
 
 ### Experiment …
 
-You might notice that this is GitHub template, not a library.
+You might notice that this is a GitHub template, not a library.
 
 In the current version, you have the primary logic/ config in a single file.
-You should see all the config and logic at a glance.
+The APIs are well documented, but are not required to be read through completely.
 
-Thus, you can easily change the program to your liking.
+You can easily change the program to your liking.
 
 To experiment, some starting points might be:
 * Setting the bpm to your favorite song's bpm (See: [songbpm.com](https://songbpm.com/))
