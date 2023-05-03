@@ -1,13 +1,13 @@
 # Flow template
 
-An OPENRNDR template to jumpstart a music visualization program.
+An OPENRNDR template called "Flow" to jumpstart a music visualization program.
 
 Run the template to see the example program in action.
 
 Even better, use the prepared APIs and wire them together as you please.
 The result should be stunning visuals - audio reactive and in sync.
 
-___ Forked from  https://github.com/openrndr/openrndr-template ___
+___ Forked from https://github.com/openrndr/openrndr-template ___
 
 ## Intention
 
@@ -44,9 +44,19 @@ Navigate to `src/main/kotlin/TemplateProgram.kt` and run it.
 
 Press `F1` to toggle the available commands. The other keys are used for the example itself.
 
-### Template Screenshots
+### Screenshots
 
--- TODO: Put images from the example program here --
+#### TemplateProgram: On Startup
+
+![TemplateProgram: On Startup](./images/TemplateProgram-OnStartup.png)
+
+#### TemplateProgram: Diamond ring on, 2 Bouncy balls activated
+
+![TemplateProgram: Diamond ring on, 2 of 4 bouncy balls activated](./images/TemplateProgram-DiamondRing-BouncyBalls.png)
+
+#### TemplateProgram: Spectral Audio Analysis
+
+![TemplateProgram: Spectral Audio Analysis](./images/TemplateProgram-SpectralAudioAnalysis.png)
 
 ### Experiment …
 
@@ -160,7 +170,7 @@ For the keyboard, keys can always be used by their name, like `'escape'` or `'k'
 or by their layout-independent key code, if they have one, like `KEY_ESCAPE` (`'k'` doesn't have one).
 
 Use `inputScheme.keyDown { … }` and specify `String/Int.bind(myDescription) { myAction() }` 
-to bind keys (by their name or key code, like 'k', 'escape' or KEY_ESCAPE) to actions.
+to bind keys to actions.
 
 You can also track keys by different tracking styles: `PIANO` and `TOGGLE`.
 Piano tracking treats a key as active as long as it is pressed.
@@ -256,7 +266,7 @@ I marked the tasks as done, that are stable and used in the template.
   * VisualGroup-based Video player
   * Start, Stop, Move to time, etc.
 * Param Picker
-  * Like orx-gui, but in a different application / interface
+  * Like `[orx-gui](https://github.com/openrndr/orx/tree/master/orx-jvm/orx-gui)`, but in a different application / interface
   * Live program or similar to change values on the fly (like OliveProgram, but only for hand-picked variables)
 * [Spotify API](https://developer.spotify.com/documentation/web-api/reference) integration
 
