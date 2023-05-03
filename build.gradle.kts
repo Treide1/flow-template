@@ -4,7 +4,7 @@ import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 group = "vjhenke.template"
-version = "1.1.1"
+version = "1.1.2"
 
 val applicationMainClass = "TemplateProgramKt"
 
