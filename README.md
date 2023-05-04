@@ -91,7 +91,7 @@ Some advantages:
   I tend to write the code that I would like to work, and _then_ write the functionality.
 * IntelliJ IDEA support. Including the obvious clone-and-run procedure, to code completion.
 
-* Debatable:
+Debatable:
 * IntelliJ as the supported IDE. I love it, but it's surely not for everyone.
 * It is not as popular as other frameworks. 
   This means that fewer libraries are available for it, and more often, you have to write stuff yourself.
@@ -128,14 +128,15 @@ Start with `val beatClock = extend(BeatClock(bpm: Int))` and get a beat-tracking
 
 Use its `phase` counting the beats (with decimals) for beat-based effects. 
 
-Bind envelopes via `val cubicInOut by bpm.bindEnvelope { … }` to use a cyclic `Envelope` and
+Bind envelopes via `val cubicInOut by bpm.bindEnvelope { … }` to get a cyclic `Envelope` and
 use its value to animate stuff, like size, position, color, etc.
 
 ### Audio
 
-Start with `val audio = Audio()`, create audio processor like `VolumeProcessor` or `ConstantQProcessor` via its `audio.create<...>Processor` methods.
+Start with `val audio = Audio()`, create audio processors like `VolumeProcessor` or `ConstantQProcessor` via its `audio.create<...>Processor` methods.
 
-Then call `audio.start()` to get the latest audio analysis data from each processor.
+Then call `audio.start()` to let the audio analysis run in a background thread.
+Fetch the latest audio data from each processor.
 
 Provides common values for working with audio, like the frequency range a human can hear, also called "Acoustic Range": `LOWEST_FQ`/`HIGHEST_FQ`.
 Or typical frequency analysis ranges `BASS`, `MID` and `TREBLE`.
@@ -229,7 +230,7 @@ I marked the tasks as done, that are stable and used in the template.
   - [x] Color Repo
   - [x] Color Palette
   - [ ] Color Picker
-  - [ ] Callable Procedures, like blend or sampling from a color path
+  - [ ] Sampling, like linear blend or along a color path
 - [x] Content API
   - [x] Visual group for organizing content
   - [x] Inline-object property/function definition and access
@@ -258,10 +259,10 @@ I marked the tasks as done, that are stable and used in the template.
 ### Long-Term Goals
 
 * Scenes API
- * Scene management 
- * Scene transitions 
-   * Cross-Fading
-   * Key Rebinding
+  * Scene management 
+  * Scene transitions 
+    * Cross-Fading
+    * Key Rebinding
 * FFMPEG Video API
   * VisualGroup-based Video player
   * Start, Stop, Move to time, etc.
