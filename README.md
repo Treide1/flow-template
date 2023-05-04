@@ -100,9 +100,10 @@ If you need help on a topic, you might want to visit the [discourse forum](https
 
 It seems similar to render engines/ frameworks like [Processing.org](https://processing.org/), 
 [Three.js](https://threejs.org/)
-or even [Skia](https://skia.org/).
+or [Skia](https://skia.org/) or even [Vvvv](https://vvvv.org/).
 
-After working with many computer graphics tools over the years, I openly admit to love OPENRNDR.
+However, after working with many computer graphics frameworks (like the mentioned ones plus many more), 
+I'd say that it just does so many things the right way.
 
 If you are not convinced, I recommend to try it out yourself.
 
