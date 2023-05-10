@@ -3,7 +3,8 @@ import flow.bpm.BeatClock
 import flow.bpm.envelope.Capacitor
 import flow.bpm.envelope.Envelope
 import flow.bpm.toIntervalCount
-import flow.color.colorRepo
+import flow.color.ColorRepo
+import flow.color.ColorRepo.ColorRoles.*
 import flow.content.VisualGroup
 import flow.fx.MirrorFilter
 import flow.fx.toR
@@ -16,7 +17,6 @@ import org.openrndr.Fullscreen
 import org.openrndr.KEY_ESCAPE
 import org.openrndr.KEY_SPACEBAR
 import org.openrndr.application
-import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.Drawer
 import org.openrndr.draw.isolated
 import org.openrndr.draw.isolatedWithTarget
@@ -44,22 +44,13 @@ fun main() = application {
 
     program {
         // Init inputScheme
-        val inputScheme = inputScheme(program.keyboard)
+        val inputScheme = inputScheme(keyboard)
 
         // Init beatClock
-        val beatClock = program.extend(BeatClock(125.0)) // <- Play your favorite song. Set its bpm here.
+        val beatClock = extend(BeatClock(125.0)) // <- Play your favorite song. Set its bpm here.
 
         // Init colors
-        val colorRepo = colorRepo {
-            palette = listOf(
-                "#90F0CB", // primary
-                "#A38641", // secondary
-                "#CE60F0", // tertiary
-            ).map { ColorRGBa.fromHex(it) }
-        }
-
-        // Init render pipeline
-        val renderPipeline = RenderPipeline(width, height, drawer)
+        val colorRepo = ColorRepo(ColorRepo.DEMO_PALETTE)
 
         // Init audio input
         val audio = Audio(
@@ -88,6 +79,9 @@ fun main() = application {
         val volProcessor = audio.createVolumeProcessor()
         val constantQ = audio.createConstantQProcessor(2, Audio.DEFAULT_RANGES, 40)
         audio.start()
+
+        // Init render pipeline
+        val renderPipeline = RenderPipeline(width, height, drawer)
 
         // Init Fx
         val blur = ApproximateGaussianBlur()
@@ -120,7 +114,7 @@ fun main() = application {
                     Vector2(0.8, 0.2)
                 ).forEachIndexed { i, (x, y) ->
                     val colorIndex = i % 2 + 1
-                    var color = colorRepo.palette[colorIndex]
+                    var color = colorRepo[colorIndex]
                     if (inputScheme.isKeyActive("e")) color = color.opacify(flash)
                     fill = color
                     stroke = null
@@ -135,7 +129,7 @@ fun main() = application {
                     val isActive = inputScheme.isKeyActive(key)
                     if (!isActive) return@forEachIndexed
                     val pos = drawer.bounds.center + Vector2(0.0, -height*relR).rotate(- i * 90.0)
-                    fill = colorRepo.palette[0]
+                    fill = colorRepo[PRIMARY]
                     stroke = null
                     circle(pos, sizeRange.endInclusive)
                 }
@@ -171,7 +165,7 @@ fun main() = application {
 
                 // Center diamond
                 if (isShowingMain) {
-                    val mainColor = colorRepo.palette[0].opacify(kick * 0.5 + 0.5)
+                    val mainColor = colorRepo[PRIMARY].opacify(kick * 0.5 + 0.5)
                     fill = mainColor
                     stroke = null
                     drawDiamond(width / 2.0, height / 2.0, mainSize)
@@ -188,7 +182,7 @@ fun main() = application {
                     val angle = i * angleStep + ringRot
                     val x = center.x + ringRadius * cos(angle)
                     val y = center.y + ringRadius * sin(angle)
-                    fill = colorRepo.palette[i%2 + 1].opacify(ringOpacity)
+                    fill = colorRepo[i%2 + 1].opacify(ringOpacity)
                     stroke = null
                     drawDiamond(x, y, size)
                 }
@@ -221,60 +215,60 @@ fun main() = application {
             // Audio mode
             val audioMode = CyclicFlag("Magnitudes", "Bands")
 
+            // Screen vars
+            val loX = width * 0.25
+            val hiX = width * 0.75
+            val loY = height * 0.75
+            val hiY = height * 0.25
+
             // Draws rectangles based on the volume of the corresponding frequency bands (raw magnitudes/by range).
             // Draws a rectangle for the overall volume on top.
             override fun Drawer.draw() {
                 capacitor.update(0.016, inputScheme.isKeyActive("v"))
 
-                val loX = width * 0.25
-                val hiX = width * 0.75
-                val loY = height * 0.75
-                val hiY = height * 0.25
-
-                // Draw rectangles
+                // Draw volume bars
                 if (audioMode.value == "Bands") {
                     val bandedVolList = constantQ.filteredBandedVolumes
                     bandedVolList.forEachIndexed { i, vol ->
-                        val volY = loY.lerp(hiY, vol)
-
                         val freqBand = constantQ.freqBands[i]
 
                         val x0 = log2(freqBand.start)
                             .map(log2(Audio.LOWEST_FQ), log2(Audio.HIGHEST_FQ), loX, hiX)
                         val x1 = log2(freqBand.endInclusive)
                             .map(log2(Audio.LOWEST_FQ), log2(Audio.HIGHEST_FQ), loX, hiX)
-
                         val mixPerc = i.toDouble() / bandedVolList.size
-                        fill = colorRepo.palette[0]
-                            .mix(colorRepo.palette[2], mixPerc)
-                            .opacify(0.5 * alphaFac)
+
+                        fill = colorRepo[PRIMARY].mix(colorRepo[TERTIARY], mixPerc).opacify(0.5 * alphaFac)
                         stroke = null
-                        rectangle(x0, loY, x1 - x0, volY - loY)
+                        drawVolBar(x0, x1, vol)
                     }
                 } else if (audioMode.value == "Magnitudes") {
                     val volList = constantQ.filteredMagnitudes
                     volList.forEachIndexed { i, vol ->
-                        val volY = loY.lerp(hiY, vol)
-
                         val x0 = (i+0.1) / volList.size * (hiX - loX) + loX
                         val x1 = (i+0.9) / volList.size * (hiX - loX) + loX
-
                         val mixPerc = i * 1.0 / volList.size
-                        fill = colorRepo.palette[0]
-                            .mix(colorRepo.palette[2], mixPerc)
-                            .opacify(0.5 * alphaFac)
+
+                        fill = colorRepo[PRIMARY].mix(colorRepo[TERTIARY], mixPerc).opacify(0.5 * alphaFac)
                         stroke = null
-                        rectangle(x0, loY, x1 - x0, volY - loY)
+                        drawVolBar(x0, x1, vol)
                     }
                 }
 
                 // Draw general volume as bar
                 val baseVol = volProcessor.filteredLastVolume
-                val volY = loY.lerp(hiY, baseVol)
 
-                fill = colorRepo.palette[1].opacify(0.2 * alphaFac)
+                fill = colorRepo[SECONDARY].opacify(0.2 * alphaFac)
                 stroke = null
-                rectangle(loX, loY, hiX - loX, volY - loY)
+                drawVolBar(loX, hiX, baseVol)
+            }
+
+            /**
+             * Draws a volume bar from [x0] to [x1], with [volume] being the relative height in unit range.
+             */
+            fun Drawer.drawVolBar(x0: Double, x1: Double, volume: Double) {
+                val volY = loY.lerp(hiY, volume)
+                rectangle(x0, loY, x1 - x0, volY - loY)
             }
         }
 
@@ -313,7 +307,7 @@ fun main() = application {
                 mirrorFx._fadeExp = flash
 
                 // Draw triangle
-                fill = colorRepo.palette[0].opacify(0.5 * fac)
+                fill = colorRepo[PRIMARY].opacify(0.5 * fac)
 
                 val baseCenter = bounds.center - Vector2(maxR + 20.0, 0.0) //Vector2(25.0, height/2.0) // bounds.center - Vector2(maxR, 0.0)
                 val off = Vector2(15.0, 0.0).rotate(sin(ebbAndFlow * TWO_PI)*90.0 + 180.0)

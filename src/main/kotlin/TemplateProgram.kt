@@ -1,6 +1,6 @@
 import flow.audio.Audio
 import flow.bpm.BeatClock
-import flow.color.colorRepo
+import flow.color.ColorRepo
 import flow.input.InputScheme.TrackTypes.TOGGLE
 import flow.input.inputScheme
 import flow.rendering.RenderPipeline
@@ -26,9 +26,9 @@ fun main() = application {
         val beatClock = extend(BeatClock(125.0)) // <- Play your favorite song. Set its bpm here.
 
         // Init colors
-        val colorRepo = colorRepo<ColorRGBa> {
+        val colorRepo = ColorRepo<ColorRGBa>(
             // ...
-        }
+        )
 
         // Init render pipeline
         val renderPipeline = RenderPipeline(width, height, drawer)

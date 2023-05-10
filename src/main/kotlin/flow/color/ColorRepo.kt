@@ -1,23 +1,55 @@
+@file:Suppress("unused")
+
 package flow.color
+
+import flow.color.ColorRepo.ColorRoles.*
+import org.openrndr.color.ColorModel
+import org.openrndr.color.ColorRGBa
 
 /**
  * Color repository.
  *
  * Defines a [palette] using a color model [ColorModel] of your choice, like ColorRGBa, ColorXSVa or ColorLABa.
+ * @param palette The palette of colors.
  */
-class ColorRepo<ColorModel> {
+class ColorRepo<T: ColorModel<T>>(var palette: Map<String, T> = mapOf()) {
 
-    /**
-     * Palette of colors.
-     */
-    var palette = listOf<ColorModel>()
+    operator fun get(colorName: String): T {
+        return palette[colorName] ?: throw IllegalArgumentException("Color name $colorName not found in palette.")
+    }
+
+    operator fun get(colorRole: ColorRoles): T {
+        return this[colorRole.name]
+    }
+
+    operator fun get(index: Int): T {
+        return palette.values.toList()[index]
+    }
+
+    enum class ColorRoles {
+        PRIMARY,
+        PRIMARY_VARIANT,
+        SECONDARY,
+        SECONDARY_VARIANT,
+        TERTIARY,
+        TERTIARY_VARIANT,
+
+        ACCENT,
+        NEUTRAL,
+        BACKGROUND,
+    }
+
+    companion object {
+
+        val DEMO_PALETTE = mapOf(
+            PRIMARY.name   to "#90F0CB",
+            SECONDARY.name to "#A38641",
+            TERTIARY.name  to "#CE60F0",
+        ).mapValues{ (_, hex) -> ColorRGBa.fromHex(hex) }
+    }
 
     // TODO-OPT: Define blend procedures, provide palette builders like from Adobe website
     //  (See Adobe Kuler color wheel: https://color.adobe.com/create/color-wheel)
-}
-
-fun <ColorModel> colorRepo(config: ColorRepo<ColorModel>.() -> Unit): ColorRepo<ColorModel> {
-    return ColorRepo<ColorModel>().also { it.config() }
 }
 
 
