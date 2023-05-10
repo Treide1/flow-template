@@ -173,7 +173,30 @@ class InputScheme(keyEvents: KeyEvents) {
         track(trackType, keyName, description)
     }
 
-    // TODO: add "untrack", incl update of description
+    /**
+     * Untrack a key by its name, like `"k"`.
+     */
+    fun untrack(keyName: String) {
+        keyTracker.pianoKeys.remove(keyName.hashCode())
+        keyTracker.toggleKeys.remove(keyName.hashCode())
+        keyTracker.pianoDescriptions.remove(keyName)
+        keyTracker.toggleDescriptions.remove(keyName)
+    }
+
+    /**
+     * Untrack a key by its code from [KeyCodes], like `KeyCodes.KEY_ESCAPE`.
+     */
+    fun untrack(keyCode: Int) {
+        val keyName = KeyCodes.nameByCode(keyCode)
+        untrack(keyName)
+    }
+
+    /**
+     * Untrack a list of keys by their name, like `listOf("w","a","s","d")`.
+     */
+    fun untrack(keyNames: List<String>) {
+        keyNames.forEach { untrack(it) }
+    }
 
     /**
      * Returns true if the key is currently active. "Active" is defined by the track type.

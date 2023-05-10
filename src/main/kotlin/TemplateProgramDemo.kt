@@ -355,8 +355,7 @@ fun main() = application {
         }
 
         // Init UI display
-        val uiDisplay = UiDisplay().apply {
-            controlTextLines = inputScheme.getControlsText().split("\n")
+        val uiDisplay = UiDisplay(inputScheme).apply {
             trackValue("BPM") { "${beatClock.bpm}" }
             trackValue("Phase") { "${beatClock.phase.round(2)}" }
             trackValue("Audio mode") { audioGroup.audioMode.value }

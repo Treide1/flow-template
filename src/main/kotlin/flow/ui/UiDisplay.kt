@@ -2,13 +2,12 @@
 
 package flow.ui
 
+import flow.input.InputScheme
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.Drawer
 import org.openrndr.draw.isolated
 
-class UiDisplay {
-
-    var controlTextLines = listOf<String>()
+class UiDisplay(val inputScheme: InputScheme) {
 
     private val valueUpdateList = mutableListOf<Pair<String, () -> String>>()
 
@@ -28,6 +27,7 @@ class UiDisplay {
         }
 
         drawer.isolated {
+            val controlTextLines = inputScheme.getControlsText().split("\n")
             val lines = controlTextLines + listOf("", "Values:") + valueLines
 
             drawer.displayLinesOfText(lines)
