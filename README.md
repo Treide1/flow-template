@@ -13,7 +13,8 @@ ___ Forked from https://github.com/openrndr/openrndr-template ___
 
 I am Lukas, a VJ and creative coder from Germany.
 
-Many of my VJ projects in OPENRNDR start with similar code snippets, which I used to copy back and forth.
+Many of my VJ projects in [OPENRNDR](https://openrndr.org/) start with similar code snippets, 
+which I used to copy back and forth.
 Some parts integrated well, others required extra work.
 
 As the complexity of my projects grew, I wanted to have a more structured approach.
@@ -31,7 +32,7 @@ So it is likely, to get support in the foreseeable future. (May, 2023 - ...)
 ### Prerequisites
 
 * [IntelliJ IDEA](https://www.jetbrains.com/idea/download/) (Community or Professional) installed. Other IDEs need to be configured manually.
-* Kotlin SDK installed. (Included in IntelliJ IDEA, might need to upgrade to the latest version.)
+* Git configured in IntelliJ IDEA.
 
 ### Clone And Run
 
@@ -192,14 +193,18 @@ Those seem to be inefficient, however. So I wrote my own wrapper.
 Define your effect `chain` and apply during your procedure. 
 Typically at the end, but hey - no on is stopping you to use it in the beginning or the middle. Or multiple times.
 
+# Appendix
+
 ## Roadmap
 
-Several APIs are already planned. 
 I am happy with the current state of the template, but there is more to come.
 
-Most APIs are subject to change, either by refactoring or by adding new features.
+Several APIs are planned as listed below.
+Most current APIs are subject to change, either by refactoring or by adding new features. 
+So just expect some basic integration.
 
-I marked the tasks as done, that are stable and used in the template.
+For the progress, I marked those tasks as done, that are stable and used in the template.
+All the other tasks require some more work.
 
 ### Template Progress
 
@@ -268,8 +273,55 @@ I marked the tasks as done, that are stable and used in the template.
   * VisualGroup-based Video player
   * Start, Stop, Move to time, etc.
 * Param Picker
-  * Like `[orx-gui](https://github.com/openrndr/orx/tree/master/orx-jvm/orx-gui)`, but in a different application / interface
+  * Like [orx-gui](https://github.com/openrndr/orx/tree/master/orx-jvm/orx-gui), but in a different application / interface
   * Live program or similar to change values on the fly (like OliveProgram, but only for hand-picked variables)
 * [Spotify API](https://developer.spotify.com/documentation/web-api/reference) integration
 
+## Useful References
 
+### Framework and Language
+
+#### OPENRNDR
+* website: https://openrndr.org/
+* guide: https://guide.openrndr.org/
+* github: https://github.com/openrndr
+  * original template: https//github.com/openrndr/openrndr-template 
+* discourse: https://openrndr.discourse.group/
+
+#### Kotlin
+* Reference: https://kotlinlang.org/docs/reference/
+  * Collections: https://kotlinlang.org/docs/reference/collections-overview.html
+  * Delegation: https://kotlinlang.org/docs/reference/delegation.html
+
+### Useful when working with music
+
+#### Find your song's bpm
+* [songbpm.com](https://songbpm.com/)
+
+#### Acoustics / "Human hearing"
+* "Bass Mid and Treble – Frequency Ranges Explained (With Hertz Chart)": https://housegrail.com/bass-treble-hertz-frequency-chart/
+
+### Audio processing
+
+#### TarsosDSP
+* github: https://github.com/JorenSix/TarsosDSP
+* ConstantQ paper: http://academics.wellesley.edu/Physics/brown/pubs/cq1stPaper.pdf
+
+#### OneEuroFilter
+* paper: https://cristal.univ-lille.fr/~casiez/1euro/
+
+### Computer Graphics
+
+### Inigo Quilez' Articles
+Archive of articles about shaders and CG in general.
+Easy to understand, highly informative.
+* https://iquilezles.org/articles
+
+#### Milkdrop 
+Music visualizer, now continued as ProjectM
+* original: https://www.geisswerks.com/milkdrop/
+* ProjectM: https://github.com/projectM-visualizer/projectm
+
+#### Electric Sheep (Flam3)
+(Not for music, but provides theory and artistic functions)
+* S. Draves, E. Reckase. "The Fractal Flame Algorithm", Nov 2008. URL: https://flam3.com/flame_draves.pdf
