@@ -41,11 +41,14 @@ class ColorRepo<T: ColorModel<T>>(var palette: Map<String, T> = mapOf()) {
 
     companion object {
 
+        /**
+         * The palette of colors used in the demo. Uses turquoise, yellow and purple.
+         */
         val DEMO_PALETTE = mapOf(
             PRIMARY.name   to "#90F0CB",
             SECONDARY.name to "#A38641",
             TERTIARY.name  to "#CE60F0",
-        ).mapValues{ (_, hex) -> ColorRGBa.fromHex(hex) }
+        ).mapValues{ (_, hex) -> ColorRGBa.fromHex(hex).toXSVa() }
     }
 
     // TODO-OPT: Define blend procedures, provide palette builders like from Adobe website

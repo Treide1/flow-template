@@ -116,7 +116,8 @@ fun main() = application {
                     val colorIndex = i % 2 + 1
                     var color = colorRepo[colorIndex]
                     if (inputScheme.isKeyActive("e")) color = color.opacify(flash)
-                    fill = color
+
+                    fill = color.toRGBa()
                     stroke = null
                     val r = kick.map(0.0, 1.0, sizeRange.start, sizeRange.endInclusive)
                     circle(x * width, y * height, r)
@@ -129,7 +130,8 @@ fun main() = application {
                     val isActive = inputScheme.isKeyActive(key)
                     if (!isActive) return@forEachIndexed
                     val pos = drawer.bounds.center + Vector2(0.0, -height*relR).rotate(- i * 90.0)
-                    fill = colorRepo[PRIMARY]
+
+                    fill = colorRepo[PRIMARY].toRGBa()
                     stroke = null
                     circle(pos, sizeRange.endInclusive)
                 }
@@ -165,8 +167,7 @@ fun main() = application {
 
                 // Center diamond
                 if (isShowingMain) {
-                    val mainColor = colorRepo[PRIMARY].opacify(kick * 0.5 + 0.5)
-                    fill = mainColor
+                    fill = colorRepo[PRIMARY].opacify(kick * 0.5 + 0.5).toRGBa()
                     stroke = null
                     drawDiamond(width / 2.0, height / 2.0, mainSize)
                 }
@@ -182,7 +183,7 @@ fun main() = application {
                     val angle = i * angleStep + ringRot
                     val x = center.x + ringRadius * cos(angle)
                     val y = center.y + ringRadius * sin(angle)
-                    fill = colorRepo[i%2 + 1].opacify(ringOpacity)
+                    fill = colorRepo[i%2 + 1].opacify(ringOpacity).toRGBa()
                     stroke = null
                     drawDiamond(x, y, size)
                 }
@@ -238,7 +239,7 @@ fun main() = application {
                             .map(log2(Audio.LOWEST_FQ), log2(Audio.HIGHEST_FQ), loX, hiX)
                         val mixPerc = i.toDouble() / bandedVolList.size
 
-                        fill = colorRepo[PRIMARY].mix(colorRepo[TERTIARY], mixPerc).opacify(0.5 * alphaFac)
+                        fill = colorRepo[PRIMARY].mix(colorRepo[TERTIARY], mixPerc).opacify(0.5 * alphaFac).toRGBa()
                         stroke = null
                         drawVolBar(x0, x1, vol)
                     }
@@ -249,7 +250,7 @@ fun main() = application {
                         val x1 = (i+0.9) / volList.size * (hiX - loX) + loX
                         val mixPerc = i * 1.0 / volList.size
 
-                        fill = colorRepo[PRIMARY].mix(colorRepo[TERTIARY], mixPerc).opacify(0.5 * alphaFac)
+                        fill = colorRepo[PRIMARY].mix(colorRepo[TERTIARY], mixPerc).opacify(0.5 * alphaFac).toRGBa()
                         stroke = null
                         drawVolBar(x0, x1, vol)
                     }
@@ -258,7 +259,7 @@ fun main() = application {
                 // Draw general volume as bar
                 val baseVol = volProcessor.filteredLastVolume
 
-                fill = colorRepo[SECONDARY].opacify(0.2 * alphaFac)
+                fill = colorRepo[SECONDARY].opacify(0.2 * alphaFac).toRGBa()
                 stroke = null
                 drawVolBar(loX, hiX, baseVol)
             }
@@ -307,7 +308,8 @@ fun main() = application {
                 mirrorFx._fadeExp = flash
 
                 // Draw triangle
-                fill = colorRepo[PRIMARY].opacify(0.5 * fac)
+                fill = colorRepo[PRIMARY].opacify(0.5 * fac).toRGBa()
+                stroke = null
 
                 val baseCenter = bounds.center - Vector2(maxR + 20.0, 0.0) //Vector2(25.0, height/2.0) // bounds.center - Vector2(maxR, 0.0)
                 val off = Vector2(15.0, 0.0).rotate(sin(ebbAndFlow * TWO_PI)*90.0 + 180.0)
