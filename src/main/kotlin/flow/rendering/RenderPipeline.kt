@@ -6,7 +6,6 @@ import org.openrndr.draw.*
 
 class RenderPipeline(width: Int, height: Int, val drawer: Drawer) {
 
-    // TODO: Change to factory pattern
     val drawTarget = renderTarget(width, height) {
         colorBuffer(ColorFormat.RGBa, ColorType.FLOAT32)
         depthBuffer()
