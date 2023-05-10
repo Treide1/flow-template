@@ -20,6 +20,7 @@ import kotlin.math.log10
  * @param overlap Size of the overlap between audio buffers. Default is 0.
  * @param sampleRate Sample rate of the audio. Default is 44100. Deviations from system device *will* cause problems.
  */
+// TODO Refactor to make more clear + provide sampleRate/bufferSize resolution strategy
 class Audio(
     val bufferSize: Int = 1024,
     val overlap: Int = 0,
@@ -110,11 +111,13 @@ class Audio(
         val MID = 320.0 .. 2500.0
         val TREBLE = 2500.0 .. 5000.0
         val BRILLIANCE = 5000.0 .. 20000.0
+        val DEFAULT_RANGES = listOf(BASS, LOW_MID, MID, TREBLE, BRILLIANCE)
 
         // Milkdrop style ranges
         val MD_BASS = 20.0 .. 320.0
         val MD_MID = 320.0 .. 2500.0
         val MD_TREBLE = 2500.0 .. 20000.0
+        val MILKDROP_RANGES = listOf(MD_BASS, MD_MID, MD_TREBLE)
 
         // Volume range as Sound Pressure Level (SPL) in decibel
         const val LOWEST_SPL = -160.0

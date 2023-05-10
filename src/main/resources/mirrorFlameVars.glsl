@@ -8,10 +8,14 @@ out vec4 o_color;
 // Parameters:
 // Takes a stencil buffer where 0 is identity lookup
 uniform usampler2D stencil;
+// Takes the number of iterations to run
+uniform int iterCount;
 // Takes a y scale parameter, assuming width to go from -1 to 1
 uniform float yScl;
 // Takes a flag whether to fade towards black
 uniform bool fade;
+// Takes an exponent for fading (later iterations become darker)
+uniform float fadeExp = 0.25;
 
 // Helper functions
 vec2 lerp(vec2 first, vec2 second, float perc) {
@@ -31,6 +35,32 @@ vec2 toUvCoords(vec2 mathCoords) {
 }
 
 #define PI 3.14159265359
+
+// Custom functions
+// Custom 1
+vec2 flipX(vec2 uv) {
+    return vec2(-uv.x, uv.y);
+}
+
+// Custom 2
+vec2 flipY(vec2 uv) {
+    return vec2(uv.x, -uv.y);
+}
+
+// Custom 3
+vec2 flipXY(vec2 uv) {
+    return vec2(-uv.x, -uv.y);
+}
+
+uniform float rotateAndScale_angle = 0.05;
+// Custom 4
+vec2 rotateAndScale(vec2 uv, float base, float angleOff, float scale) {
+    float r = length(uv);
+    float theta = atan(uv.y, uv.x);
+    float _r = r * scale ;
+    float _theta = theta + angleOff;
+    return vec2(cos(_theta), sin(_theta)) * _r;
+}
 
 // Flame variation functions (are offset by 128)
 // Flame var 1
@@ -128,13 +158,13 @@ vec2 bent(vec2 uv) {
     return vec2(uv.x >= 0.0 ? uv.x : 2.0 * uv.x, uv.y >= 0.0 ? uv.y : 0.5 * uv.y);
 }
 
-uniform float b = 1.4;
-uniform float c = 1.1;
-uniform float e = 0.7;
-uniform float f = 1.6;
+uniform float waves_b = 1.4;
+uniform float waves_c = 1.1;
+uniform float waves_e = 0.7;
+uniform float waves_f = 1.6;
 // Flame var 15
 vec2 waves(vec2 uv) {
-    return vec2(uv.x + b * sin(uv.y / c / c), uv.y + e * sin(uv.x / f / f));
+    return vec2(uv.x + waves_b * sin(uv.y / waves_c / waves_c), uv.y + waves_e * sin(uv.x / waves_f / waves_f));
 }
 
 // Flame var 16
@@ -148,12 +178,14 @@ vec4 iterativeLookup(vec2 uv) {
     vec2 mathCoords = toMathCoords(uv);
     uint stencilValue = texture(stencil, toUvCoords(mathCoords)).x;
 
-    int i = 100;
+    int i = iterCount;
     while (stencilValue != 0u && i > 0) {
-        // Mapping #1, flip x
-        if (stencilValue == 1u) mathCoords.x = -mathCoords.x;
-        // Mapping #2, flip y
-        if (stencilValue == 2u) mathCoords.y = -mathCoords.y;
+        if (stencilValue < 128u){
+            if (stencilValue == 1u) mathCoords = flipX(mathCoords);
+            if (stencilValue == 2u) mathCoords = flipY(mathCoords);
+            if (stencilValue == 3u) mathCoords = flipXY(mathCoords);
+            if (stencilValue == 4u) mathCoords = rotateAndScale(mathCoords, 1.25, 0.05, 1.25);
+        }
 
         // Flame vars
         if (stencilValue >= 128u) {
@@ -182,7 +214,7 @@ vec4 iterativeLookup(vec2 uv) {
     }
 
     float fac = 1.0;
-    if (fade) fac = sqrt(i / 100.0);
+    if (fade) fac = pow(i * 1.0 / iterCount, fadeExp);
     return texture(tex0, toUvCoords(mathCoords)) * fac;
 }
 
