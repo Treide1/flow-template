@@ -4,7 +4,7 @@ package flow.fx
 
 import org.openrndr.draw.shadeStyle
 
-fun galaxyShadeStyle(time: Double) = shadeStyle {
+fun galaxyShadeStyle(time: Double, iterations: Int = 45) = shadeStyle {
     fragmentTransform = """
     vec2 uv = c_boundsPosition.xy;
     uv = uv * 2.0 - 1.0;
@@ -17,7 +17,7 @@ fun galaxyShadeStyle(time: Double) = shadeStyle {
     v1 = v2 = v3 = 0.0;
 	
 	float s = 0.0;
-	for (int i = 0; i < 90; i++)
+	for (int i = 0; i < ${iterations}; i++)
 	{
 		vec3 p = s * vec3(uv, 0.0);
 		p.xy *= ma;
