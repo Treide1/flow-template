@@ -1,5 +1,6 @@
 package flow.bpm.envelope
 
+import util.lerp
 import kotlin.reflect.KProperty
 
 
@@ -11,9 +12,9 @@ import kotlin.reflect.KProperty
  * the capacitor discharges from [holdValue] to [offValue] over the duration of [onGateClosed].
  */
 // TODO: Write program extension binder, to put the update logic in the definition.
-data class Capacitor(
+open class Capacitor(
     val offValue:Double = 0.0,
-    val holdValue: Double = 1.0
+    val holdValue: Double = 1.0,
 ) {
 
     var value = offValue
@@ -58,5 +59,20 @@ data class Capacitor(
 
     operator fun getValue(requester: Any, property: KProperty<*>): Double {
         return value
+    }
+}
+
+class LinearCapacitor(
+    openLength: Double,
+    closeLength: Double,
+    offValue:Double = 0.0,
+    holdValue: Double = 1.0,
+): Capacitor(
+    offValue,
+    holdValue
+) {
+    init {
+        onGateOpen = Envelope(openLength) { offValue.lerp(holdValue, it / openLength) }
+        onGateClosed = Envelope(closeLength) { holdValue.lerp(offValue, it / closeLength) }
     }
 }

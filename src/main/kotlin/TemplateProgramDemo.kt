@@ -2,6 +2,7 @@ import flow.audio.Audio
 import flow.bpm.BeatClock
 import flow.bpm.envelope.Capacitor
 import flow.bpm.envelope.Envelope
+import flow.bpm.envelope.LinearCapacitor
 import flow.bpm.toIntervalCount
 import flow.color.ColorRepo
 import flow.color.ColorRepo.ColorRoles.*
@@ -203,14 +204,7 @@ fun main() = application {
         val audioGroup = object: VisualGroup(program) {
 
             // Opacity saturate on (towards 1.0) and off (towards 0.0)
-            val capacitor = Capacitor().apply {
-                onGateOpen = Envelope(0.5) {
-                    it / 0.5
-                }
-                onGateClosed = Envelope(0.5) {
-                    1.0 - it / 0.5
-                }
-            }
+            val capacitor = LinearCapacitor(0.5, 0.5)
             val alphaFac by capacitor
 
             // Audio mode
@@ -277,10 +271,7 @@ fun main() = application {
 
             // Main circle that grows if activated, and shrinks if deactivated.
             val maxR = Vector2(0.3 * width, 0.3 * height).length
-            val capacitor = Capacitor().apply {
-                onGateOpen = Envelope(0.5) { it / 0.5 }
-                onGateClosed = Envelope(0.5) { 1.0 - it / 0.5 }
-            }
+            val capacitor = LinearCapacitor(0.5, 0.5)
             val fac by capacitor
 
             val triangleR = 20.0
