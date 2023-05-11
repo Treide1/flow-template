@@ -1,6 +1,5 @@
-package flow.bpm
+package flow.envelope
 
-import flow.bpm.envelope.Envelope
 import kotlin.reflect.KProperty
 
 /**

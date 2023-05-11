@@ -1,8 +1,10 @@
 import flow.audio.Audio
+import flow.autoupdate.AutoUpdate
+import flow.autoupdate.AutoUpdate.autoUpdate
 import flow.bpm.BeatClock
-import flow.bpm.envelope.Capacitor
-import flow.bpm.envelope.Envelope
-import flow.bpm.envelope.LinearCapacitor
+import flow.envelope.Capacitor
+import flow.envelope.Envelope
+import flow.envelope.LinearCapacitor
 import flow.bpm.toIntervalCount
 import flow.color.ColorRepo
 import flow.color.ColorRepo.ColorRoles.*
@@ -48,7 +50,11 @@ fun main() = application {
         val inputScheme = inputScheme(keyboard)
 
         // Init beatClock
-        val beatClock = extend(BeatClock(125.0)) // <- Play your favorite song. Set its bpm here.
+        val bpm = 125.0
+        val beatClock = extend(BeatClock(bpm)) // <- Play your favorite song. Set its bpm here.
+
+        // Init autoUpdate
+        extend(AutoUpdate)
 
         // Init colors
         val colorRepo = ColorRepo(ColorRepo.DEMO_PALETTE)
@@ -62,9 +68,11 @@ fun main() = application {
 
         // Specify beat-based values
         val kick by beatClock.bindEnvelopeBySegments(1.0) {
-            segmentJoin(0.15, 0.8)
-            segmentJoin(0.2, 1.0)
-            segmentJoin(1.0, 0.0) via { x: Double -> x.pow(3.0) }
+            lastX = 0.9
+            segmentJoin(0.50, 1.0)
+            segmentJoin(0.75, 0.1) via { smootherstep(0.0, 1.0, it) }
+            segmentJoin(0.85, 0.0)
+            segmentJoin(1.00, 0.9) via { x: Double -> x.pow(3.0) }
         }
         val flash by beatClock.bindEnvelope(1/2.0) { phase ->
             val interval = 1.0 / 4.0
@@ -125,8 +133,7 @@ fun main() = application {
                 }
 
                 // Draw a circle in each diamond direction on screen
-                val flashGate = if (inputScheme.isKeyActive("e")) flash else 0.0
-                val relR = max(kick, flashGate).map(0.0, 1.0, 0.15, 0.35)
+                val relR = kick.map(0.0, 1.0, 0.15, 0.35)
                 "w,a,s,d".split(",").forEachIndexed { i, key ->
                     val isActive = inputScheme.isKeyActive(key)
                     if (!isActive) return@forEachIndexed
@@ -140,17 +147,15 @@ fun main() = application {
         }
 
         val diamondGroup = object: VisualGroup(program) {
-            var isShowingMain = true
             val mainSize = 75.0
 
-            var isShowingRing = false
             val ringCount = 12
             val ringRadius = 100.0
             val ringSize = 10.0
             var ringRot = 0.0
 
             // Opacity of the ring is controlled by a capacitor.
-            val capacitor = Capacitor(0.0, 0.8).apply {
+            val ringOpacity by Capacitor(0.0, 0.8).apply {
                 onGateOpen = Envelope(1.0) { t ->
                     if (t < 0.4) (t / 0.4).pow(1/2.0) // Reaches 1.0
                     else 1.0.lerp(holdValue, (t - 0.4) / 0.6)
@@ -158,22 +163,18 @@ fun main() = application {
                 onGateClosed = Envelope (0.1) { t ->
                     holdValue.lerp(offValue, t / 0.1)
                 }
-            }
-            val ringOpacity by capacitor
+            }.autoUpdate { update(beatClock.deltaSeconds, inputScheme.isKeyActive("q")) }
 
             // If active, draw a center diamond and/or a ring of diamonds around it.
             override fun Drawer.draw() {
-                isShowingMain = inputScheme.isKeyActive("c").not()
-                isShowingRing = inputScheme.isKeyActive("q")
 
                 // Center diamond
+                val isShowingMain = inputScheme.isKeyActive("c").not()
                 if (isShowingMain) {
                     fill = colorRepo[PRIMARY].opacify(kick * 0.5 + 0.5).toRGBa()
                     stroke = null
                     drawDiamond(width / 2.0, height / 2.0, mainSize)
                 }
-
-                capacitor.update(0.016, isShowingRing)
 
                 // Draw a ring of diamonds around the main diamond.
                 ringRot += kick * 0.05
@@ -203,9 +204,9 @@ fun main() = application {
 
         val audioGroup = object: VisualGroup(program) {
 
-            // Opacity saturate on (towards 1.0) and off (towards 0.0)
-            val capacitor = LinearCapacitor(0.5, 0.5)
-            val alphaFac by capacitor
+            // Opacity fac as capacitor controlled by "v"
+            val alphaFac by LinearCapacitor(0.5, 0.5)
+                .autoUpdate { update(beatClock.deltaSeconds, inputScheme.isKeyActive("v")) }
 
             // Audio mode
             val audioMode = CyclicFlag("Magnitudes", "Bands")
@@ -219,38 +220,44 @@ fun main() = application {
             // Draws rectangles based on the volume of the corresponding frequency bands (raw magnitudes/by range).
             // Draws a rectangle for the overall volume on top.
             override fun Drawer.draw() {
-                capacitor.update(0.016, inputScheme.isKeyActive("v"))
-
-                // Draw volume bars
-                if (audioMode.value == "Bands") {
-                    val bandedVolList = constantQ.filteredBandedVolumes
-                    bandedVolList.forEachIndexed { i, vol ->
-                        val freqBand = constantQ.freqBands[i]
-
-                        val x0 = log2(freqBand.start)
-                            .map(log2(Audio.LOWEST_FQ), log2(Audio.HIGHEST_FQ), loX, hiX)
-                        val x1 = log2(freqBand.endInclusive)
-                            .map(log2(Audio.LOWEST_FQ), log2(Audio.HIGHEST_FQ), loX, hiX)
-                        val mixPerc = i.toDouble() / bandedVolList.size
-
-                        fill = colorRepo[PRIMARY].mix(colorRepo[TERTIARY], mixPerc).opacify(0.5 * alphaFac).toRGBa()
-                        stroke = null
-                        drawVolBar(x0, x1, vol)
-                    }
-                } else if (audioMode.value == "Magnitudes") {
-                    val volList = constantQ.filteredMagnitudes
-                    volList.forEachIndexed { i, vol ->
-                        val x0 = (i+0.1) / volList.size * (hiX - loX) + loX
-                        val x1 = (i+0.9) / volList.size * (hiX - loX) + loX
-                        val mixPerc = i * 1.0 / volList.size
-
-                        fill = colorRepo[PRIMARY].mix(colorRepo[TERTIARY], mixPerc).opacify(0.5 * alphaFac).toRGBa()
-                        stroke = null
-                        drawVolBar(x0, x1, vol)
-                    }
+                when (audioMode.value) {
+                    "Bands" -> drawBands()
+                    "Magnitudes" -> drawMagnitudes()
                 }
+                drawer.drawSoundPressureLevel()
+            }
 
-                // Draw general volume as bar
+            fun Drawer.drawBands() {
+                val bandedVolList = constantQ.filteredBandedVolumes
+                bandedVolList.forEachIndexed { i, vol ->
+                    val freqBand = constantQ.freqBands[i]
+
+                    val x0 = log2(freqBand.start)
+                        .map(log2(Audio.LOWEST_FQ), log2(Audio.HIGHEST_FQ), loX, hiX)
+                    val x1 = log2(freqBand.endInclusive)
+                        .map(log2(Audio.LOWEST_FQ), log2(Audio.HIGHEST_FQ), loX, hiX)
+                    val mixPerc = i.toDouble() / bandedVolList.size
+
+                    fill = colorRepo[PRIMARY].mix(colorRepo[TERTIARY], mixPerc).opacify(0.5 * alphaFac).toRGBa()
+                    stroke = null
+                    drawVolBar(x0, x1, vol)
+                }
+            }
+
+            fun Drawer.drawMagnitudes() {
+                val volList = constantQ.filteredMagnitudes
+                volList.forEachIndexed { i, vol ->
+                    val x0 = (i+0.1) / volList.size * (hiX - loX) + loX
+                    val x1 = (i+0.9) / volList.size * (hiX - loX) + loX
+                    val mixPerc = i * 1.0 / volList.size
+
+                    fill = colorRepo[PRIMARY].mix(colorRepo[TERTIARY], mixPerc).opacify(0.5 * alphaFac).toRGBa()
+                    stroke = null
+                    drawVolBar(x0, x1, vol)
+                }
+            }
+
+            fun Drawer.drawSoundPressureLevel() {
                 val baseVol = volProcessor.filteredLastVolume
 
                 fill = colorRepo[SECONDARY].opacify(0.2 * alphaFac).toRGBa()
@@ -271,19 +278,23 @@ fun main() = application {
 
             // Main circle that grows if activated, and shrinks if deactivated.
             val maxR = Vector2(0.3 * width, 0.3 * height).length
-            val capacitor = LinearCapacitor(0.5, 0.5)
-            val fac by capacitor
+            val fac by LinearCapacitor(0.5, 0.5)
+                .autoUpdate { update(beatClock.deltaSeconds, inputScheme.isKeyActive("m")) }
 
             val triangleR = 20.0
             val triangleVertices = List(3) { Vector2(triangleR, 0.0).rotate(90.0 + it*120.0) }
 
             var rotateAndScale_angle by mirrorFx.parameters
-            var angle = 0.05
-                set(value) {
-                    field = value
-                    rotateAndScale_angle = value
+            var angle = 0.1
+
+            init {
+                rotateAndScale_angle = angle
+                AutoUpdate.autoUpdate {
+                    angle += 0.005
+                    rotateAndScale_angle = angle
+                    mirrorFx._fadeExp = flash
                 }
-            var maxAngleOff = 0.001
+            }
 
             fun triangleContour(center: Vector2, angleOff: Double) = contour {
                 repeat(3) {
@@ -293,11 +304,6 @@ fun main() = application {
             }
 
             override fun Drawer.draw() {
-                capacitor.update(0.016, inputScheme.isKeyActive("m"))
-                angle += maxAngleOff
-
-                mirrorFx._fadeExp = flash
-
                 // Draw triangle
                 fill = colorRepo[PRIMARY].opacify(0.5 * fac).toRGBa()
                 stroke = null
@@ -334,6 +340,7 @@ fun main() = application {
             keyDown {
                 KEY_ESCAPE.bind("Exit Application") { audio.stop(); application.exit() }
                 KEY_SPACEBAR.bind("Reset Beat Clock") { beatClock.resetTime(program.seconds) }
+                "j".bind("BPM Reset") { beatClock.animateTo(bpm = bpm, program.seconds, 0.1)}
                 "k".bind("BPM x0.5") { beatClock.animateTo(bpm = beatClock.bpm / 2.0, program.seconds, 0.1) }
                 "l".bind("BPM x2.0") { beatClock.animateTo(bpm = beatClock.bpm * 2.0, program.seconds, 0.1) }
                 "b".bind("Cycle Audio mode") { audioGroup.audioMode.next() }

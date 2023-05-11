@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package flow.bpm.envelope
+package flow.envelope
 
 import org.openrndr.math.map
 

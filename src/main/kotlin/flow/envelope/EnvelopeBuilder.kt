@@ -1,6 +1,6 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 
-package flow.bpm.envelope
+package flow.envelope
 
 import org.openrndr.animatable.easing.Easer
 import org.openrndr.animatable.easing.Easing

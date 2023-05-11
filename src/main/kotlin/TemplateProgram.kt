@@ -1,4 +1,5 @@
 import flow.audio.Audio
+import flow.autoupdate.AutoUpdate
 import flow.bpm.BeatClock
 import flow.color.ColorRepo
 import flow.input.InputScheme.TrackTypes.TOGGLE
@@ -24,6 +25,9 @@ fun main() = application {
 
         // Init beatClock
         val beatClock = extend(BeatClock(125.0)) // <- Play your favorite song. Set its bpm here.
+
+        // Init AutoUpdate
+        extend(AutoUpdate)
 
         // Init colors
         val colorRepo = ColorRepo<ColorRGBa>(

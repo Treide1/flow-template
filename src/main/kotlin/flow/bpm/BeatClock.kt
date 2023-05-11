@@ -2,8 +2,9 @@
 
 package flow.bpm
 
-import flow.bpm.envelope.Envelope
-import flow.bpm.envelope.EnvelopeBuilder
+import flow.envelope.Envelope
+import flow.envelope.EnvelopeBuilder
+import flow.envelope.Sampler
 import org.openrndr.Extension
 import org.openrndr.Program
 import org.openrndr.draw.Drawer
@@ -26,11 +27,6 @@ class BeatClock(var bpm: Double) : Extension {
 
     override var enabled = true
 
-    /**
-     * Current phase. Recalculated on every frame.
-     */
-    var phase = 0.0
-        private set
 
     /**
      * Time stamp where the beat counting started. This is treated like t = 0.
@@ -39,10 +35,38 @@ class BeatClock(var bpm: Double) : Extension {
         private set
 
     /**
-     * Time stamp of the last frame.
+     * Previous frame's phase.
      */
-    var lastNow = 0.0
+    private var previousPhase = 0.0
+
+    /**
+     * Current phase.
+     */
+    var phase = 0.0
         private set
+
+    /**
+     * Phase delta from previous frame to current frame.
+     */
+    val deltaPhase: Double
+        get() = phase - previousPhase
+
+    /**
+     * Previous frame's time stamp.
+     */
+    private var previousSeconds = 0.0
+
+    /**
+     * Time stamp of the current frame.
+     */
+    var seconds = 0.0
+        private set
+
+    /**
+     * Time delta from previous frame to current frame.
+     */
+    val deltaSeconds: Double
+        get() = seconds - previousSeconds
 
     /**
      * Should a transition take place, this will be non-null data holder.
@@ -69,21 +93,22 @@ class BeatClock(var bpm: Double) : Extension {
      * Update the phase. Should a transition be present, update the remaining time.
      */
     override fun beforeDraw(drawer: Drawer, program: Program) {
-        // Update the 'now' time stamp
-        val now = program.seconds
-        lastNow = now
+        // Update the 'seconds' time stamp
+        previousSeconds = seconds
+        seconds = program.seconds
 
         // Calculate the phase
-        phase = (now - t0) * bpm / 60.0
+        previousPhase = phase
+        phase = (seconds - t0) * bpm / 60.0
         var updatePhase = phase
 
         // Should a transition exist, perform interpolation and consume it if it's done.
         transition?.run {
-            val targetPhase = (now - targetT0) * targetBpm / 60.0
-            val transitionProgress = now.map(transitionBegin, transitionEnd, 0.0, 1.0)
+            val targetPhase = (seconds - targetT0) * targetBpm / 60.0
+            val transitionProgress = seconds.map(transitionBegin, transitionEnd, 0.0, 1.0)
             updatePhase = updatePhase * (1.0 - transitionProgress) + targetPhase * transitionProgress
 
-            if (transitionEnd >= now) {
+            if (transitionEnd >= seconds) {
                 bpm = targetBpm
                 t0 = targetT0
                 transition = null
@@ -129,7 +154,7 @@ class BeatClock(var bpm: Double) : Extension {
      * If you want to avoid a large shift in phase,
      * you should try to satisfy the following equation:
      * ```
-     * bpm * (now - t0) ≈ _bpm * (now - _t0)
+     * bpm * (seconds - t0) ≈ _bpm * (seconds - _t0)
      * ```
      * @param bpm The new bpm rate.
      * @param t0 The new t0 time stamp.
@@ -140,8 +165,8 @@ class BeatClock(var bpm: Double) : Extension {
         transition = Transition(
             targetBpm = bpm,
             targetT0 = t0,
-            transitionBegin = lastNow,
-            transitionEnd = lastNow + duration
+            transitionBegin = previousSeconds,
+            transitionEnd = previousSeconds + duration
         )
     }
 
