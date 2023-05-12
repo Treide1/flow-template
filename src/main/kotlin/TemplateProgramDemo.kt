@@ -367,9 +367,7 @@ fun main() = application {
             }
 
             // Draw controls
-            if (inputScheme.isKeyActive("f1").not()) {
-                uiDisplay.displayUiOn(drawer)
-            }
+            if (inputScheme.isKeyActive("f1").not()) uiDisplay.displayOnDrawer(drawer)
         }
 
     }

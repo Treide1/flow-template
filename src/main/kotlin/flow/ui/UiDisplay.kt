@@ -19,7 +19,7 @@ class UiDisplay(val inputScheme: InputScheme) {
         valueUpdateList.removeAll { it.first == name }
     }
 
-    fun displayUiOn(drawer: Drawer) {
+    fun displayOnDrawer(drawer: Drawer) {
         val maxNameLength = valueUpdateList.maxOfOrNull { it.first.length } ?: 0
         val valueLines = valueUpdateList.map { (name, toValue) ->
             val paddedName = "$name: ".padEnd(maxNameLength+2, ' ')
