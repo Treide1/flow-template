@@ -34,6 +34,7 @@ import kotlin.math.max
  *
  * @param stencilBuffer The stencil buffer that is bound to the [stencil] parameter. Has to be a single-channel unit8 buffer.
  */
+// TODO: Very rarely leaves 1px-wide black borders on recursion contours.
 class MirrorFilter(
     stencilBuffer: ColorBuffer
 ) : Filter(
@@ -79,7 +80,7 @@ class MirrorFilter(
     var _fadeExp = 2.0
         set(value) {
             field = value
-            fadeExp = value.saturate()
+            fadeExp = value.saturate().toFloat()
         }
 
     /**

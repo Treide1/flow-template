@@ -54,11 +54,11 @@ vec2 flipXY(vec2 uv) {
 
 uniform float rotateAndScale_angle = 0.05;
 // Custom 4
-vec2 rotateAndScale(vec2 uv, float base, float angleOff, float scale) {
+vec2 rotateAndScale(vec2 uv, float base, float scale) {
     float r = length(uv);
     float theta = atan(uv.y, uv.x);
     float _r = r * scale ;
-    float _theta = theta + angleOff;
+    float _theta = theta + rotateAndScale_angle;
     return vec2(cos(_theta), sin(_theta)) * _r;
 }
 
@@ -184,7 +184,7 @@ vec4 iterativeLookup(vec2 uv) {
             if (stencilValue == 1u) mathCoords = flipX(mathCoords);
             if (stencilValue == 2u) mathCoords = flipY(mathCoords);
             if (stencilValue == 3u) mathCoords = flipXY(mathCoords);
-            if (stencilValue == 4u) mathCoords = rotateAndScale(mathCoords, 1.25, 0.05, 1.25);
+            if (stencilValue == 4u) mathCoords = rotateAndScale(mathCoords, 1.25, 1.25);
         }
 
         // Flame vars

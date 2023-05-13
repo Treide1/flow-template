@@ -2,8 +2,6 @@ import flow.audio.Audio
 import flow.autoupdate.AutoUpdate
 import flow.autoupdate.AutoUpdate.autoUpdate
 import flow.bpm.BeatClock
-import flow.envelope.Capacitor
-import flow.envelope.Envelope
 import flow.envelope.LinearCapacitor
 import flow.bpm.toIntervalCount
 import flow.color.ColorRepo
@@ -137,23 +135,19 @@ fun main() = application {
         }
 
         val diamondGroup = object: VisualGroup(program) {
+            // Main diamond values
             val mainSize = 75.0
 
+            // Diamond ring values
             val ringCount = 12
             val ringRadius = 100.0
             val ringSize = 10.0
             var ringRot = 0.0
 
             // Opacity of the ring is controlled by a capacitor.
-            val ringOpacity by Capacitor(0.0, 0.8).apply {
-                onGateOpen = Envelope(1.0) { t ->
-                    if (t < 0.4) (t / 0.4).pow(1/2.0) // Reaches 1.0
-                    else 1.0.lerp(holdValue, (t - 0.4) / 0.6)
-                }
-                onGateClosed = Envelope (0.1) { t ->
-                    holdValue.lerp(offValue, t / 0.1)
-                }
-            }.autoUpdate { update(beatClock.deltaSeconds, inputScheme.isKeyActive("q")) }
+            val ringOpacity by LinearCapacitor(0.5, 0.1).autoUpdate {
+                update(beatClock.deltaSeconds, inputScheme.isKeyActive("q"))
+            }
 
             // If active, draw a center diamond and/or a ring of diamonds around it.
             override fun Drawer.draw() {
@@ -194,9 +188,10 @@ fun main() = application {
 
         val audioGroup = object: VisualGroup(program) {
 
-            // Opacity fac as capacitor controlled by "v"
-            val alphaFac by LinearCapacitor(0.5, 0.5)
-                .autoUpdate { update(beatClock.deltaSeconds, inputScheme.isKeyActive("v")) }
+            // Fade in or fade out, as alpha factor controlled by "v"
+            val alphaFac by LinearCapacitor(0.5, 0.5).autoUpdate {
+                update(beatClock.deltaSeconds, inputScheme.isKeyActive("v"))
+            }
 
             // Audio mode
             val audioMode = CyclicFlag("Magnitudes", "Bands")
@@ -255,9 +250,6 @@ fun main() = application {
                 drawVolBar(loX, hiX, baseVol)
             }
 
-            /**
-             * Draws a volume bar from [x0] to [x1], with [volume] being the relative height in unit range.
-             */
             fun Drawer.drawVolBar(x0: Double, x1: Double, volume: Double) {
                 val volY = loY.lerp(hiY, volume)
                 rectangle(x0, loY, x1 - x0, volY - loY)
@@ -266,25 +258,17 @@ fun main() = application {
 
         val mirrorGroup = object: VisualGroup(program) {
 
-            // Main circle that grows if activated, and shrinks if deactivated.
+            // Circle of the mirror effect (recursive texture).
+            // It grows if activated, and shrinks if deactivated.
             val maxR = Vector2(0.3 * width, 0.3 * height).length
-            val fac by LinearCapacitor(0.5, 0.5)
-                .autoUpdate { update(beatClock.deltaSeconds, inputScheme.isKeyActive("m")) }
+            val alphaFac by LinearCapacitor(0.5, 0.5).autoUpdate {
+                update(beatClock.deltaSeconds, inputScheme.isKeyActive("m"))
+            }
 
             val triangleR = 20.0
             val triangleVertices = List(3) { Vector2(triangleR, 0.0).rotate(90.0 + it*120.0) }
 
             var rotateAndScale_angle by mirrorFx.parameters
-            var angle = 0.1
-
-            init {
-                rotateAndScale_angle = angle
-                AutoUpdate.autoUpdate {
-                    angle += 0.005
-                    rotateAndScale_angle = angle
-                    mirrorFx._fadeExp = flash
-                }
-            }
 
             fun triangleContour(center: Vector2, angleOff: Double) = contour {
                 repeat(3) {
@@ -294,23 +278,30 @@ fun main() = application {
             }
 
             override fun Drawer.draw() {
-                // Draw triangle
-                fill = colorRepo[PRIMARY].opacify(0.5 * fac).toRGBa()
-                stroke = null
+                // Update the mirror effect parameters
+                rotateAndScale_angle = ebbAndFlow * 0.01 + 0.05
+                mirrorFx._fadeExp = flash * 0.1
 
-                val baseCenter = bounds.center - Vector2(maxR + 20.0, 0.0) //Vector2(25.0, height/2.0) // bounds.center - Vector2(maxR, 0.0)
-                val off = Vector2(15.0, 0.0).rotate(sin(ebbAndFlow * TWO_PI)*90.0 + 180.0)
+                // Fade in the triangle duo together with the mirror effect.
+                // The triangles jiggle across circular arc close to the mirror rim.
+                val baseCenter = bounds.center - Vector2(maxR + 40.0, 0.0)
+                val off = Vector2(35.0, 0.0).rotate(sin(ebbAndFlow * TWO_PI)*60.0 + 180.0)
                 val center0 = baseCenter + off
                 val center1 = Vector2(width - center0.x, center0.y)
-                contour(triangleContour(center0, angle))
-                contour(triangleContour(center1, -angle))
 
+                fill = colorRepo[PRIMARY].opacify(0.5 * alphaFac).toRGBa()
+                stroke = null
+                contour(triangleContour(center0, -kick*30.0))
+                contour(triangleContour(center1, kick*30.0))
+
+                // Draw the mirror effect stencil.
+                // 0 is identity function, 4 is scaleAndRotate function.
                 drawer.isolatedWithTarget(renderPipeline.stencilTarget) {
                     clear(0.toR())
 
                     fill = 4.toR()
                     stroke = null
-                    circle(width / 2.0, height / 2.0, maxR * fac)
+                    circle(width / 2.0, height / 2.0, maxR * alphaFac)
                 }
             }
         }
