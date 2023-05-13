@@ -120,7 +120,7 @@ fun main() = application {
                     circle(x * width, y * height, r)
                 }
 
-                // Draw a circle in each diamond direction on screen
+                // Draw a circle in each compass direction around center
                 val relR = kick.map(0.0, 1.0, 0.15, 0.35)
                 "w,a,s,d".split(",").forEachIndexed { i, key ->
                     val isActive = inputScheme.isKeyActive(key)
