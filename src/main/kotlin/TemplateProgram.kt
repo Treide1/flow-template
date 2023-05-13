@@ -47,12 +47,10 @@ fun main() = application {
         // ...
 
         // Set Fx chain
-        renderPipeline.apply {
-            fxRepo.setChain {
-                // Fx on drawBuffer
-                overlay(drawBuffer, joinBuffer)
-                // Fx on joinBuffer
-            }
+        renderPipeline.setFxChain {
+            // Fx on drawBuffer ...
+            drawBuffer.copyTo(imageBuffer)
+            // Fx on imageBuffer ...
         }
 
         // Define visual groups

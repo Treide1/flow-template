@@ -24,8 +24,8 @@ import org.openrndr.draw.Drawer
 import org.openrndr.draw.isolated
 import org.openrndr.draw.isolatedWithTarget
 import org.openrndr.extra.fx.blur.ApproximateGaussianBlur
-import org.openrndr.extra.fx.blur.FrameBlur
 import org.openrndr.extra.fx.blur.GaussianBloom
+import org.openrndr.extra.fx.distort.Perturb
 import org.openrndr.math.Vector2
 import org.openrndr.math.map
 import org.openrndr.math.smootherstep
@@ -96,18 +96,8 @@ fun main() = application {
         val blur = ApproximateGaussianBlur()
         val bloom = GaussianBloom()
         val mirrorFx = MirrorFilter(renderPipeline.stencilBuffer)
-        val frameBlur = FrameBlur()
-
-        // Set Fx chain
-        renderPipeline.apply {
-            fxRepo.setChain {
-                blur.apply(drawBuffer)
-                bloom.apply(drawBuffer)
-                mirrorFx.apply(drawBuffer)
-                overlay(drawBuffer, joinBuffer)
-                frameBlur.apply(joinBuffer)
-            }
-        }
+        val perturb = Perturb()
+        val perturbAmount = CyclicFlag(0, 1, 2, 3)
 
         // Init visual groups
         val circleGroup = object: VisualGroup(program) {
@@ -345,6 +335,7 @@ fun main() = application {
                 "l".bind("BPM x2.0") { beatClock.animateTo(bpm = beatClock.bpm * 2.0, program.seconds, 0.1) }
                 "b".bind("Cycle Audio mode") { audioGroup.audioMode.next() }
                 "f".bind("Toggle fade") { mirrorFx._fade = !mirrorFx._fade }
+                "p".bind("Cycle Perturb amount") { perturbAmount.next() }
             }
         }
 
@@ -354,11 +345,31 @@ fun main() = application {
             trackValue("Phase") { "${beatClock.phase.round(2)}" }
             trackValue("Audio mode") { audioGroup.audioMode.value }
             trackValue("Fade") { "${mirrorFx._fade}" }
+            trackValue("Perturbations") { "${perturbAmount.value}" }
+        }
+
+        // Set Fx chain
+        renderPipeline.setFxChain {
+            // Update parameters
+            perturb.phase = seconds * 0.01
+            perturb.decay = + volProcessor.filteredLastVolume.map(0.3, 0.7, 1.0, 0.0)
+            perturb.gain = 0.8
+
+            // Repeat 0 to 3 perturbs
+            repeat(perturbAmount.value) { perturb.apply(drawBuffer) }
+            // Add "hazy glow" with blur+bloom
+            blur.apply(drawBuffer)
+            bloom.apply(drawBuffer)
+            // Apply mirror effect
+            mirrorFx.apply(drawBuffer)
+            // Resolve the content of the draw buffer to the image buffer. (For example, rescale it to fit to screen.)
+            drawBuffer.copyTo(imageBuffer)
         }
 
         // Draw loop
         extend {
-            renderPipeline.render(clearTarget = true) {
+            // Perform the render operation with the specified draw block
+            renderPipeline.render {
                 // Draw visual groups
                 audioGroup.draw()
                 circleGroup.draw()
