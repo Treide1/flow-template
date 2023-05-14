@@ -49,16 +49,17 @@ class RenderPipeline(width: Int, height: Int, val drawer: Drawer) {
     /**
      * Performs the [drawBlock] onto the draw target, then applies the [fxChain].
      * The result is then drawn to the screen.
-     * @param clearDrawTarget Whether to clear the drawTarget before rendering.
+     * @param clearDrawBuffer Whether to clear the drawBuffer before rendering.
      * @param clearImageBuffer Whether to clear the imageBuffer before rendering.
      * @param drawBlock The block to execute for drawing.
      */
-    fun render(clearDrawTarget: Boolean = true, clearImageBuffer: Boolean = true, drawBlock: Drawer.() -> Unit = {}) {
+    fun render(clearDrawBuffer: Boolean = true, clearImageBuffer: Boolean = true, drawBlock: Drawer.() -> Unit = {}) {
+        // Clear buffers if needed
+        if (clearDrawBuffer) drawBuffer.fill(ColorRGBa.TRANSPARENT)
+        if (clearImageBuffer) imageBuffer.fill(ColorRGBa.TRANSPARENT)
+
         // Draw onto drawTarget
         drawer.isolatedWithTarget(drawTarget) {
-            // Clearing color buffer content from last frame
-            if (clearDrawTarget) clear(ColorRGBa.TRANSPARENT)
-            // Draw execution block
             drawBlock()
         }
 

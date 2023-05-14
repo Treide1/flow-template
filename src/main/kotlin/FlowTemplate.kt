@@ -77,7 +77,7 @@ fun main() = application {
 
         // Draw loop
         extend {
-            renderPipeline.render(clearDrawTarget = true, clearImageBuffer = true) {
+            renderPipeline.render(clearDrawBuffer = true, clearImageBuffer = true) {
                 // Draw visual groups
                 // ...
             }

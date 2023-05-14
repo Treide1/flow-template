@@ -48,7 +48,7 @@ fun main() = application {
         val inputScheme = inputScheme(keyboard)
 
         // Init beatClock
-        val bpm = 125.0
+        val bpm = 120.0
         val beatClock = extend(BeatClock(bpm)) // <- Play your favorite song. Set its bpm here.
 
         // Init autoUpdate
