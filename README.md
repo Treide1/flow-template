@@ -1,37 +1,36 @@
 # Flow template
 
-An OPENRNDR template called "Flow" to jumpstart a music visualization program.
+An OPENRNDR template named "Flow" to jump start music visualization with the most useful tools prepared.
 
-Run the template to see the example program in action.
+Run the template demo to see the example program in action.
+It shows what the template is capable of.
 
-Even better, use the prepared APIs and wire them together as you please.
+Adapt the demo to your liking or start from the empty template. 
+
+Discover useful APIs for working with music, visual content, visual effects and much more.
+
 The result should be stunning visuals - audio reactive and in sync.
-
-___ Forked from https://github.com/openrndr/openrndr-template ___
 
 ## Intention
 
 I am Lukas, a VJ and creative coder from Germany.
 
-Many of my VJ projects in [OPENRNDR](https://openrndr.org/) start with similar code snippets, 
+Many of my VJ projects in [OPENRNDR](https://openrndr.org/) start with similar functionality,
 which I used to copy back and forth.
-Some parts integrated well, others required extra work.
 
-As the complexity of my projects grew, I wanted to have a more structured approach.
-This template is my "expansion" of OPENRNDR that suits my needs for live music visualization.
-
-But I also wanted to share this template, providing the tools and an example to run for everyone.
+This template is my "expansion" of OPENRNDR that suits the needs for live music visualization.
+But I also wanted to share this template, providing the tools and an demo to run for everyone.
 
 Feel free to clone and experiment with it, or fork it and make it your own version.
 
 I use this myself as a starting ground for my projects. 
-So it is likely, to get support in the foreseeable future. (May, 2023 - ...)
+So it is likely, to get updates in the future until I am satisfied with it.
 
 ## How to use
 
 ### Prerequisites
 
-* [IntelliJ IDEA](https://www.jetbrains.com/idea/download/) (Community or Professional) installed. Other IDEs need to be configured manually.
+* [IntelliJ IDEA](https://www.jetbrains.com/idea/download/) (Community or Professional) installed. Other IDEs are discouraged.
 * Git configured in IntelliJ IDEA.
 
 ### Clone And Run
@@ -40,35 +39,31 @@ Open IntelliJ IDEA. Navigate to File → New → "Project from Version Control..
 
 Add this repo's url and clone this repository.
 
-Navigate to `src/main/kotlin/TemplateProgram.kt` and run it. 
+Navigate to the demo at `src/main/kotlin/FlowTemplateDemo.kt` and run "Current File". 
 (Similar to [OPENRNDR Template](https://github.com/openrndr/openrndr-template))
 
-Press `F1` to toggle the available commands. The other keys are used for the example itself.
+Press `f1` to toggle the available commands. The other keys are used for the demo itself.
 
-### Screenshots
+### Screenshots of the FlowTemplateDemo
 
-#### TemplateProgram: On Startup
+#### Demo: On Startup
 
-![TemplateProgram: On Startup](./images/TemplateProgram-OnStartup.png)
+![Demo: On Startup](./images/TemplateProgram-OnStartup.png)
 
-#### TemplateProgram: Diamond ring on, 2 Bouncy balls activated
+#### Demo: Diamond ring on, 2 Bouncy balls activated
 
-![TemplateProgram: Diamond ring on, 2 of 4 bouncy balls activated](./images/TemplateProgram-DiamondRing-BouncyBalls.png)
+![Demo: Diamond ring on, 2 of 4 bouncy balls activated](./images/TemplateProgram-DiamondRing-BouncyBalls.png)
 
-#### TemplateProgram: Spectral Audio Analysis
+#### Demo: Spectral Audio Analysis
 
-![TemplateProgram: Spectral Audio Analysis](./images/TemplateProgram-SpectralAudioAnalysis.png)
+![Demo: Spectral Audio Analysis](./images/TemplateProgram-SpectralAudioAnalysis.png)
 
 ### Experiment …
 
 You might notice that this is a GitHub template, not a library.
+This way, you have everything in one file to adapt config or logic.
 
-In the current version, you have the primary logic/ config in a single file.
-The APIs are well documented, but are not required to be read through completely.
-
-You can easily change the program to your liking.
-
-To experiment, some starting points might be:
+To experiment with the demo, some starting points might be:
 * Setting the bpm to your favorite song's bpm (See: [songbpm.com](https://songbpm.com/))
 * Tweaking values
 * Changing the color palette
@@ -76,49 +71,22 @@ To experiment, some starting points might be:
 * Write your own bpm-based envelopes (See: `kick` and `flash`)
 
 Even better, start from scratch and build something of your own.
-Try things out, and enjoy !
+Try things out, follow the fun and enjoy !
 
 ## Why should I use this ?
 
-### Based on OPENRNDR
+If you are computer graphics beginner or veteran, <br>
+a VJ or video creator, <br>
+creative coder, motion designer, multimedia artist or just interested in cool looking visuals to enhance your music experience -<br>
+then this might be for you.
 
-The [OPENRNDR](https://openrndr.org/) framework is powerful and concise out-of-the-box.
+This template aims to build on top of OPENRNDR to quickly build live music visuals programs, 
+with well integrated APIs that can be used right away.
 
-Some advantages:
-* It is based on [Kotlin](https://kotlinlang.org/).
-  One of the [most beloved programming languages](https://survey.stackoverflow.co/2022/#technology-most-loved-dreaded-and-wanted), and my personal favorite.
-* Concise access to various computer graphics APIs. Browse (and run) the [examples](https://guide.openrndr.org/) yourself and get your mind blown 🤯
-* Extensible. Kotlin allows for some "build your own language" features and OPENRNDR is similar with its APIs. 
-  I tend to write the code that I would like to work, and _then_ write the functionality.
-* IntelliJ IDEA support. Including the obvious clone-and-run procedure, to code completion.
-
-Debatable:
-* IntelliJ as the supported IDE. I love it, but it's surely not for everyone.
-* It is not as popular as other frameworks. 
-  This means that fewer libraries are available for it, and more often, you have to write stuff yourself.
-  
-If you need help on a topic, you might want to visit the [discourse forum](https://openrndr.discourse.group/).
-
-It seems similar to render engines/ frameworks like [Processing.org](https://processing.org/), 
-[Three.js](https://threejs.org/)
-or [Skia](https://skia.org/) or even [Vvvv](https://vvvv.org/).
-
-However, after working with many computer graphics frameworks (like the mentioned ones plus many more), 
-I'd say that it just does so many things the right way.
-
-If you are not convinced, I recommend to try it out yourself.
-
-Also, check out the [Doodle Wall](https://openrndr.discourse.group/t/doodles-wall-c) to see what other people made with this amazing framework.
-
-### Made for music visualization 
-
-A fitting description of OPENRNDR is ["a tool to create tools"](https://alternativeto.net/software/openrndr/about/).
-
-I strongly sympathize with that idea:
-It allows for many great creative-coding applications, where **you** decide what aspects you want to use.
-
-And this template is a created tool specifically for music visualization. 
-It provides APIs and starts with a template program to get you started.
+* Based on OPENRNDR
+* Useful APIs for live music visualization
+* Emphasis on single-file config
+* Demo program to run for yourself
 
 It is not a full-blown VJ software, but a starting point for your own project.
 
@@ -167,7 +135,7 @@ Then, call `myVisualGroup.draw()`, as well as the other groups' draw function, i
 
 Start with `val inputScheme = inputScheme(myInputDevice: KeyEvents) { … }` and set up your input scheme.
 
-The template uses the default `keyboard` input device, but you can provide your onw device interface.
+The template uses the default `keyboard` input device, but you can provide your own device interface.
 
 For the keyboard, keys can always be used by their name, like `'escape'` or `'k'`, 
 or by their layout-independent key code, if they have one, like `KEY_ESCAPE` (`'k'` doesn't have one).
@@ -183,14 +151,16 @@ Use their active state anywhere with `inputScheme.isKeyActive(myKey: String/Int)
 
 In general, you can unbind/untrack keys and dynamically change key bindings during runtime.
 
-### Graphics pipeline effects (FX)
+### Render Pipeline and FxRepo
 
-Start with `val fxRepo = FxRepo { … }` and configure your fx repository.
+Start with `val renderPipeline = RenderPipeline(widht, height, drawer)` 
+and init a render pipeline with a visual effect repository `fxRepo` and 
+some standard renderTargets/colorBuffers prepared.
 
-Provides a setup for the graphics pipeline, similar to vanilla OPENRNDR `compose { … }` blocks.
-Those seem to be inefficient, however. So I wrote my own wrapper.
+Provides a setup for a graphics pipeline, similar to vanilla OPENRNDR `compose { … }` blocks.
+Those seem to be wasteful with resources, however. So I wrote my own wrapper.
 
-Define your effect `chain` and apply during your procedure. 
+Define your effect chain with `fxRepo` and apply during your procedure. 
 Typically at the end, but hey - no on is stopping you to use it in the beginning or the middle. Or multiple times.
 
 # Appendix
@@ -217,7 +187,8 @@ All the other tasks require some more work.
   - [x] `VisualGroup`
   - [x] `InputScheme`
   - [x] `FxRepo`
-    - [ ] `MirrorFx` (inspired by Milkdrop → recursive textures). Implemented, but unused.
+    - [x] `MirrorFx` 
+    - [x] `GalaxyShadeStyle`
   - [x] `UiDisplay`
   - [x] `Realtime filters`, currently just OneEuroFilter
 
@@ -254,9 +225,14 @@ All the other tasks require some more work.
   - [x] Key binding
     - [x] bind/unbind
   - [ ] Hard-bound keys (like `f1` for hiding the UI, `escape` for exiting the app)
-- [x] FxRepo API
+  - [ ] Input recording
+    - [ ] Binary, Analog 1D, Analog 2D
+    - [ ] Mouse recording (with pre-calibration)
+      - [ ] Linear sampling, 2D sampling
+      - [ ] As Envelope, binding to animation
+- [x] RenderPipeline API
   - [x] Chain definition and usage
-  - [ ] Graphics pipeline refactoring (currently quite verbose)
+  - [x] FxRepo
 - [x] UiDisplay API
   - [x] Basic UI 
   - [x] Can be hidden
@@ -282,40 +258,56 @@ All the other tasks require some more work.
 ### Framework and Language
 
 #### OPENRNDR
-* website: https://openrndr.org/
-* guide: https://guide.openrndr.org/
-* github: https://github.com/openrndr
-  * original template: https//github.com/openrndr/openrndr-template 
-* discourse: https://openrndr.discourse.group/
+Visit their [Website](https://openrndr.org/) and run your first program with the help of the [Guide](https://guide.openrndr.org/).
+
+You can also check out their [GitHub](https://github.com/openrndr), where the [Original Template](https://github.com/openrndr/openrndr-template) also resides.
+
+If you have questions on a topic, want to see what others have done or want to share your own creations,
+you can visit the [Discourse](https://openrndr.discourse.group/) forum.
 
 #### Kotlin
-* Reference: https://kotlinlang.org/docs/reference/
-  * Collections: https://kotlinlang.org/docs/reference/collections-overview.html
-  * Delegation: https://kotlinlang.org/docs/reference/delegation.html
+You can learn Kotlin or refresh your memory in the [Reference](https://kotlinlang.org/docs/reference/) documentation.
+In particular, you might find working with [Collections](https://kotlinlang.org/docs/reference/collections-overview.html) useful.
 
-### Useful when working with music
+If you want to quickly test something in Kotlin, you can go to the official [Kotlin Playground](https://play.kotlinlang.org).
 
-#### Find your song's bpm
+### Working with music
+
+#### Find the bpm of your song
+Website to search your song's name and artist anf get its bpm. 
+I found this one to be the most reliable.
 * [songbpm.com](https://songbpm.com/)
 
 #### Acoustics / "Human hearing"
-* "Bass Mid and Treble – Frequency Ranges Explained (With Hertz Chart)": https://housegrail.com/bass-treble-hertz-frequency-chart/
-
-### Audio processing
+Article on acoustics and musical frequency ranges
+* ["Bass Mid and Treble – Frequency Ranges Explained (With Hertz Chart)"](https://housegrail.com/bass-treble-hertz-frequency-chart/)
 
 #### TarsosDSP
-* github: https://github.com/JorenSix/TarsosDSP
-* ConstantQ paper: http://academics.wellesley.edu/Physics/brown/pubs/cq1stPaper.pdf
+Comprehensive audio analysis (and synthesis) library for the JVM. 
+Provides most of the Audio API functionality.
+* [GitHub](https://github.com/JorenSix/TarsosDSP)
+* [ConstantQ paper](http://academics.wellesley.edu/Physics/brown/pubs/cq1stPaper.pdf)
+
+### Working with live data
 
 #### OneEuroFilter
+Update filter for noisy live data. Useful for input filtering, like audio or mouse movement.
 * paper: https://cristal.univ-lille.fr/~casiez/1euro/
 
-### Computer Graphics
+### Working with shaders
 
-### Inigo Quilez' Articles
+### The Book Of Shaders
+Highly recommended beginner online-book to learn about shaders, GPU-CPU relationship,
+pros and cons of shaders, when and how to use them and much more.
+Covers the basics and presents concise examples.
+* [The Book Of Shaders](https://thebookofshaders.com/)
+
+#### Inigo Quilez' Articles
 Archive of articles about shaders and CG in general.
 Easy to understand, highly informative.
 * https://iquilezles.org/articles
+
+### Music visualizer inspiration
 
 #### Milkdrop 
 Music visualizer, now continued as ProjectM
@@ -323,5 +315,5 @@ Music visualizer, now continued as ProjectM
 * ProjectM: https://github.com/projectM-visualizer/projectm
 
 #### Electric Sheep (Flam3)
-(Not for music, but provides theory and artistic functions)
+Fractal images that change based on genetic algorithms. Contains long list of "artistic math functions".
 * S. Draves, E. Reckase. "The Fractal Flame Algorithm", Nov 2008. URL: https://flam3.com/flame_draves.pdf
