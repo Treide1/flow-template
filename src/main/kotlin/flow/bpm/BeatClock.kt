@@ -9,6 +9,8 @@ import org.openrndr.Extension
 import org.openrndr.Program
 import org.openrndr.draw.Drawer
 import org.openrndr.math.map
+import org.openrndr.math.saturate
+import util.lerp
 
 /**
  * BeatClock repository.
@@ -105,10 +107,10 @@ class BeatClock(var bpm: Double) : Extension {
         // Should a transition exist, perform interpolation and consume it if it's done.
         transition?.run {
             val targetPhase = (seconds - targetT0) * targetBpm / 60.0
-            val transitionProgress = seconds.map(transitionBegin, transitionEnd, 0.0, 1.0)
-            updatePhase = updatePhase * (1.0 - transitionProgress) + targetPhase * transitionProgress
+            val transitionProgress = seconds.map(transitionBegin, transitionEnd, 0.0, 1.0).saturate()
+            updatePhase = updatePhase.lerp(targetPhase, transitionProgress)
 
-            if (transitionEnd >= seconds) {
+            if (seconds >= transitionEnd) {
                 bpm = targetBpm
                 t0 = targetT0
                 transition = null
