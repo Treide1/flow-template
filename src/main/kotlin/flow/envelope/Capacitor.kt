@@ -71,7 +71,11 @@ class LinearCapacitor(
     holdValue
 ) {
     init {
-        onGateOpen = Envelope(openDuration) { offValue.lerp(holdValue, it / openDuration) }
-        onGateClosed = Envelope(closeDuration) { holdValue.lerp(offValue, it / closeDuration) }
+        if (openDuration > 0.0) onGateOpen = Envelope(openDuration) {
+            offValue.lerp(holdValue, it / openDuration)
+        }
+        if (closeDuration > 0.0) onGateClosed = Envelope(closeDuration) {
+            holdValue.lerp(offValue, it / closeDuration)
+        }
     }
 }
