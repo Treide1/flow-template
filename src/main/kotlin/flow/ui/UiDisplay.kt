@@ -2,6 +2,7 @@
 
 package flow.ui
 
+import flow.envelope.LinearCapacitor
 import flow.input.InputScheme
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.Drawer
@@ -19,6 +20,8 @@ class UiDisplay(val inputScheme: InputScheme) {
         valueUpdateList.removeAll { it.first == name }
     }
 
+    var alphaCap = LinearCapacitor(0.0, 0.0)
+
     fun displayOnDrawer(drawer: Drawer) {
         val maxNameLength = valueUpdateList.maxOfOrNull { it.first.length } ?: 0
         val valueLines = valueUpdateList.map { (name, toValue) ->
@@ -29,8 +32,9 @@ class UiDisplay(val inputScheme: InputScheme) {
         drawer.isolated {
             val controlTextLines = inputScheme.getControlsText().split("\n")
             val lines = controlTextLines + listOf("", "Values:") + valueLines
+            val color = ColorRGBa.WHITE.opacify(alphaCap.value)
 
-            drawer.displayLinesOfText(lines)
+            drawer.displayLinesOfText(lines, color = color)
         }
     }
 }

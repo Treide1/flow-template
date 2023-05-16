@@ -347,6 +347,9 @@ fun main() = application {
             trackValue("Audio mode") { audioGroup.audioMode.value }
             trackValue("Perturbations") { "${perturbAmount.value}" }
         }
+        uiDisplay.alphaCap = LinearCapacitor(0.1, 0.5).autoUpdate {
+            update(beatClock.deltaSeconds, inputScheme.isKeyActive("f1").not())
+        }
 
         // Set Fx chain
         renderPipeline.setFxChain {
@@ -378,7 +381,7 @@ fun main() = application {
             }
 
             // Draw controls
-            if (inputScheme.isKeyActive("f1").not()) uiDisplay.displayOnDrawer(drawer)
+            uiDisplay.displayOnDrawer(drawer)
         }
 
     }
