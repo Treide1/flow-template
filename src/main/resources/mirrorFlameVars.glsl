@@ -173,24 +173,39 @@ vec2 fisheye(vec2 uv) {
     return vec2(uv.y, uv.x) * 2.0 / (r + 1.0);
 }
 
+uniform vec2 offset = vec2(0.0, 0.0);
+// TODO: This function leads to undefined behavior on stencil lookup.
+// The issue can be discretely manipulated with offset.x, offset.y > 0.5
+uint getStencilValue(vec2 mathCoords) {
+    //return texture(stencil, toUvCoords(mathCoords)).r;
+    vec2 uv = toUvCoords(mathCoords);
+    return texelFetch(stencil, ivec2(uv * textureSize(stencil, 0) + offset), 0).r;
+}
+
+uint getStencilValueLegacy(vec2 mathCoords) {
+    return texture(stencil, toUvCoords(mathCoords)).r;
+}
+
 // Iterative lookup function
 vec4 iterativeLookup(vec2 uv) {
     vec2 mathCoords = toMathCoords(uv);
-    uint stencilValue = texture(stencil, toUvCoords(mathCoords)).x;
+    uint stencilValue = getStencilValue(mathCoords);
 
     int i = iterCount;
-    while (stencilValue != 0u && i > 0) {
-        if (stencilValue < 128u){
+
+    while (i > 0) {
+        // Custom functions
+        if (stencilValue < 128u) {
+            if (stencilValue == 0u) break;
             if (stencilValue == 1u) mathCoords = flipX(mathCoords);
             if (stencilValue == 2u) mathCoords = flipY(mathCoords);
             if (stencilValue == 3u) mathCoords = flipXY(mathCoords);
             if (stencilValue == 4u) mathCoords = rotateAndScale(mathCoords, 1.25, 1.25);
         }
-
         // Flame vars
-        if (stencilValue >= 128u) {
+        else if (stencilValue >= 128u) {
             stencilValue -= 128u; // Domain update
-            if (stencilValue == 0u) break;
+            if (stencilValue == 0u) break; // Zero is skipped for consistency with original flam3 paper
             if (stencilValue == 1u) mathCoords = sinusoidal(mathCoords);
             if (stencilValue == 2u) mathCoords = spherical(mathCoords);
             if (stencilValue == 3u) mathCoords = swirl(mathCoords);
@@ -208,8 +223,15 @@ vec4 iterativeLookup(vec2 uv) {
             if (stencilValue == 15u) mathCoords = waves(mathCoords);
             if (stencilValue == 16u) mathCoords = fisheye(mathCoords);
         }
+        // Not supposed to happen. Just break the loop.
+        else break;
 
-        stencilValue = texture(stencil, toUvCoords(mathCoords)).x;
+        // Break if out of bounds
+        vec2 p = toUvCoords(mathCoords);
+        if (p.x <= 0.0 || p.x >= 1.0 || p.y <= 0.0 || p.y >= 1.0) break;
+
+        // Update stencil value and the loop counter
+        stencilValue = getStencilValue(mathCoords);
         i--;
     }
 
