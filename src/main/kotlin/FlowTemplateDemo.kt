@@ -48,8 +48,8 @@ fun main() = application {
         val inputScheme = inputScheme(keyboard)
 
         // Init beatClock
-        val bpm = 120.0
-        val beatClock = extend(BeatClock(bpm)) // <- Play your favorite song. Set its bpm here.
+        val bpm = 120.0 // <- Play your favorite song. Set its bpm here.
+        val beatClock = extend(BeatClock(bpm))
 
         // Init autoUpdate
         extend(AutoUpdate)
@@ -331,11 +331,11 @@ fun main() = application {
             keyDown {
                 KEY_ESCAPE.bind("Exit Application") { audio.stop(); application.exit() }
                 KEY_SPACEBAR.bind("Reset Beat Clock") { beatClock.resetTime(program.seconds) }
-                "j".bind("BPM Reset") { beatClock.animateTo(bpm = bpm, program.seconds, 0.1)}
-                "k".bind("BPM x0.5") { beatClock.animateTo(bpm = beatClock.bpm / 2.0, program.seconds, 0.1) }
-                "l".bind("BPM x2.0") { beatClock.animateTo(bpm = beatClock.bpm * 2.0, program.seconds, 0.1) }
+                "8".bind("BPM x0.5") { beatClock.animateTo(bpm = beatClock.bpm / 2.0, program.seconds, 0.1) }
+                "9".bind("BPM x2.0") { beatClock.animateTo(bpm = beatClock.bpm * 2.0, program.seconds, 0.1) }
+                "0".bind("BPM Reset") { beatClock.animateTo(bpm = bpm, program.seconds, 0.0)}
                 "b".bind("Cycle Audio mode") { audioGroup.audioMode.next() }
-                "f".bind("Toggle mirror flip X") { mirrorGroup.mirrorFlipX = !mirrorGroup.mirrorFlipX}
+                "n".bind("Toggle mirror flip X") { mirrorGroup.mirrorFlipX = !mirrorGroup.mirrorFlipX}
                 "p".bind("Cycle Perturb amount") { perturbAmount.next() }
             }
         }
