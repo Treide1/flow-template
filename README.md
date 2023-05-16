@@ -46,6 +46,14 @@ Press `f1` to toggle the available commands. The other keys are used for the dem
 
 ### Screenshots of the FlowTemplateDemo
 
+#### Live demo
+
+<!-- video width="320" height="240" controls>
+  <source src="videos/video.mov" type="video/mp4">
+</video -->
+
+<!-- ![](./videos/video.mp4) -->
+
 #### Demo: On Startup
 
 ![Demo: On Startup](./images/TemplateProgram-OnStartup.png)
