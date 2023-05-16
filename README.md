@@ -48,11 +48,9 @@ Press `f1` to toggle the available commands. The other keys are used for the dem
 
 #### Live demo
 
-<!-- video width="320" height="240" controls>
-  <source src="videos/video.mov" type="video/mp4">
-</video -->
+![](./videos/DemoClip.mp4)
 
-<!-- ![](./videos/video.mp4) -->
+👉 Full Demo on YouTube: [Flow Template ~ Live Demo](https://youtu.be/IqMl_r1qLPQ)
 
 #### Demo: On Startup
 
