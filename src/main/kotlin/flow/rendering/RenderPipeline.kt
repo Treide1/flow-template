@@ -19,6 +19,8 @@ class RenderPipeline(width: Int, height: Int, val drawer: Drawer) {
      */
     val drawBuffer = drawTarget.colorBuffer(0)
 
+    val tmpBuffer = drawBuffer.createEquivalent()
+
     /**
      * Final render buffer that is displayed on screen.
      */
@@ -75,9 +77,15 @@ class RenderPipeline(width: Int, height: Int, val drawer: Drawer) {
 
     /**
      * Shortcut for [Filter.apply] with (buffer, buffer).
+     * Should this [Filter] require a temporary buffer, you can pass it as [tmpBuffer].
      */
-    fun Filter.apply(buffer: ColorBuffer) {
-        this.apply(buffer, buffer)
+    fun Filter.apply(buffer: ColorBuffer, tmpBuffer: ColorBuffer? = null) {
+        if (tmpBuffer == null)
+            this.apply(buffer, buffer)
+        else {
+            this.apply(buffer, tmpBuffer)
+            tmpBuffer.copyTo(buffer)
+        }
     }
 
     /**

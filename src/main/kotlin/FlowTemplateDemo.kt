@@ -268,7 +268,7 @@ fun main() = application {
             val triangleR = 20.0
             val triangleVertices = List(3) { Vector2(triangleR, 0.0).rotate(90.0 + it*120.0) }
 
-            var rotateAndScale_angle by mirrorFx.parameters
+            var mirrorFlipX = false
 
             fun triangleContour(center: Vector2, angleOff: Double) = contour {
                 repeat(3) {
@@ -276,6 +276,8 @@ fun main() = application {
                 }
                 close()
             }
+
+            var rotateAndScale_angle by mirrorFx.parameters
 
             override fun Drawer.draw() {
                 // Update the mirror effect parameters
@@ -301,7 +303,15 @@ fun main() = application {
 
                     fill = 4.toR()
                     stroke = null
+                    strokeWeight = 0.0
                     circle(width / 2.0, height / 2.0, maxR * alphaFac)
+
+                    if (mirrorFlipX) {
+                        fill = 1.toR()
+                        stroke = null
+                        val rect = drawer.bounds.scaledBy(yScale = 1.0, xScale = 0.5, vAnchor = 0.5, uAnchor = 0.0)
+                        rectangle(rect)
+                    }
                 }
             }
         }
@@ -325,7 +335,7 @@ fun main() = application {
                 "k".bind("BPM x0.5") { beatClock.animateTo(bpm = beatClock.bpm / 2.0, program.seconds, 0.1) }
                 "l".bind("BPM x2.0") { beatClock.animateTo(bpm = beatClock.bpm * 2.0, program.seconds, 0.1) }
                 "b".bind("Cycle Audio mode") { audioGroup.audioMode.next() }
-                "f".bind("Toggle fade") { mirrorFx._fade = !mirrorFx._fade }
+                "f".bind("Toggle mirror flip X") { mirrorGroup.mirrorFlipX = !mirrorGroup.mirrorFlipX}
                 "p".bind("Cycle Perturb amount") { perturbAmount.next() }
             }
         }
@@ -335,7 +345,6 @@ fun main() = application {
             trackValue("BPM") { "${beatClock.bpm}" }
             trackValue("Phase") { "${beatClock.phase.round(2)}" }
             trackValue("Audio mode") { audioGroup.audioMode.value }
-            trackValue("Fade") { "${mirrorFx._fade}" }
             trackValue("Perturbations") { "${perturbAmount.value}" }
         }
 
@@ -351,10 +360,10 @@ fun main() = application {
             // Add "hazy glow" with blur+bloom
             blur.apply(drawBuffer)
             bloom.apply(drawBuffer)
-            // Apply mirror effect
-            mirrorFx.apply(drawBuffer)
             // Resolve the content of the draw buffer to the image buffer. (For example, rescale it to fit to screen.)
             drawBuffer.copyTo(imageBuffer)
+            // Apply mirror effect
+            mirrorFx.apply(imageBuffer, tmpBuffer = tmpBuffer)
         }
 
         // Draw loop
