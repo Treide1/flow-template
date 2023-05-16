@@ -48,9 +48,7 @@ Press `f1` to toggle the available commands. The other keys are used for the dem
 
 #### Live demo
 
-![](./videos/DemoClip.mp4)
-
-👉 Full Demo on YouTube: [Flow Template ~ Live Demo](https://youtu.be/IqMl_r1qLPQ)
+[![Flow Template ~ Live Demo](https://img.youtube.com/vi/IqMl_r1qLPQ/maxresdefault.jpg)](https://youtu.be/IqMl_r1qLPQ)
 
 #### Demo: On Startup
 
