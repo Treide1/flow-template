@@ -268,6 +268,7 @@ fun main() = application {
             }
 
             var mirrorFlipX = false
+            var mirrorFlipY = false
 
             var rotateAndScale_angle by mirrorFx.parameters
 
@@ -294,13 +295,16 @@ fun main() = application {
 
                     fill = ROTATE_AND_SCALE.r
                     stroke = null
-                    strokeWeight = 0.0
                     circle(width / 2.0, height / 2.0, maxR * alphaFac)
 
                     if (mirrorFlipX) {
                         fill = FLIP_X.r
-                        stroke = null
-                        val rect = drawer.bounds.scaledBy(yScale = 1.0, xScale = 0.5, vAnchor = 0.5, uAnchor = 0.0)
+                        val rect = drawer.bounds.scaledBy(xScale = 0.5, yScale = 1.0, uAnchor = 0.0, vAnchor = 0.5)
+                        rectangle(rect)
+                    }
+                    if (mirrorFlipY) {
+                        fill = FLIP_Y.r
+                        val rect = drawer.bounds.scaledBy(xScale = 1.0, yScale = 0.5, uAnchor = 0.5, vAnchor = 0.0)
                         rectangle(rect)
                     }
                 }
@@ -326,7 +330,8 @@ fun main() = application {
                 "9".bind("BPM x2.0") { beatClock.animateTo(bpm = beatClock.bpm * 2.0, program.seconds, 0.1) }
                 "0".bind("BPM Reset") { beatClock.animateTo(bpm = bpm, program.seconds, 0.0) }
                 "b".bind("Cycle Audio mode") { audioGroup.audioMode.next() }
-                "n".bind("Toggle mirror flip X") { mirrorGroup.mirrorFlipX = !mirrorGroup.mirrorFlipX }
+                "j".bind("Toggle mirror flip X") { mirrorGroup.mirrorFlipX = !mirrorGroup.mirrorFlipX }
+                "k".bind("Toggle mirror flip Y") { mirrorGroup.mirrorFlipY = !mirrorGroup.mirrorFlipY }
                 "p".bind("Cycle Perturb amount") { perturbAmount.next() }
             }
         }
