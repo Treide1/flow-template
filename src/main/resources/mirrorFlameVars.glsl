@@ -12,10 +12,6 @@ uniform usampler2D stencil;
 uniform int iterCount;
 // Takes a y scale parameter, assuming width to go from -1 to 1
 uniform float yScl;
-// Takes a flag whether to fade towards black
-uniform bool fade;
-// Takes an exponent for fading (later iterations become darker)
-uniform float fadeExp = 0.25;
 
 // Helper functions
 vec2 lerp(vec2 first, vec2 second, float perc) {
@@ -174,11 +170,11 @@ vec2 fisheye(vec2 uv) {
 }
 
 uniform vec2 offset = vec2(0.0, 0.0);
-// TODO: This function leads to undefined behavior on stencil lookup.
-// The issue can be discretely manipulated with offset.x, offset.y > 0.5
+// TODO: This function leads to undefined behavior on stencil lookup. Fix this, at least for M1 chips.
+// The issue can be discretely manipulated with |offset.x|, |offset.y| > 0.5
 uint getStencilValue(vec2 mathCoords) {
-    //return texture(stencil, toUvCoords(mathCoords)).r;
     vec2 uv = toUvCoords(mathCoords);
+    // return texture(stencil, uv).r; // equivalent to below for offset = 0
     return texelFetch(stencil, ivec2(uv * textureSize(stencil, 0) + offset), 0).r;
 }
 
@@ -235,9 +231,7 @@ vec4 iterativeLookup(vec2 uv) {
         i--;
     }
 
-    float fac = 1.0;
-    if (fade) fac = pow(i * 1.0 / iterCount, fadeExp);
-    return texture(tex0, toUvCoords(mathCoords)) * fac;
+    return texture(tex0, toUvCoords(mathCoords));
 }
 
 // Main function:

@@ -282,7 +282,6 @@ fun main() = application {
             override fun Drawer.draw() {
                 // Update the mirror effect parameters
                 rotateAndScale_angle = ebbAndFlow * 0.01 + 0.05
-                mirrorFx._fadeExp = flash * 0.1
 
                 // Fade in the triangle duo together with the mirror effect.
                 // The triangles jiggle across circular arc close to the mirror rim.

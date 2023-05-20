@@ -66,24 +66,6 @@ class MirrorFilter(
     private var iterCount by parameters
 
     /**
-     * Accessor for [fade].
-     */
-    var _fade = false
-        set(value) {
-            field = value
-            fade = value
-        }
-
-    /**
-     * Accessor for [fadeExp].
-     */
-    var _fadeExp = 2.0
-        set(value) {
-            field = value
-            fadeExp = value.saturate().toFloat()
-        }
-
-    /**
      * Accessor for [iterCount].
      */
     var _iterCount = 100
@@ -98,8 +80,6 @@ class MirrorFilter(
         yScl = stencilBuffer.width.toDouble() / stencilBuffer.height.toDouble()
 
         // Mutable values, that require initialization
-        fade = _fade
-        fadeExp = _fadeExp
         iterCount = _iterCount
     }
 
