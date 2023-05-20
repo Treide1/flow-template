@@ -76,16 +76,14 @@ class RenderPipeline(width: Int, height: Int, val drawer: Drawer) {
     val fxRepo = FxRepo(this)
 
     /**
-     * Shortcut for [Filter.apply] with (buffer, buffer).
-     * Should this [Filter] require a temporary buffer, you can pass it as [tmpBuffer].
+     * Shortcut for [Filter.apply] with (buffer, buffer) but with temporary buffer inbetween.
+     * Should this [Filter] require a custom temporary buffer, you can pass it as [customTmpBuffer].
      */
-    fun Filter.apply(buffer: ColorBuffer, tmpBuffer: ColorBuffer? = null) {
-        if (tmpBuffer == null)
-            this.apply(buffer, buffer)
-        else {
-            this.apply(buffer, tmpBuffer)
-            tmpBuffer.copyTo(buffer)
-        }
+    fun Filter.apply(buffer: ColorBuffer, customTmpBuffer: ColorBuffer? = null) {
+        val tmp = customTmpBuffer ?: tmpBuffer
+
+        this.apply(buffer, tmp)
+        tmp.copyTo(buffer)
     }
 
     /**
