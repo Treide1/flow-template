@@ -83,7 +83,8 @@ fun main() = application {
             }
 
             // Draw controls
-            if (inputScheme.isKeyActive("f1").not()) uiDisplay.displayOnDrawer(drawer)
+            uiDisplay.alphaCap.update(0.01, inputScheme.isKeyActive("f1").not())
+            uiDisplay.displayOnDrawer(drawer)
         }
 
     }
