@@ -6,7 +6,6 @@ import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.ColorBuffer
 import org.openrndr.draw.Filter
 import org.openrndr.draw.filterShaderFromCode
-import org.openrndr.math.saturate
 import org.openrndr.resourceText
 import kotlin.math.max
 
@@ -83,33 +82,36 @@ class MirrorFilter(
         iterCount = _iterCount
     }
 
-    companion object {
-        val customNames = listOf(
-            "identity", // 0
-            "flipX", // 1
-            "flipY", // 2
-            "flipXY", // 3
-            "rotateAndScale", // 4
-        )
-        val flameVariationNames = listOf(
-            "identity", // 0
-            "sinusoidal", // 1
-            "spherical", // 2
-            "swirl", // 3
-            "horseshoe", // 4
-            "polar", // 5
-            "handkerchief", // 6
-            "heart", // 7
-            "disc", // 8
-            "spiral", // 9
-            "hyperbolic", // 10
-            "diamond", // 11
-            "ex", // 12
-            "julia", // 13
-            "bent", // 14
-            "waves", // 15
-            "fisheye", // 16
-        )
+    enum class LookupFunctions(val id: Int) {
+        IDENTITY(0),
+        FLIP_X(1),
+        FLIP_Y(2),
+        FLIP_XY(3),
+        ROTATE_AND_SCALE(4),
+        REFLECT_ANGLED(5),
+
+        SINUSOIDAL(128 + 1),
+        SPHERICAL(128 + 2),
+        SWIRL(128 + 3),
+        HORSESHOE(128 + 4),
+        POLAR(128 + 5),
+        HANDKERCHIEF(128 + 6),
+        HEART(128 + 7),
+        DISC(128 + 8),
+        SPIRAL(128 + 9),
+        HYPERBOLIC(128 + 10),
+        DIAMOND(128 + 11),
+        EX(128 + 12),
+        JULIA(128 + 13),
+        BENT(128 + 14),
+        WAVES(128 + 15),
+        FISHEYE(128 + 16),
+        ;
+
+        /**
+         * Convert this [id] attribute the according stencil color using [Int.toR].
+         */
+        fun toR(): ColorRGBa = this.id.toR()
     }
 }
 
