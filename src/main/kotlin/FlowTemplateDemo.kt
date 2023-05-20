@@ -15,10 +15,7 @@ import flow.input.InputScheme.TrackTypes.TOGGLE
 import flow.input.inputScheme
 import flow.rendering.RenderPipeline
 import flow.ui.UiDisplay
-import org.openrndr.Fullscreen
-import org.openrndr.KEY_ESCAPE
-import org.openrndr.KEY_SPACEBAR
-import org.openrndr.application
+import org.openrndr.*
 import org.openrndr.draw.Drawer
 import org.openrndr.draw.isolated
 import org.openrndr.draw.isolatedWithTarget
@@ -336,6 +333,7 @@ fun main() = application {
         val uiDisplay = UiDisplay(inputScheme).apply {
             trackValue("BPM") { "${beatClock.bpm}" }
             trackValue("Phase") { "${beatClock.phase.round(2)}" }
+            trackValue("FPS") { "${beatClock.fps}" }
             trackValue("Audio mode") { audioGroup.audioMode.value }
             trackValue("Perturbations") { "${perturbAmount.value}" }
         }

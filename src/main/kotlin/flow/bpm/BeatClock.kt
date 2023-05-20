@@ -10,7 +10,9 @@ import org.openrndr.Program
 import org.openrndr.draw.Drawer
 import org.openrndr.math.map
 import org.openrndr.math.saturate
+import org.openrndr.panel.elements.round
 import util.lerp
+import kotlin.math.floor
 
 /**
  * BeatClock repository.
@@ -71,6 +73,12 @@ class BeatClock(var bpm: Double) : Extension {
         get() = seconds - previousSeconds
 
     /**
+     * Currently (estimated) frames per second.
+     */
+    var fps = 0.0
+        private set
+
+    /**
      * Should a transition take place, this will be non-null data holder.
      */
     var transition: Transition? = null
@@ -102,9 +110,13 @@ class BeatClock(var bpm: Double) : Extension {
         // Calculate the phase
         previousPhase = phase
         phase = (seconds - t0) * bpm / 60.0
-        var updatePhase = phase
+
+        // Calculate fps, update once per second
+        if (floor(seconds) != floor(previousSeconds))
+            fps = (1 / (seconds - previousSeconds)).round(2)
 
         // Should a transition exist, perform interpolation and consume it if it's done.
+        var updatePhase = phase
         transition?.run {
             val targetPhase = (seconds - targetT0) * targetBpm / 60.0
             val transitionProgress = seconds.map(transitionBegin, transitionEnd, 0.0, 1.0).saturate()
