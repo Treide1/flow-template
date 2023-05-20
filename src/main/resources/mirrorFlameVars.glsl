@@ -27,11 +27,11 @@ float rand(float seed){
 }
 
 vec2 toMathCoords(vec2 uv) {
-    return vec2(uv.x * 2.0 - 1.0, (uv.y * 2.0 - 1.0) * yScl);
+    return vec2(uv.x * 2.0 - 1.0, (uv.y * 2.0 - 1.0) / yScl);
 }
 
 vec2 toUvCoords(vec2 mathCoords) {
-    return vec2((mathCoords.x + 1.0) / 2.0, (mathCoords.y / yScl + 1.0) / 2.0);
+    return vec2((mathCoords.x + 1.0) / 2.0, (mathCoords.y * yScl + 1.0) / 2.0);
 }
 
 #define PI 3.14159265359
