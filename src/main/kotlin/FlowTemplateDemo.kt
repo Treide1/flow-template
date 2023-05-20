@@ -7,6 +7,7 @@ import flow.bpm.toIntervalCount
 import flow.color.ColorRepo
 import flow.color.ColorRepo.ColorRoles.*
 import flow.content.VisualGroup
+import flow.fx.MedianDenoisingFilter
 import flow.fx.MirrorFilter
 import flow.fx.MirrorFilter.LookupFunctions.*
 import flow.input.InputScheme.TrackTypes.PIANO
@@ -28,9 +29,9 @@ import org.openrndr.math.Vector2
 import org.openrndr.math.map
 import org.openrndr.math.smootherstep
 import org.openrndr.panel.elements.round
-import org.openrndr.shape.contour
 import util.CyclicFlag
 import util.TWO_PI
+import util.createTriangleContour
 import util.lerp
 import kotlin.math.*
 
@@ -94,6 +95,8 @@ fun main() = application {
         val blur = ApproximateGaussianBlur()
         val bloom = GaussianBloom()
         val mirrorFx = MirrorFilter(renderPipeline.stencilBuffer)
+        val denoise = MedianDenoisingFilter()
+
         val perturb = Perturb()
         val perturbAmount = CyclicFlag(0, 1, 2, 3)
 
@@ -265,17 +268,7 @@ fun main() = application {
                 update(beatClock.deltaSeconds, inputScheme.isKeyActive("m"))
             }
 
-            val triangleR = 20.0
-            val triangleVertices = List(3) { Vector2(triangleR, 0.0).rotate(90.0 + it*120.0) }
-
             var mirrorFlipX = false
-
-            fun triangleContour(center: Vector2, angleOff: Double) = contour {
-                repeat(3) {
-                    moveOrLineTo(center + triangleVertices[it].rotate(angleOff))
-                }
-                close()
-            }
 
             var rotateAndScale_angle by mirrorFx.parameters
 
@@ -292,11 +285,11 @@ fun main() = application {
 
                 fill = colorRepo[PRIMARY].opacify(0.5 * alphaFac).toRGBa()
                 stroke = null
-                contour(triangleContour(center0, -kick*30.0))
-                contour(triangleContour(center1, kick*30.0))
+                val c1 = createTriangleContour(center0, 20.0, -kick*30.0)
+                val c2 = createTriangleContour(center1, 20.0, kick*30.0)
+                contours(listOf(c1, c2))
 
                 // Draw the mirror effect stencil.
-                // 0 is identity function, 4 is scaleAndRotate function.
                 drawer.isolatedWithTarget(renderPipeline.stencilTarget) {
                     clear(IDENTITY.r)
 
@@ -332,9 +325,9 @@ fun main() = application {
                 KEY_SPACEBAR.bind("Reset Beat Clock") { beatClock.resetTime(program.seconds) }
                 "8".bind("BPM x0.5") { beatClock.animateTo(bpm = beatClock.bpm / 2.0, program.seconds, 0.1) }
                 "9".bind("BPM x2.0") { beatClock.animateTo(bpm = beatClock.bpm * 2.0, program.seconds, 0.1) }
-                "0".bind("BPM Reset") { beatClock.animateTo(bpm = bpm, program.seconds, 0.0)}
+                "0".bind("BPM Reset") { beatClock.animateTo(bpm = bpm, program.seconds, 0.0) }
                 "b".bind("Cycle Audio mode") { audioGroup.audioMode.next() }
-                "n".bind("Toggle mirror flip X") { mirrorGroup.mirrorFlipX = !mirrorGroup.mirrorFlipX}
+                "n".bind("Toggle mirror flip X") { mirrorGroup.mirrorFlipX = !mirrorGroup.mirrorFlipX }
                 "p".bind("Cycle Perturb amount") { perturbAmount.next() }
             }
         }
@@ -365,7 +358,9 @@ fun main() = application {
             // Resolve the content of the draw buffer to the image buffer. (For example, rescale it to fit to screen.)
             drawBuffer.copyTo(imageBuffer)
             // Apply mirror effect
-            mirrorFx.apply(imageBuffer, tmpBuffer = tmpBuffer)
+            mirrorFx.apply(imageBuffer)
+            // Apply 3x3 median denoise to reduce salt-and-pepper noise
+            denoise.apply(imageBuffer)
         }
 
         // Draw loop
