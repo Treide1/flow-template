@@ -50,16 +50,6 @@ class MirrorFilter(
     private var yScl by parameters
 
     /**
-     * Flag to enable / disable fading towards the max iterations.
-     */
-    private var fade by parameters
-
-    /**
-     * The exponent for the fading. Higher values result in a faster fading.
-     */
-    private var fadeExp by parameters
-
-    /**
      * The maximum number of iterations to perform. Higher values result in more detailed images.
      */
     private var iterCount by parameters
@@ -109,13 +99,14 @@ class MirrorFilter(
         ;
 
         /**
-         * Convert this [id] attribute the according stencil color using [Int.toR].
+         * The red-channel value for the stencil buffer.
          */
-        fun toR(): ColorRGBa = this.id.toR()
+        val r: ColorRGBa
+            get() = this.id.toR()
     }
 }
 
 /**
  * Convert an integer to a ColorRGBa with [this] as the red channel for UINT8 color buffers.
  */
-fun Int.toR(): ColorRGBa = ColorRGBa(r = this / 256.0, g = 0.0, b = 0.0)
+private fun Int.toR(): ColorRGBa = ColorRGBa(r = this / 256.0, g = 0.0, b = 0.0)

@@ -8,7 +8,7 @@ import flow.color.ColorRepo
 import flow.color.ColorRepo.ColorRoles.*
 import flow.content.VisualGroup
 import flow.fx.MirrorFilter
-import flow.fx.toR
+import flow.fx.MirrorFilter.LookupFunctions.*
 import flow.input.InputScheme.TrackTypes.PIANO
 import flow.input.InputScheme.TrackTypes.TOGGLE
 import flow.input.inputScheme
@@ -298,15 +298,15 @@ fun main() = application {
                 // Draw the mirror effect stencil.
                 // 0 is identity function, 4 is scaleAndRotate function.
                 drawer.isolatedWithTarget(renderPipeline.stencilTarget) {
-                    clear(0.toR())
+                    clear(IDENTITY.r)
 
-                    fill = 4.toR()
+                    fill = ROTATE_AND_SCALE.r
                     stroke = null
                     strokeWeight = 0.0
                     circle(width / 2.0, height / 2.0, maxR * alphaFac)
 
                     if (mirrorFlipX) {
-                        fill = 1.toR()
+                        fill = FLIP_X.r
                         stroke = null
                         val rect = drawer.bounds.scaledBy(yScale = 1.0, xScale = 0.5, vAnchor = 0.5, uAnchor = 0.0)
                         rectangle(rect)
