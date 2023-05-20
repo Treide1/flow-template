@@ -2,11 +2,11 @@ import flow.audio.Audio
 import flow.autoupdate.AutoUpdate
 import flow.autoupdate.AutoUpdate.autoUpdate
 import flow.bpm.BeatClock
-import flow.envelope.LinearCapacitor
 import flow.bpm.toIntervalCount
 import flow.color.ColorRepo
 import flow.color.ColorRepo.ColorRoles.*
 import flow.content.VisualGroup
+import flow.envelope.LinearCapacitor
 import flow.fx.MedianDenoisingFilter
 import flow.fx.MirrorFilter
 import flow.fx.MirrorFilter.LookupFunctions.*
@@ -15,11 +15,13 @@ import flow.input.InputScheme.TrackTypes.TOGGLE
 import flow.input.inputScheme
 import flow.rendering.RenderPipeline
 import flow.ui.UiDisplay
-import org.openrndr.*
+import org.openrndr.Fullscreen
+import org.openrndr.KEY_ESCAPE
+import org.openrndr.KEY_SPACEBAR
+import org.openrndr.application
 import org.openrndr.draw.Drawer
 import org.openrndr.draw.isolated
 import org.openrndr.draw.isolatedWithTarget
-import org.openrndr.extra.fx.blur.ApproximateGaussianBlur
 import org.openrndr.extra.fx.blur.GaussianBloom
 import org.openrndr.extra.fx.distort.Perturb
 import org.openrndr.math.Vector2
@@ -46,7 +48,7 @@ fun main() = application {
         val inputScheme = inputScheme(keyboard)
 
         // Init beatClock
-        val bpm = 140.0 // <- Play your favorite song. Set its bpm here.
+        val bpm = 125.0 // <- Play your favorite song. Set its bpm here.
         val beatClock = extend(BeatClock(bpm))
 
         // Init autoUpdate
@@ -89,8 +91,8 @@ fun main() = application {
         val renderPipeline = RenderPipeline(width, height, drawer)
 
         // Init Fx
-        val blur = ApproximateGaussianBlur()
         val bloom = GaussianBloom()
+        bloom.window = 1
         val mirrorFx = MirrorFilter(renderPipeline.stencilBuffer)
         val denoise = MedianDenoisingFilter()
 
@@ -350,8 +352,7 @@ fun main() = application {
 
             // Repeat 0 to 3 perturbs
             repeat(perturbAmount.value) { perturb.apply(drawBuffer) }
-            // Add "hazy glow" with blur+bloom
-            blur.apply(drawBuffer)
+            // Add "hazy glow" with bloom
             bloom.apply(drawBuffer)
             // Resolve the content of the draw buffer to the image buffer. (For example, rescale it to fit to screen.)
             drawBuffer.copyTo(imageBuffer)
