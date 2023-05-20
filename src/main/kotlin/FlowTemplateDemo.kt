@@ -325,10 +325,10 @@ fun main() = application {
             // Hard-coded input bindings
             keyDown {
                 KEY_ESCAPE.bind("Exit Application") { audio.stop(); application.exit() }
-                KEY_SPACEBAR.bind("Reset Beat Clock") { beatClock.resetTime(program.seconds) }
-                "8".bind("BPM x0.5") { beatClock.animateTo(bpm = beatClock.bpm / 2.0, program.seconds, 0.1) }
-                "9".bind("BPM x2.0") { beatClock.animateTo(bpm = beatClock.bpm * 2.0, program.seconds, 0.1) }
-                "0".bind("BPM Reset") { beatClock.animateTo(bpm = bpm, program.seconds, 0.0) }
+                KEY_SPACEBAR.bind("Reset Beat Clock") { beatClock.resetTime() }
+                "8".bind("BPM -1") { beatClock.animateTo(bpm = beatClock.bpm - 1.0, 0.1) }
+                "9".bind("BPM +1") { beatClock.animateTo(bpm = beatClock.bpm + 1.0, 0.1) }
+                "0".bind("BPM Reset") { beatClock.animateTo(bpm = bpm, 0.0) }
                 "b".bind("Cycle Audio mode") { audioGroup.audioMode.next() }
                 "j".bind("Toggle mirror flip X") { mirrorGroup.mirrorFlipX = !mirrorGroup.mirrorFlipX }
                 "k".bind("Toggle mirror flip Y") { mirrorGroup.mirrorFlipY = !mirrorGroup.mirrorFlipY }

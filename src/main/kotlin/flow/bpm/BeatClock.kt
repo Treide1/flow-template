@@ -17,13 +17,15 @@ import kotlin.math.floor
 /**
  * BeatClock repository.
  *
- * Start a builder with `val beatClock = extend(BeatClock()) { … }` to configure settings.
+ * Start with `val beatClock = extend(BeatClock(…))`.
  * Use [phase] to query the relative phase since program start
  * or use [bindEnvelope] to access a [EnvelopeBuilder].
  *
  * Cross-fade to a new bpm rate with [animateTo].
- * For example `animateTo(bpm = 132.0, 1.0)` to start the new beat on keystroke "k",
- * gradually changing the phase and speed to 132.0 over 1.0 second.
+ * For example, when calling `animateTo(bpm = 132.0, 1.0)`
+ * the bpm and phase will gradually change to 132.0 over 1.0 second.
+ *
+ * @see [EnvelopeBuilder] for more information on how to create envelopes.
  *
  * @param bpm The initial bpm. Can be modified during runtime, e.g. during a playlist run.
  */
@@ -31,9 +33,8 @@ class BeatClock(var bpm: Double) : Extension {
 
     override var enabled = true
 
-
     /**
-     * Time stamp where the beat counting started. This is treated like t = 0.
+     * Time stamp where the beat counting started. This is treated like "t = 0".
      */
     var t0 = 0.0
         private set
@@ -171,11 +172,11 @@ class BeatClock(var bpm: Double) : Extension {
      * bpm * (seconds - t0) ≈ _bpm * (seconds - _t0)
      * ```
      * @param bpm The new bpm rate.
-     * @param t0 The new t0 time stamp.
      * @param duration The duration of the transition.
+     * @param t0 The new t0 time stamp. Uses "now" as default.
      */
     // TODO: Refactor this to be derived from a general Animation or Blend API.
-    fun animateTo(bpm: Double, t0: Double, duration: Double) {
+    fun animateTo(bpm: Double, duration: Double, t0: Double = previousSeconds) {
         transition = Transition(
             targetBpm = bpm,
             targetT0 = t0,
@@ -185,15 +186,15 @@ class BeatClock(var bpm: Double) : Extension {
     }
 
     /**
-     * Reset the beat clock. Starts at [now].
+     * Reset the beat clock.
      */
-    fun resetTime(now: Double) {
-        t0 = now
+    fun resetTime() {
+        t0 = previousSeconds
     }
 }
 
 /**
- * Calculates how often an interval of length [intervalLength] fits into this Double.
+ * Calculates how often an interval of length [intervalLength] fits into [this] Double.
  *
  * Example:
  * ```
