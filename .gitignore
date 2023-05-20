@@ -6,3 +6,5 @@ out
 video/
 screenshots/
 gui-parameters/
+/src/main/kotlin/generated/
+/src/main/external/
