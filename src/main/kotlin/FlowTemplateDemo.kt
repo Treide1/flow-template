@@ -46,7 +46,7 @@ fun main() = application {
         val inputScheme = inputScheme(keyboard)
 
         // Init beatClock
-        val bpm = 120.0 // <- Play your favorite song. Set its bpm here.
+        val bpm = 140.0 // <- Play your favorite song. Set its bpm here.
         val beatClock = extend(BeatClock(bpm))
 
         // Init autoUpdate
@@ -356,7 +356,7 @@ fun main() = application {
             // Resolve the content of the draw buffer to the image buffer. (For example, rescale it to fit to screen.)
             drawBuffer.copyTo(imageBuffer)
             // Apply mirror effect
-            mirrorFx.apply(imageBuffer)
+            mirrorFx.apply(imageBuffer, useCopyBuffer = true)
             // Apply 3x3 median denoise to reduce salt-and-pepper noise
             denoise.apply(imageBuffer)
         }
