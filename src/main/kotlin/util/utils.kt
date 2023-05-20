@@ -17,14 +17,12 @@ class CyclicFlag<T>(val options: List<T>) {
     constructor(vararg options: T): this(options.toList())
 
     var index = 0
-    private var _value = options[index]
 
     val value: T
-        get() = _value
+        get() = options[index]
 
     fun next() {
         index = (index + 1) % options.size
-        _value = options[index]
     }
 
 }
