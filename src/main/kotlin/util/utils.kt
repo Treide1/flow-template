@@ -2,6 +2,9 @@
 
 package util
 
+import org.openrndr.math.Vector2
+import org.openrndr.shape.ShapeContour
+import org.openrndr.shape.contour
 import kotlin.reflect.KProperty
 
 // This file is a dump for common utility functions and data structures.
@@ -50,6 +53,18 @@ class QueueCache<T>(val size: Int){
 
     operator fun getValue(requester: Any, property: KProperty<*>): List<T> {
         return cache
+    }
+}
+
+fun createTriangleContour(position: Vector2, radius: Double, rotation: Double): ShapeContour {
+
+    val triangleVertices = List(3) { Vector2(radius, 0.0).rotate(90.0 + it*120.0) }
+
+    return contour {
+        repeat(3) {
+            moveOrLineTo(position + triangleVertices[it].rotate(rotation))
+        }
+        close()
     }
 }
 
