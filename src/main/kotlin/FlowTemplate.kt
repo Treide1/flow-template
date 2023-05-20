@@ -72,6 +72,7 @@ fun main() = application {
         // Init UI display
         val uiDisplay = UiDisplay(inputScheme).apply {
             trackValue("BPM") { "${beatClock.bpm}" }
+            trackValue("FPS") { "${beatClock.fps}" }
             // ...
         }
 
