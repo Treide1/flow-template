@@ -3,17 +3,17 @@ package flow.realtime.filters
 import kotlin.math.abs
 
 /**
- * OneEuroFilter is a simple filter for noisy signals.
+ * The "OneEuroFilter" is a simple filter for noisy signals.
+ * It values local stability (when noise > signal), but also accounts for responsiveness (when signal > noise).
  *
  * Original paper: https://gery.casiez.net/1euro/
  *
  * This code is a re-implementation of the Java version by Stéphane Conversy.
- * However, it is not a direct port, but rather a Kotlin version with some
- * direct improvements and clearer names.
+ * This is not a direct port. It simplifies and renames to better fit with Kotlin.
  *
- * @param minCutoff The minimum cutoff frequency. Has to be >0.
+ * @param minCutoff The minimum cutoff frequency. Has to be positive.
  * @param beta Cutoff bias. No constraints.
- * @param dCutoff The cutoff frequency when the speed is "large". Has to be >0.
+ * @param dCutoff The cutoff frequency when the speed is "large". Has to be positive.
  * @param initVal The initial value of the filter. Defaults to 0.0.
  *
  * @author Lukas Henke
@@ -56,7 +56,7 @@ class OneEuroFilter(
         return x.filterWithAlpha(value, alpha(cutoff))
     }
 
-    class LowPassFilter(var alpha: Double, initVal: Double = 0.0) {
+    class LowPassFilter(alpha: Double, initVal: Double = 0.0) {
 
         var s = initVal
         var y = s
