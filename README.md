@@ -1,12 +1,9 @@
 # Flow template
 
-An OPENRNDR template named "Flow" to jump start music visualization with the most useful tools prepared.
+An OPENRNDR template named "Flow" to jump start a music visualization with the most useful tools prepared.
 
-Run the template demo to see the example program in action.
-It shows what the template is capable of.
-
-Adapt the demo to your liking or start from the empty template. 
-
+Run the template demo. <br>
+Adapt it to your liking or start from the empty template. <br>
 Discover useful APIs for working with music, visual content, visual effects and much more.
 
 The result should be stunning visuals - audio reactive and in sync.
@@ -15,23 +12,18 @@ The result should be stunning visuals - audio reactive and in sync.
 
 I am Lukas, a VJ and creative coder from Germany.
 
-Many of my VJ projects in [OPENRNDR](https://openrndr.org/) start with similar functionality,
-which I used to copy back and forth.
-
-This template is my "expansion" of OPENRNDR that suits the needs for live music visualization.
+This template is my "expansion" of [OPENRNDR](https://openrndr.org/) that suits the needs for live music visualization.
 But I also wanted to share this template, providing the tools and a demo to run for everyone.
 
-Feel free to clone and experiment with it, or fork it and make it your own version.
-
-I use this myself as a starting ground for my projects. 
-So it is likely, to get updates in the future until I am satisfied with it.
+Feel free to clone and experiment with it, or fork it and make your own version.
 
 ## How to use
 
 ### Prerequisites
 
-* [IntelliJ IDEA](https://www.jetbrains.com/idea/download/) (Community or Professional) installed. Other IDEs are discouraged.
+* [IntelliJ IDEA](https://www.jetbrains.com/idea/download/) Community or Professional installed. (Other IDEs are discouraged.)
 * Git configured in IntelliJ IDEA.
+* A physical or virtual microphone is configured as your system's default microphone. See Audio Routing.
 
 ### Clone And Run
 
@@ -44,7 +36,7 @@ Navigate to the demo at `src/main/kotlin/FlowTemplateDemo.kt` and run "Current F
 
 Press `f1` to toggle the available commands. The other keys are used for the demo itself.
 
-### Screenshots of the FlowTemplateDemo
+### The FlowTemplateDemo
 
 #### Live demo
 
@@ -73,10 +65,10 @@ This way, you have everything in one file to adapt config or logic.
 
 To experiment with the demo, some starting points might be:
 * Setting the bpm to your favorite song's bpm (See: [songbpm.com](https://songbpm.com/))
-* Tweaking values
 * Changing the color palette
-* Write your own visual groups (See: `audioGroup`, `diamondGroup` and `circleGroup`)
-* Write your own bpm-based envelopes (See: `kick` and `flash`)
+* Tweaking values
+* Writing your own visual groups (See: `audioGroup`, `diamondGroup` and `circleGroup`)
+* Writing your own bpm-based envelopes (See: `kick` and `flash`)
 
 Even better, start from scratch and build something of your own.
 Try things out, follow the fun and enjoy !
@@ -280,6 +272,16 @@ In particular, you might find working with [Collections](https://kotlinlang.org/
 If you want to quickly test something in Kotlin, you can go to the official [Kotlin Playground](https://play.kotlinlang.org).
 
 ### Working with music
+
+#### Audio Routing
+If you want to route your system's audio output to a virtual audio input device,
+then you should use a program for that. <br>
+(For example, the Windows feature "Use output as input" will mess up your system.)
+
+The easiest way is usually to ...<br>
+* Windows: Install [JackAudio2](https://jackaudio.org/).
+* MacOS: Install [BlackHole](https://github.com/ExistentialAudio/BlackHole). The 2 channel version is sufficient.
+* Linux: Install [JackAudio2](https://jackaudio.org/) or [PulseAudio](https://www.freedesktop.org/wiki/Software/PulseAudio/).
 
 #### Find the bpm of your song
 Website to search your song's name and artist anf get its bpm. 
