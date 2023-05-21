@@ -19,7 +19,7 @@ Many of my VJ projects in [OPENRNDR](https://openrndr.org/) start with similar f
 which I used to copy back and forth.
 
 This template is my "expansion" of OPENRNDR that suits the needs for live music visualization.
-But I also wanted to share this template, providing the tools and an demo to run for everyone.
+But I also wanted to share this template, providing the tools and a demo to run for everyone.
 
 Feel free to clone and experiment with it, or fork it and make it your own version.
 
@@ -54,15 +54,17 @@ Press `f1` to toggle the available commands. The other keys are used for the dem
 
 #### Demo: On Startup
 
-![Demo: On Startup](./images/TemplateProgram-OnStartup.png)
+![Demo: On Startup](images/FlowTemplateDemo-OnStartup.png)
 
-#### Demo: Diamond ring on, 2 Bouncy balls activated
+#### Demo: Gallery
 
-![Demo: Diamond ring on, 2 of 4 bouncy balls activated](./images/TemplateProgram-DiamondRing-BouncyBalls.png)
+![FullContent NoFx](images/FlowTemplateDemo-FullContent-NoFx.png)
 
-#### Demo: Spectral Audio Analysis
+![Perturbed FlipXY](images/FlowTemplateDemo-Perturbed-FlipXY.png)
 
-![Demo: Spectral Audio Analysis](./images/TemplateProgram-SpectralAudioAnalysis.png)
+![RotateAndScaleRecursion](images/FlowTemplateDemo-RotateAndScaleRecursion.png)
+
+![Perturbed Recursion FlipXY](images/FlowTemplateDemo-Perturbed-Recursion-FlipXY.png)
 
 ### Experiment …
 
