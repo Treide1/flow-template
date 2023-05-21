@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 group = "vjhenke.template"
 version = "1.2.0"
 
-val applicationMainClass = "TemplateProgramKt"
+val applicationMainClass = "FlowTemplateKt"
 
 /**  ## additional ORX features to be added to this project */
 val orxFeatures = setOf<String>(
