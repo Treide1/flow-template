@@ -40,7 +40,7 @@ Press `f1` to toggle the available commands. The other keys are used for the dem
 
 #### Live demo
 
-![](videos/DemoClip.gif)
+![](videos/DemoClip.mp4)
 
 👉 Watch the [Full Version](https://youtu.be/IqMl_r1qLPQ) on YouTube
 
