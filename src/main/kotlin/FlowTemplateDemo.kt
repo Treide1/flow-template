@@ -60,9 +60,14 @@ fun main() = application {
         // Init audio input
         val audio = Audio(
             sampleRate = 44100,
-            bufferSize = 8192,
-            overlap = 8192 - 1024,
+            bufferSize = 4096,
+            overlap = 4096 - 1024,
         )
+
+        // Specify audio processors
+        val volProcessor = audio.createVolumeProcessor()
+        val constantQ = audio.createConstantQProcessor(2, Audio.DEFAULT_RANGES, 40)
+        audio.start()
 
         // Specify beat-based values
         val kick by beatClock.bindEnvelopeBySegments(1.0) {
@@ -81,11 +86,6 @@ fun main() = application {
             segmentJoin(2.0, 1.0) via { x: Double -> smootherstep(0.0, 1.0, x) }
             segmentJoin(4.0, 0.0) via { x: Double -> smootherstep(0.0, 1.0, x) }
         }
-
-        // Specify audio processors
-        val volProcessor = audio.createVolumeProcessor()
-        val constantQ = audio.createConstantQProcessor(2, Audio.DEFAULT_RANGES, 40)
-        audio.start()
 
         // Init render pipeline
         val renderPipeline = RenderPipeline(width, height, drawer)

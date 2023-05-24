@@ -40,8 +40,9 @@ class ConstantQProcessor(
 ): AudioProcessor {
 
     // Shorthand for audio constants
-    private val loFq = Audio.LOWEST_FQ
-    private val hiFq = Audio.HIGHEST_FQ
+    // Don't use 20f-20000f range as it will hang on termination.
+    private val loFq = 40.0
+    private val hiFq = 10000.0
 
     // ConstantQ runner (processor for TarsosDSP)
     private val constantQ = ConstantQ(sampleRate.toFloat(), loFq.toFloat(), hiFq.toFloat(), binsPerOctave.toFloat())
