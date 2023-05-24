@@ -40,7 +40,7 @@ Press `f1` to toggle the available commands. The other keys are used for the dem
 
 #### Live demo
 
-![DemoClip](videos/DemoClip.mp4)
+[![DemoClip](videos/DemoClip.mp4) currently disabled]
 
 👉 Watch the [Full Version](https://youtu.be/IqMl_r1qLPQ) on YouTube
 
@@ -195,11 +195,10 @@ All the other tasks require some more work.
 ### API Progress
 - [x] BeatClock
   - [x] Beat tracking
-- [ ] Audio API (stable during runtime, but has bug on closing audio stream)
+- [x] Audio API
   - [x] Audio dispatch logic
   - [ ] Setup based on system settings/ used processors
     - [ ] Audio device selection
-    - [ ] Fixing occasional zombie audio input stream after app exit (killable with force-quit) 
   - [x] General Volume Processor
   - [x] Range-Specific Volume processor (ConstantQ)
   - [ ] Source → Cache/Filter middleware → Value provider (Refactoring)
