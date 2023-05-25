@@ -18,6 +18,9 @@ import kotlin.math.max
  *
  * Takes the [stencil] to use a mirror function for the stencil value.
  * Performs operations on transformed uv coordinates. [0, 1]^2 -> [-1, 1]^2
+ *
+ * (It is recommended to use a median denoise filter after this effect to reduce salt-and-pepper noise.)
+ *
  * Example:
  * ```
  * // Custom made
@@ -33,7 +36,6 @@ import kotlin.math.max
  *
  * @param stencilBuffer The stencil buffer that is bound to the [stencil] parameter. Has to be a single-channel unit8 buffer.
  */
-// TODO: Very rarely leaves 1px-wide black borders on recursion contours.
 class MirrorFilter(
     stencilBuffer: ColorBuffer
 ) : Filter(
