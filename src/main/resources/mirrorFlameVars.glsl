@@ -169,13 +169,9 @@ vec2 fisheye(vec2 uv) {
     return vec2(uv.y, uv.x) * 2.0 / (r + 1.0);
 }
 
-uniform vec2 offset = vec2(0.0, 0.0);
-// TODO: This function leads to undefined behavior on stencil lookup. Fix this, at least for M1 chips.
-// The issue can be discretely manipulated with |offset.x|, |offset.y| > 0.5
 uint getStencilValue(vec2 mathCoords) {
-    vec2 uv = toUvCoords(mathCoords);
-    // return texture(stencil, uv).r; // equivalent to below for offset = 0
-    return texelFetch(stencil, ivec2(uv * textureSize(stencil, 0) + offset), 0).r;
+    return texture(stencil, toUvCoords(mathCoords)).r; // equivalent to below for offset = 0
+    // return texelFetch(stencil, ivec2(uv * textureSize(stencil, 0) + vec2(0.0, 0.0)), 0).r;
 }
 
 uint getStencilValueLegacy(vec2 mathCoords) {
