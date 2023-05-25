@@ -84,7 +84,7 @@ fun main() = application {
             }
 
             // Draw controls
-            uiDisplay.alphaCap.update(0.01, inputScheme.isKeyActive("f1").not())
+            uiDisplay.alphaCap.update(beatClock.deltaSeconds, inputScheme.isKeyActive("f1").not())
             uiDisplay.displayOnDrawer(drawer)
         }
 
