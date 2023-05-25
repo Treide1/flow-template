@@ -93,24 +93,6 @@ class EnvelopeBuilder internal constructor(){
         // 1. Sort with complexity O(n log n)
         segments.sortBy { it.fromT }
 
-        // TODO: Evaluate if [2.] is really needed/performant.
-        // 2. We complete segments to be a complete timeline.
-        // Any gaps are filled with segments with zeroEaser.
-        var t = 0.0
-        var i = 0
-        while (i < segments.size ) {
-            val nextSeg = segments[i]
-            val nextT = nextSeg.fromT
-            // If there is a "gap" between last t and fromT, fill it with segment with zeroEaser.
-            // Then set t to correct fromT. Increment i to skip zeroEaser segment.
-            if (t < nextT) {
-                segments += EnvelopeSegment(t, nextT, 0.0, 0.0).also { it via zeroEaser }
-                t = nextT
-                i++
-            }
-            // Increment i for drawn segment 'nextSeg'.
-            i++
-        }
         // 2. Convert to immutable list to feed to closure.
         val timeline = segments.toList()
 
