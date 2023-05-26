@@ -3,7 +3,9 @@ import flow.FlowProgramConfig
 import flow.autoupdate.AutoUpdate.autoUpdate
 import flow.color.ColorRepo
 import flow.content.VisualGroup
+import flow.envelope.LinearCapacitor
 import flow.fx.galaxyShadeStyle
+import flow.input.InputScheme.TrackTypes.TOGGLE
 import flow.rendering.image
 import org.openrndr.Fullscreen
 import org.openrndr.application
@@ -27,7 +29,6 @@ fun main() = application {
     flowProgram(
         FlowProgramConfig(
             initialBpm = 125.0, // <- Play your favorite song. Set its bpm here.
-            isWithGui = true,
         )
     ) {
 
@@ -40,10 +41,14 @@ fun main() = application {
             segmentJoin(1.00, 0.9) via { x: Double -> x.pow(3.0) }
         }
 
+        val kickFac by LinearCapacitor(0.1, 0.1).autoUpdate {
+            update(beatClock.deltaSeconds, inputScheme.isKeyActive("k"))
+        }
+
         val ebbAndFlow by beatClock.bindEnvelopeBySegments(8.0) {
             val exponentialDecay = { x: Double -> exp(-x).map(1.0, exp(-1.0), 0.0, 1.0) }
             lastX = 1.0
-            segmentJoin(2.0, 0.0) via exponentialDecay
+            segmentJoin(7.0, 0.0) via exponentialDecay
             segmentJoin(8.0, 1.0) via exponentialDecay
         }
 
@@ -60,18 +65,20 @@ fun main() = application {
         audio.start()
 
         // Setup Fx
-        renderPipeline.lumaOpacity.autoUpdate {
-            foregroundOpacity = ebbAndFlow
-            backgroundLuma = ebbAndFlow.smoothstep(0.0, 1.0)
-            foregroundLuma = ebbAndFlow.smoothstep(0.0, 1.0) / 2.0
-        }
+        renderPipeline.apply {
+            lumaOpacity.autoUpdate {
+                foregroundOpacity = ebbAndFlow
+                backgroundLuma = ebbAndFlow.smoothstep(0.0, 1.0)
+                foregroundLuma = ebbAndFlow.smoothstep(0.0, 1.0) / 2.0
+            }
 
-        renderPipeline.chromaticAberration.autoUpdate {
-            aberrationFactor = kick * 20.0
-        }
+            chromaticAberration.autoUpdate {
+                aberrationFactor = kick * kickFac * 20.0
+            }
 
-        renderPipeline.verticalWave.autoUpdate {
-            amplitude = kick * 0.02
+            verticalWave.autoUpdate {
+                amplitude = kick * kickFac * 0.02
+            }
         }
 
         // Define visual groups
@@ -144,6 +151,9 @@ fun main() = application {
         }
 
         inputScheme.apply {
+
+            track(TOGGLE, "k", "Controls kickFac")
+
             keyDown {
                 "z".bind("Next zoom variation") { galaxyGroup.zoomVariations.next() }
             }
