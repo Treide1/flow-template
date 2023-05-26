@@ -26,6 +26,9 @@ class ColorRepo<T: ColorModel<T>>(var palette: Map<String, T> = mapOf()) {
         return palette.values.toList()[index]
     }
 
+    /**
+     * Enumeration of common color roles.
+     */
     enum class ColorRoles {
         PRIMARY,
         PRIMARY_VARIANT,
@@ -34,6 +37,7 @@ class ColorRepo<T: ColorModel<T>>(var palette: Map<String, T> = mapOf()) {
         TERTIARY,
         TERTIARY_VARIANT,
 
+        CONTRARY,
         ACCENT,
         NEUTRAL,
         BACKGROUND,
