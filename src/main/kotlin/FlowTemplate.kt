@@ -46,13 +46,6 @@ fun main() = application {
         // Init Fx
         // ...
 
-        // Set Fx chain
-        renderPipeline.setFxChain {
-            // Fx on drawBuffer ...
-            drawBuffer.copyTo(imageBuffer)
-            // Fx on imageBuffer ...
-        }
-
         // Define visual groups
         // ...
 
@@ -78,9 +71,15 @@ fun main() = application {
 
         // Draw loop
         extend {
-            renderPipeline.render(clearDrawBuffer = true, clearImageBuffer = true) {
+            renderPipeline.render {
                 // Draw visual groups
                 // ...
+
+                // Use fx
+                // ...
+
+                // Eventually draw to image buffer
+                drawBuffer.copyTo(imageBuffer)
             }
 
             // Draw controls

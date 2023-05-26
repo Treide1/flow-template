@@ -14,6 +14,7 @@ import flow.input.InputScheme.TrackTypes.PIANO
 import flow.input.InputScheme.TrackTypes.TOGGLE
 import flow.input.inputScheme
 import flow.rendering.RenderPipeline
+import flow.rendering.image
 import flow.ui.UiDisplay
 import org.openrndr.Fullscreen
 import org.openrndr.KEY_ESCAPE
@@ -348,24 +349,6 @@ fun main() = application {
             update(beatClock.deltaSeconds, inputScheme.isKeyActive("f1").not())
         }
 
-        // Set Fx chain
-        renderPipeline.setFxChain {
-            // Update parameters
-            perturb.phase = seconds * 0.01
-            perturb.decay = + volProcessor.filteredLastVolume.map(0.3, 0.7, 1.0, 0.0)
-            perturb.gain = 0.8
-
-            // Repeat 0 to 3 perturbs
-            repeat(perturbAmount.value) { perturb.apply(drawBuffer) }
-            // Add "hazy glow" with bloom
-            bloom.apply(drawBuffer)
-            // Resolve the content of the draw buffer to the image buffer. (For example, rescale it to fit to screen.)
-            drawBuffer.copyTo(imageBuffer)
-            // Apply mirror effect
-            mirrorFx.apply(imageBuffer, useCopyBuffer = true)
-            // Apply 3x3 median denoise to reduce salt-and-pepper noise
-            denoise.apply(imageBuffer)
-        }
 
         // Draw loop
         extend {
@@ -376,7 +359,26 @@ fun main() = application {
                 circleGroup.draw()
                 diamondGroup.draw()
                 mirrorGroup.draw()
+
+                // Set Fx chain
+                perturb.phase = seconds * 0.01
+                perturb.decay = + volProcessor.filteredLastVolume.map(0.3, 0.7, 1.0, 0.0)
+                perturb.gain = 0.8
+
+                // Repeat 0 to 3 perturbs
+                repeat(perturbAmount.value) { perturb.apply(drawBuffer) }
+                // Add "hazy glow" with bloom
+                bloom.apply(drawBuffer)
+                // Resolve the content of the draw buffer to the image buffer. (For example, rescale it to fit to screen.)
+                drawBuffer.copyTo(imageBuffer)
+                // Apply mirror effect
+                mirrorFx.apply(imageBuffer, useCopyBuffer = true)
+                // Apply 3x3 median denoise to reduce salt-and-pepper noise
+                denoise.apply(imageBuffer)
             }
+
+            // Draw the result to screen
+            drawer.image(renderPipeline)
 
             // Draw controls
             uiDisplay.displayOnDrawer(drawer)

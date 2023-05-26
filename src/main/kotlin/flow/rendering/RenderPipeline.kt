@@ -1,10 +1,30 @@
+@file:Suppress("unused")
+
 package flow.rendering
 
-import flow.fx.FxRepo
+import flow.fx.MirrorFilter
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.*
+import org.openrndr.extra.fx.blend.Overlay
+import org.openrndr.extra.fx.blend.SourceAtop
+import org.openrndr.extra.fx.blur.ApproximateGaussianBlur
+import org.openrndr.extra.fx.blur.GaussianBloom
+import org.openrndr.extra.fx.color.ChromaticAberration
+import org.openrndr.extra.fx.color.LumaOpacity
+import org.openrndr.extra.fx.distort.Perturb
+import org.openrndr.extra.fx.distort.VerticalWave
+import org.openrndr.extra.gui.GUI
+import org.openrndr.extra.gui.addTo
 
-class RenderPipeline(width: Int, height: Int, val drawer: Drawer) {
+class RenderPipeline(
+    width: Int,
+    height: Int,
+    val drawer: Drawer,
+    val gui: GUI? = null,
+    // builder: RenderPipelineBuilder.() -> Unit = {} // TODO: for scenes api
+) {
+
+    // init { builder(RenderPipelineBuilder()) }
 
     /**
      * The target onto which the [render] function draws.
@@ -38,42 +58,47 @@ class RenderPipeline(width: Int, height: Int, val drawer: Drawer) {
      */
     val stencilBuffer = stencilTarget.colorBuffer(0)
 
-    // Backing field for fxChain
-    private var fxChain: RenderPipeline.() -> Unit = {}
-
     /**
-     * Sets the fx chain to be applied in [render].
+     *
      */
-    fun setFxChain(fxChain: RenderPipeline.() -> Unit) {
-        this.fxChain = fxChain
-    }
-
-    /**
-     * Performs the [drawBlock] onto the draw target, then applies the [fxChain].
-     * The result is then drawn to the screen.
-     * @param clearDrawBuffer Whether to clear the drawBuffer before rendering.
-     * @param clearImageBuffer Whether to clear the imageBuffer before rendering.
-     * @param drawBlock The block to execute for drawing.
-     */
-    fun render(clearDrawBuffer: Boolean = true, clearImageBuffer: Boolean = true, drawBlock: Drawer.() -> Unit = {}) {
-        // Clear buffers if needed
-        if (clearDrawBuffer) drawBuffer.fill(ColorRGBa.TRANSPARENT)
-        if (clearImageBuffer) imageBuffer.fill(ColorRGBa.TRANSPARENT)
+    fun render(drawBlock: RenderPipeline.() -> Unit = {}) {
 
         // Draw onto drawTarget
         drawer.isolatedWithTarget(drawTarget) {
             drawBlock()
         }
 
-        // Apply Fx and draw to screen
-        fxChain()
         drawer.image(imageBuffer)
     }
 
-    /**
-     * The [FxRepo] that holds all the effects.
-     */
-    val fxRepo = FxRepo(this)
+    fun clear(colorBuffer: ColorBuffer = drawBuffer, color: ColorRGBa = ColorRGBa.TRANSPARENT) {
+        colorBuffer.fill(color)
+    }
+
+    private fun <T: Filter> T.addToGui(): T {
+        if (gui != null) {
+            this.addTo(gui)
+        }
+        return this
+    }
+
+    val overlay by lazy { Overlay().addToGui() }
+    val sourceAtop by lazy { SourceAtop().addToGui()}
+    val lumaOpacity by lazy { LumaOpacity().addToGui() }
+    val blur by lazy { ApproximateGaussianBlur().addToGui() }
+    val bloom by lazy { GaussianBloom().apply { window = 1 }.addToGui() }
+    val mirrorFx by lazy { MirrorFilter(stencilBuffer).addToGui() }
+    val perturb by lazy { Perturb().addToGui() }
+    val chromaticAberration by lazy { ChromaticAberration().addToGui() }
+    val verticalWave by lazy { VerticalWave().apply { segments = 1; phase = 0.5 }.addToGui() }
+
+    fun ColorBuffer.applyFx(vararg filters: Filter): ColorBuffer {
+        filters.forEach {
+            it.apply(this)
+        }
+        return this
+    }
+
 
     /**
      * Shortcut for [Filter.apply] with (buffer, buffer).
@@ -90,10 +115,34 @@ class RenderPipeline(width: Int, height: Int, val drawer: Drawer) {
     }
 
     /**
-     * Applies the [overlay] filter to the [source] and [target] buffer combined,
-     * and writes the result to the [target] buffer.
+     *
      */
-    fun overlay(source: ColorBuffer, target: ColorBuffer) {
-        fxRepo.overlay.apply(source, target)
+    fun draw(function: Drawer.() -> Unit) {
+        drawer.isolatedWithTarget(drawTarget, function)
+    }
+
+    /**
+     *
+     */
+    fun fx(function: RenderPipeline.() -> Unit) {
+        function()
+    }
+}
+
+/**
+ *
+ */
+fun Drawer.image(renderPipeline: RenderPipeline) {
+    this.image(renderPipeline.imageBuffer)
+}
+
+class RenderPipelineBuilder {
+
+    fun attachDrawer(name: String, out: Boolean = false) {
+        // TODO()
+    }
+
+    fun attachStencil(name: String) {
+        // TODO()
     }
 }

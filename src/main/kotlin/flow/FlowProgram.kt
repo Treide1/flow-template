@@ -15,10 +15,13 @@ import org.openrndr.extra.gui.GUI
 
 /**
  *
+ * @param initialBpm
+ * @param isWithGui
+ * @param audio
  */
 data class FlowProgramConfig(
     val initialBpm: Double = 125.0,
-    val isWithGui: Boolean = true,
+    val isWithGui: Boolean = false,
     val audio: Audio? = null,
 )
 
@@ -32,13 +35,19 @@ open class FlowProgram private constructor(
     /**
      *
      */
-    val renderPipeline by lazy { RenderPipeline(width, height, drawer) }
+    val beatClock = extend(BeatClock(bpm= config.initialBpm))
 
     /**
      *
      */
-    val beatClock = extend(BeatClock(bpm= config.initialBpm))
+    val gui by lazy { GUI() }
 
+    /**
+     *
+     */
+    val renderPipeline by lazy { RenderPipeline(width, height, drawer, if (config.isWithGui) gui else null) }
+
+    // TODO: provide access to attachments like this:
     /*{
         attachDrawer("main")
         attachDrawer("blend")
@@ -56,11 +65,6 @@ open class FlowProgram private constructor(
      *
      */
     val inputScheme = InputScheme(keyboard)
-
-    /**
-     *
-     */
-    val gui by lazy { GUI() }
 
     /**
      *

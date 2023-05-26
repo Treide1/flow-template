@@ -1,35 +1,20 @@
-import flow.audio.Audio
-import flow.autoupdate.AutoUpdate
+import flow.FlowProgram.Companion.flowProgram
+import flow.FlowProgramConfig
 import flow.autoupdate.AutoUpdate.autoUpdate
-import flow.bpm.BeatClock
 import flow.color.ColorRepo
 import flow.content.VisualGroup
-import flow.envelope.LinearCapacitor
 import flow.fx.galaxyShadeStyle
-import flow.input.InputScheme.TrackTypes.TOGGLE
-import flow.input.inputScheme
-import flow.rendering.RenderPipeline
-import flow.ui.UiDisplay
+import flow.rendering.image
 import org.openrndr.Fullscreen
-import org.openrndr.KEY_ESCAPE
-import org.openrndr.KEY_SPACEBAR
 import org.openrndr.application
-import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.Drawer
-import org.openrndr.draw.isolated
-import org.openrndr.extra.fx.blur.GaussianBloom
-import org.openrndr.extra.fx.color.ChromaticAberration
-import org.openrndr.extra.fx.color.LumaOpacity
-import org.openrndr.extra.fx.distort.VerticalWave
-import org.openrndr.extra.gui.GUI
-import org.openrndr.extra.gui.addTo
-import org.openrndr.ffmpeg.VideoPlayerConfiguration
+import org.openrndr.ffmpeg.PlayMode
 import org.openrndr.ffmpeg.VideoPlayerFFMPEG
-import org.openrndr.math.saturate
+import org.openrndr.math.map
 import org.openrndr.math.smoothstep
 import util.CyclicFlag
-import util.TWO_PI
-import kotlin.math.*
+import kotlin.math.exp
+import kotlin.math.pow
 
 /**
  * Demo 2 of the "Flow" template.
@@ -39,12 +24,12 @@ fun main() = application {
         fullscreen = Fullscreen.CURRENT_DISPLAY_MODE
         display = displays.last()
     }
-    program {
-        // Init inputScheme
-        val inputScheme = inputScheme(keyboard)
-
-        // Init beatClock
-        val beatClock = extend(BeatClock(bpm=128.0)) // <- Play your favorite song. Set its bpm here.
+    flowProgram(
+        FlowProgramConfig(
+            initialBpm = 125.0, // <- Play your favorite song. Set its bpm here.
+            isWithGui = true,
+        )
+    ) {
 
         // Define beat-based values
         val kick by beatClock.bindEnvelopeBySegments(1.0) {
@@ -55,46 +40,37 @@ fun main() = application {
             segmentJoin(1.00, 0.9) via { x: Double -> x.pow(3.0) }
         }
 
-        val ebbAndFlow by beatClock.bindEnvelope(8.0) { phase ->
-            (sin(phase/8.0 * TWO_PI)+0.5).saturate()
+        val ebbAndFlow by beatClock.bindEnvelopeBySegments(8.0) {
+            val exponentialDecay = { x: Double -> exp(-x).map(1.0, exp(-1.0), 0.0, 1.0) }
+            lastX = 1.0
+            segmentJoin(2.0, 0.0) via exponentialDecay
+            segmentJoin(8.0, 1.0) via exponentialDecay
         }
 
-        val gui = GUI()
-
-        // Init AutoUpdate
-        extend(AutoUpdate)
-
         // Init colors
-        val colorRepo = ColorRepo(
-            palette = mapOf(
-                "0" to "#E006B2",
-                "90" to "#82B1E0",
-                "180" to "#7AE060",
-                "270" to "#E0C18D",
-            ).mapValues { (_, v) -> ColorRGBa.fromHex(v) }
+        val colorRepo = ColorRepo.fromHexMapOf(
+            "0" to "#E006B2",
+            "90" to "#82B1E0",
+            "180" to "#7AE060",
+            "270" to "#E0C18D",
         )
 
-        // Init audio input
-        val audio = Audio()
+        // Setup audio
         val volProcessor = audio.createVolumeProcessor()
         audio.start()
 
-        // Init render pipeline
-        val renderPipeline = RenderPipeline(width, height, drawer)
-
-        // Init Fx
-        val lumaOpacity = LumaOpacity().autoUpdate {
-            val eafSaturated = ebbAndFlow.saturate()
-            backgroundOpacity = 0.0
-            foregroundOpacity = eafSaturated
-            backgroundLuma = eafSaturated.smoothstep(0.0, 1.0)
-            foregroundLuma = eafSaturated.smoothstep(0.0, 1.0) / 2.0
+        // Setup Fx
+        renderPipeline.lumaOpacity.autoUpdate {
+            foregroundOpacity = ebbAndFlow
+            backgroundLuma = ebbAndFlow.smoothstep(0.0, 1.0)
+            foregroundLuma = ebbAndFlow.smoothstep(0.0, 1.0) / 2.0
         }
-        val bloom = GaussianBloom().apply { window = 1 }
-        val chromaticAberration = ChromaticAberration().autoUpdate {
+
+        renderPipeline.chromaticAberration.autoUpdate {
             aberrationFactor = kick * 20.0
         }
-        val verticalWave = VerticalWave().autoUpdate {
+
+        renderPipeline.verticalWave.autoUpdate {
             amplitude = kick * 0.02
         }
 
@@ -103,10 +79,7 @@ fun main() = application {
 
             val videoPlayer = VideoPlayerFFMPEG.fromFile(
                 fileName="src/main/resources/videos/network_12716(1080p).mp4",
-                configuration= VideoPlayerConfiguration().apply {
-                    //useHardwareDecoding = false
-                    //usePacketReaderThread = true
-                }
+                mode = PlayMode.VIDEO
             )
 
             init {
@@ -114,45 +87,17 @@ fun main() = application {
                 videoPlayer.play()
             }
 
-            var videoStatistics = videoPlayer.statistics
-
             override fun Drawer.draw() {
                 videoPlayer.draw(this)
-
-                videoStatistics = videoPlayer.statistics
             }
+
         }
 
-        // Define controls for Input Scheme
-        inputScheme.apply {
-            // Tracked keys
-            track(TOGGLE, "f1", "Toggle this controls display")
-            // ...
+        val galaxyGroup = object: VisualGroup(program) {
 
-            // Hard-coded input bindings
-            keyDown {
-                KEY_ESCAPE.bind("Exit Application") { audio.stop(); application.exit() }
-                KEY_SPACEBAR.bind("Reset beat clock") { beatClock.resetTime() }
-            }
-        }
+            val zoomVariations = CyclicFlag("Step by step", "Full Zoom")
 
-        // Init UI display
-        val uiDisplay = UiDisplay(inputScheme).apply {
-            trackValue("BPM") { "${beatClock.bpm}" }
-            trackValue("FPS") { "${beatClock.fps}" }
-            trackValue("Video Statistics") { "${glitchGroup.videoStatistics}" }
-        }
-        uiDisplay.alphaCap = LinearCapacitor(0.1, 0.5).autoUpdate {
-            update(beatClock.deltaSeconds, inputScheme.isKeyActive("f1").not())
-        }
-
-        // extend(gui)
-
-        val zoomVariations = CyclicFlag("Step by step", "Full Zoom")
-
-        // Draw loop
-        extend {
-            drawer.isolated {
+            override fun Drawer.draw() {
                 shadeStyle = galaxyShadeStyle(seconds)
                 val offset = when (zoomVariations.value) {
                     "Step by step" -> (beatClock.phase%32.0) / 8.0
@@ -162,32 +107,47 @@ fun main() = application {
                 val scl = 2.5 - 1.5 * ebbAndFlow.smoothstep(0.0, 1.5) + offset
                 rectangle(drawer.bounds.scaledBy(scl))
             }
+        }
+
+        // Init UI display
+        uiDisplay.apply {
+            trackValue("Galaxy zoom") { galaxyGroup.zoomVariations.value }
+        }
+
+        // val tmpBuffer = renderPipeline.createBuffer() // TODO
+
+        // Draw loop
+        extend {
 
             renderPipeline.render {
-                // Draw visual groups
+                clear()
+                galaxyGroup.draw()
+                drawBuffer.copyTo(tmpBuffer)
+
+                clear()
                 glitchGroup.draw()
+
+                drawBuffer.applyFx(
+                    lumaOpacity,
+                    bloom,
+                    verticalWave,
+                    chromaticAberration
+                )
+                sourceAtop.apply(drawBuffer, tmpBuffer, imageBuffer)
             }
+
+            // Draw final image
+            drawer.image(renderPipeline)
 
             // Draw controls
             uiDisplay.displayOnDrawer(drawer)
         }
 
         inputScheme.apply {
-
             keyDown {
-                "z".bind("Next zoom variation") { zoomVariations.next() }
+                "z".bind("Next zoom variation") { galaxyGroup.zoomVariations.next() }
             }
-        }
-
-        // Set Fx chain
-        renderPipeline.setFxChain {
-            // Fx on drawBuffer
-            lumaOpacity.apply(drawBuffer, drawBuffer)
-            drawBuffer.copyTo(imageBuffer)
-            // Fx on imageBuffer
-            bloom.apply(imageBuffer, imageBuffer)
-            verticalWave.apply(imageBuffer, imageBuffer)
-            chromaticAberration.apply(imageBuffer, imageBuffer)
         }
     }
 }
+
