@@ -56,7 +56,7 @@ open class Capacitor(
         }
     }
 
-    operator fun getValue(requester: Any, property: KProperty<*>): Double {
+    operator fun getValue(requester: Any?, property: KProperty<*>): Double {
         return value
     }
 }
@@ -70,6 +70,7 @@ class LinearCapacitor(
     offValue,
     holdValue
 ) {
+
     init {
         if (openDuration > 0.0) onGateOpen = Envelope(openDuration) {
             offValue.lerp(holdValue, it / openDuration)
