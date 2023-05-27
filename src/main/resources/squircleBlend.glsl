@@ -7,14 +7,19 @@ uniform sampler2D tex1;
 out vec4 o_color;
 
 // Required for the shader to work
-uniform float time;
-uniform float volume;
-#define iTime time
+uniform float blend;
 #define C o_color
 #define R textureSize(tex0, 0)
 #define F v_texCoord0
+#define iChannel0 tex0
+#define iChannel1 tex1
 
-// Filter from shadertoy: https://www.shadertoy.com/view/mtX3WX
+float smootherstep (float edge0, float edge1, float x) {
+    x = clamp ((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+    return x * x * x * (x * (x * 6. - 15.) + 10.);
+}
+
+// Filter from shadertoy: https://www.shadertoy.com/view/DtXGWf
 const float pi = 355. / 113.;
 const float halfpi = 0.5 * pi;
 const float phi = 0.5 * (1. + sqrt (5.));
@@ -37,34 +42,79 @@ vec2 pcos (vec2 t) {
     return 0.5 * (1. + cos (pi * t));
 }
 
+uniform int mode;
+
 void main() {
-    float t = iTime;
+    float t = blend * 10./3. * 2; // smoothstep(0.0, pi * 2, blend * pi * 2);
     float r = R.x / R.y;
     vec2 uv = v_texCoord0;
-    vec2 uvn = uv - (0.5 * R.yx) / max (R.x, R.y);
+    vec2 uvn =  (uv - 0.5) * 0.5;
 
-    float k = 1. * volume; //texture (iChannel2, vec2 (0.09, 0.)).r;
-    k = 2.1 * cos (k * halfpi);
-
-    vec2 zuv = 9.* r * uvn; //33. * psin (0.5 * t) * uvn;
-    float t_mode = 0.0 * t;
-    int mode = int (floor (mod (t_mode, 18.)));
+    vec2 zuv = 33. * psin (0.3 * t) * uvn;
+    int _mode = mode % 18;
     float l = 0.;
-    l = max (l, length (zuv + sin (k*zuv)));
-    l = mix (l, length (zuv - sin (zuv)), psin (2.*t));// 0.1*k); //k*0.8);//psin (t));
-    l = mix (l, k*length (tan (zuv)), k-0.2); //k);//sin (1.*t));
+    if (0 == _mode) {
+        l = length (psin (zuv));
+    }
+    else if (1 == _mode) {
+        l = length (sin (zuv));
+    }
+    else if (2 == _mode) {
+        l = length (pcos (zuv));
+    }
+    else if (3 == _mode) {
+        l = length (cos (zuv));
+    }
+    else if (4 == _mode) {
+        l = length (tan (zuv));
+    }
+    else if (5 == _mode) {
+        l = length (sin (tan (zuv)));
+    }
+    else if (6 == _mode) {
+        l = length (zuv - sin (zuv));
+    }
+    else if (7 == _mode) {
+        l = length (zuv - psin (zuv));
+    }
+    else if (8 == _mode) {
+        l = length (zuv - cos (zuv));
+    }
+    else if (9 == _mode) {
+        l = length (zuv - pcos (zuv));
+    }
+    else if (10 == _mode) {
+        l = length (zuv - tan (zuv));
+    }
+    else if (11 == _mode) {
+        l = length (zuv - sin (tan (zuv)));
+    }
+    else if (12 == _mode) {
+        l = length (zuv + sin (zuv));
+    }
+    else if (13 == _mode) {
+        l = length (zuv + psin (zuv));
+    }
+    else if (14 == _mode) {
+        l = length (zuv + cos (zuv));
+    }
+    else if (15 == _mode) {
+        l = length (zuv + pcos (zuv));
+    }
+    else if (16 == _mode) {
+        l = length (zuv + tan (zuv));
+    }
+    else if (17 == _mode) {
+        l = length (zuv + sin (atan (zuv)));
+    }
+    float s = smoothstep (phi * r, -phi0 * r, l);
 
-    float s = smoothstep (phi * 2. * r, -phi0 * r, l);
+    // Creative deviation from original shader.
+    vec2 tuv = mix (uv, vec2 (s), psin (0.3 * t));
+    vec3 p0 = texture (iChannel0, 1. * tuv).rgb;
+    vec3 p1 = texture (iChannel1, 1. * tuv).rgb;
+    float mixFac = smootherstep (0.0, 1.0, blend);
+    vec3 color = mix(p0, p1, mixFac);
 
-    vec2 tuv = mix (uvn, vec2 (s), 0.777);//pcos (1.*t));
-    vec3 color = vec3 (0);
-    vec3 bg = vec3 (0.0);
-    bg = texture(tex0, 1. * uvn).rgb;
-    bg = mix (bg, pow (s, .8) * (1.-vec3 (0.1, 1.0, 0.1)), 0.888);
-    vec3 fg = vec3 (0.0, 0.5, 0.0);
-    fg = texture(tex1, 1.5 * tuv).rgb;
-    color += (1. - s) * bg;
-    color += (0. + s) * fg;
-
-    C = vec4(color, 1.0);
+    o_color = vec4(color, 1.0);
 }
