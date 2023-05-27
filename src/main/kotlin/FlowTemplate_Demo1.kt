@@ -354,6 +354,7 @@ fun main() = application {
         extend {
             // Perform the render operation with the specified draw block
             renderPipeline.render {
+                clear()
                 // Draw visual groups
                 audioGroup.draw()
                 circleGroup.draw()
