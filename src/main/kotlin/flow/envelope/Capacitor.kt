@@ -1,5 +1,7 @@
 package flow.envelope
 
+import flow.FlowProgram
+import flow.autoupdate.AutoUpdate.autoUpdate
 import util.lerp
 import kotlin.reflect.KProperty
 
@@ -78,5 +80,11 @@ class LinearCapacitor(
         if (closeDuration > 0.0) onGateClosed = Envelope(closeDuration) {
             holdValue.lerp(offValue, it / closeDuration)
         }
+    }
+}
+
+fun Capacitor.keyAutoUpdate(flowProgram: FlowProgram, keyName: String): Capacitor {
+    return this.autoUpdate {
+        update(flowProgram.beatClock.deltaSeconds, flowProgram.inputScheme.isKeyActive(keyName))
     }
 }
