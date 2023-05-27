@@ -2,7 +2,9 @@
 
 package flow.rendering
 
+import flow.fx.MedianDenoisingFilter
 import flow.fx.MirrorFilter
+import flow.fx.SquircleBlend
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.*
 import org.openrndr.extra.fx.blend.Overlay
@@ -91,6 +93,8 @@ class RenderPipeline(
     val perturb by lazy { Perturb().addToGui() }
     val chromaticAberration by lazy { ChromaticAberration().addToGui() }
     val verticalWave by lazy { VerticalWave().apply { segments = 1; phase = 0.5 }.addToGui() }
+    val squircleBlend by lazy { SquircleBlend().addToGui() }
+    val medianDenoise by lazy { MedianDenoisingFilter().addToGui() }
 
     fun ColorBuffer.applyFx(vararg filters: Filter): ColorBuffer {
         filters.forEach {
