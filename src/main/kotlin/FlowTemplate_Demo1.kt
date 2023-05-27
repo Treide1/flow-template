@@ -1,30 +1,22 @@
+import flow.FlowProgram.Companion.flowProgram
+import flow.FlowProgramConfig
 import flow.audio.Audio
-import flow.autoupdate.AutoUpdate
-import flow.autoupdate.AutoUpdate.autoUpdate
-import flow.bpm.BeatClock
 import flow.bpm.toIntervalCount
 import flow.color.ColorRepo
 import flow.color.ColorRepo.ColorRoles.*
 import flow.content.VisualGroup
 import flow.envelope.LinearCapacitor
-import flow.fx.MedianDenoisingFilter
-import flow.fx.MirrorFilter
+import flow.envelope.keyAutoUpdate
 import flow.fx.MirrorFilter.LookupFunctions.*
 import flow.input.InputScheme.TrackTypes.PIANO
 import flow.input.InputScheme.TrackTypes.TOGGLE
-import flow.input.inputScheme
-import flow.rendering.RenderPipeline
 import flow.rendering.image
-import flow.ui.UiDisplay
 import org.openrndr.Fullscreen
-import org.openrndr.KEY_ESCAPE
 import org.openrndr.KEY_SPACEBAR
 import org.openrndr.application
 import org.openrndr.draw.Drawer
 import org.openrndr.draw.isolated
 import org.openrndr.draw.isolatedWithTarget
-import org.openrndr.extra.fx.blur.GaussianBloom
-import org.openrndr.extra.fx.distort.Perturb
 import org.openrndr.math.Vector2
 import org.openrndr.math.map
 import org.openrndr.math.smootherstep
@@ -44,26 +36,18 @@ fun main() = application {
         display = displays.last()
     }
 
-    program {
-        // Init inputScheme
-        val inputScheme = inputScheme(keyboard)
-
-        // Init beatClock
-        val bpm = 125.0 // <- Play your favorite song. Set its bpm here.
-        val beatClock = extend(BeatClock(bpm))
-
-        // Init autoUpdate
-        extend(AutoUpdate)
-
-        // Init colors
-        val colorRepo = ColorRepo(ColorRepo.DEMO_PALETTE)
-
-        // Init audio input
-        val audio = Audio(
+    val config = FlowProgramConfig(
+        initialBpm = 125.0, // <- Play your favorite song. Set its bpm here.
+        audio = Audio(
             sampleRate = 44100,
             bufferSize = 4096,
             overlap = 4096 - 1024,
-        )
+        ),
+    )
+    flowProgram(config) {
+
+        // Init colors
+        val colorRepo = ColorRepo(ColorRepo.DEMO_PALETTE)
 
         // Specify audio processors
         val volProcessor = audio.createVolumeProcessor()
@@ -88,16 +72,7 @@ fun main() = application {
             segmentJoin(4.0, 0.0) via { x: Double -> smootherstep(0.0, 1.0, x) }
         }
 
-        // Init render pipeline
-        val renderPipeline = RenderPipeline(width, height, drawer)
-
-        // Init Fx
-        val bloom = GaussianBloom()
-        bloom.window = 1
-        val mirrorFx = MirrorFilter(renderPipeline.stencilBuffer)
-        val denoise = MedianDenoisingFilter()
-
-        val perturb = Perturb()
+        // Setup fx
         val perturbAmount = CyclicFlag(0, 1, 2, 3)
 
         // Init visual groups
@@ -148,9 +123,7 @@ fun main() = application {
             var ringRot = 0.0
 
             // Opacity of the ring is controlled by a capacitor.
-            val ringOpacity by LinearCapacitor(0.5, 0.1).autoUpdate {
-                update(beatClock.deltaSeconds, inputScheme.isKeyActive("q"))
-            }
+            val ringOpacity by LinearCapacitor(0.5, 0.1).keyAutoUpdate(flowProgram, "q")
 
             // If active, draw a center diamond and/or a ring of diamonds around it.
             override fun Drawer.draw() {
@@ -179,6 +152,7 @@ fun main() = application {
 
             }
 
+            // Draws a diamond at the specified position.
             fun Drawer.drawDiamond(x: Double, y: Double, size: Double) {
                 this.isolated {
                     translate(x, y)
@@ -192,14 +166,12 @@ fun main() = application {
         val audioGroup = object: VisualGroup(program) {
 
             // Fade in or fade out, as alpha factor controlled by "v"
-            val alphaFac by LinearCapacitor(0.5, 0.5).autoUpdate {
-                update(beatClock.deltaSeconds, inputScheme.isKeyActive("v"))
-            }
+            val alphaFac by LinearCapacitor(0.5, 0.5).keyAutoUpdate(flowProgram, "v")
 
-            // Audio mode
+            // Audio mode determines how the audio is visualized
             val audioMode = CyclicFlag("Magnitudes", "Bands")
 
-            // Screen vars
+            // Screen space vars
             val loX = width * 0.25
             val hiX = width * 0.75
             val loY = height * 0.75
@@ -215,6 +187,7 @@ fun main() = application {
                 drawer.drawSoundPressureLevel()
             }
 
+            // Draws bands for the ranges of frequencies.
             fun Drawer.drawBands() {
                 val bandedVolList = constantQ.filteredBandedVolumes
                 bandedVolList.forEachIndexed { i, vol ->
@@ -232,6 +205,7 @@ fun main() = application {
                 }
             }
 
+            // Visualizes the raw magnitudes of the audio.
             fun Drawer.drawMagnitudes() {
                 val volList = constantQ.filteredMagnitudes
                 volList.forEachIndexed { i, vol ->
@@ -245,6 +219,7 @@ fun main() = application {
                 }
             }
 
+            // Draws a rectangle for the overall volume on top.
             fun Drawer.drawSoundPressureLevel() {
                 val baseVol = volProcessor.filteredLastVolume
 
@@ -261,17 +236,15 @@ fun main() = application {
 
         val mirrorGroup = object: VisualGroup(program) {
 
-            // Circle of the mirror effect (recursive texture).
+            // A circular shape using the mirror effect (recursive texture).
             // It grows if activated, and shrinks if deactivated.
             val maxR = Vector2(0.3 * width, 0.3 * height).length
-            val alphaFac by LinearCapacitor(0.5, 0.5).autoUpdate {
-                update(beatClock.deltaSeconds, inputScheme.isKeyActive("m"))
-            }
+            val alphaFac by LinearCapacitor(0.5, 0.5).keyAutoUpdate(flowProgram, "m")
 
             var mirrorFlipX = false
             var mirrorFlipY = false
 
-            var rotateAndScale_angle by mirrorFx.parameters
+            var rotateAndScale_angle by renderPipeline.mirrorFx.parameters
 
             override fun Drawer.draw() {
                 // Update the mirror effect parameters
@@ -321,15 +294,13 @@ fun main() = application {
             track(PIANO, "w,a,s,d".split(","), "Bouncy balls")
             track(TOGGLE, "v", "Toggle Audio visualization")
             track(TOGGLE, "m", "Toggle mirror fx")
-            track(TOGGLE, "f1", "Toggle this controls display")
 
             // Hard-coded input bindings
             keyDown {
-                KEY_ESCAPE.bind("Exit Application") { audio.stop(); application.exit() }
                 KEY_SPACEBAR.bind("Reset Beat Clock") { beatClock.resetTime() }
                 "8".bind("BPM -1") { beatClock.animateTo(bpm = beatClock.bpm - 1.0, 0.1) }
                 "9".bind("BPM +1") { beatClock.animateTo(bpm = beatClock.bpm + 1.0, 0.1) }
-                "0".bind("BPM Reset") { beatClock.animateTo(bpm = bpm, 0.0) }
+                "0".bind("BPM Reset") { beatClock.animateTo(bpm = config.initialBpm, 0.0) }
                 "b".bind("Cycle Audio mode") { audioGroup.audioMode.next() }
                 "j".bind("Toggle mirror flip X") { mirrorGroup.mirrorFlipX = !mirrorGroup.mirrorFlipX }
                 "k".bind("Toggle mirror flip Y") { mirrorGroup.mirrorFlipY = !mirrorGroup.mirrorFlipY }
@@ -337,18 +308,12 @@ fun main() = application {
             }
         }
 
-        // Init UI display
-        val uiDisplay = UiDisplay(inputScheme).apply {
-            trackValue("BPM") { "${beatClock.bpm}" }
+        // Define UI display
+        uiDisplay.apply {
             trackValue("Phase") { "${beatClock.phase.round(2)}" }
-            trackValue("FPS") { "${beatClock.fps}" }
             trackValue("Audio mode") { audioGroup.audioMode.value }
             trackValue("Perturbations") { "${perturbAmount.value}" }
         }
-        uiDisplay.alphaCap = LinearCapacitor(0.1, 0.5).autoUpdate {
-            update(beatClock.deltaSeconds, inputScheme.isKeyActive("f1").not())
-        }
-
 
         // Draw loop
         extend {
@@ -361,7 +326,7 @@ fun main() = application {
                 diamondGroup.draw()
                 mirrorGroup.draw()
 
-                // Set Fx chain
+                // Set fx values
                 perturb.phase = seconds * 0.01
                 perturb.decay = + volProcessor.filteredLastVolume.map(0.3, 0.7, 1.0, 0.0)
                 perturb.gain = 0.8
@@ -375,7 +340,7 @@ fun main() = application {
                 // Apply mirror effect
                 mirrorFx.apply(imageBuffer, useCopyBuffer = true)
                 // Apply 3x3 median denoise to reduce salt-and-pepper noise
-                denoise.apply(imageBuffer)
+                medianDenoise.apply(imageBuffer)
             }
 
             // Draw the result to screen
