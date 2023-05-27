@@ -2,6 +2,7 @@
 
 package flow.ui
 
+import flow.envelope.Capacitor
 import flow.envelope.LinearCapacitor
 import flow.input.InputScheme
 import org.openrndr.color.ColorRGBa
@@ -20,7 +21,7 @@ class UiDisplay(val inputScheme: InputScheme) {
         valueUpdateList.removeAll { it.first == name }
     }
 
-    var alphaCap = LinearCapacitor(0.0, 0.0)
+    var alphaCap: Capacitor = LinearCapacitor(0.0, 0.0)
 
     fun displayOnDrawer(drawer: Drawer) {
         val maxNameLength = valueUpdateList.maxOfOrNull { it.first.length } ?: 0
