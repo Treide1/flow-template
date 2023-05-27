@@ -4,6 +4,7 @@ import flow.autoupdate.AutoUpdate.autoUpdate
 import flow.color.ColorRepo
 import flow.content.VisualGroup
 import flow.envelope.LinearCapacitor
+import flow.envelope.keyAutoUpdate
 import flow.fx.galaxyShadeStyle
 import flow.input.InputScheme.TrackTypes.TOGGLE
 import flow.rendering.image
@@ -41,9 +42,7 @@ fun main() = application {
             segmentJoin(1.00, 0.9) via { x: Double -> x.pow(3.0) }
         }
 
-        val kickFac by LinearCapacitor(0.1, 0.1).autoUpdate {
-            update(beatClock.deltaSeconds, inputScheme.isKeyActive("k"))
-        }
+        val kickFac by LinearCapacitor(0.1, 0.1).keyAutoUpdate(this, "k")
 
         val ebbAndFlow by beatClock.bindEnvelopeBySegments(8.0) {
             val exponentialDecay = { x: Double -> exp(-x).map(1.0, exp(-1.0), 0.0, 1.0) }
@@ -60,16 +59,12 @@ fun main() = application {
             "270" to "#E0C18D",
         )
 
-        // Setup audio
-        val volProcessor = audio.createVolumeProcessor()
-        audio.start()
-
         // Setup Fx
         renderPipeline.apply {
             lumaOpacity.autoUpdate {
                 foregroundOpacity = ebbAndFlow
                 backgroundLuma = ebbAndFlow.smoothstep(0.0, 1.0)
-                foregroundLuma = ebbAndFlow.smoothstep(0.0, 1.0) / 2.0
+                foregroundLuma = backgroundLuma / 2.0
             }
 
             chromaticAberration.autoUpdate {
@@ -135,12 +130,17 @@ fun main() = application {
                 glitchGroup.draw()
 
                 drawBuffer.applyFx(
-                    lumaOpacity,
-                    bloom,
+                    //lumaOpacity,
+                    //bloom,
                     verticalWave,
                     chromaticAberration
                 )
-                sourceAtop.apply(drawBuffer, tmpBuffer, imageBuffer)
+                //sourceAtop.apply(drawBuffer, tmpBuffer, imageBuffer)
+                squircleBlend.apply(drawBuffer, tmpBuffer, imageBuffer)
+                imageBuffer.applyFx(
+                    //bloom,
+                    //medianDenoise,
+                )
             }
 
             // Draw final image
