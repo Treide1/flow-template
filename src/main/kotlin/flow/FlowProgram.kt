@@ -4,9 +4,9 @@ package flow
 
 import flow.audio.Audio
 import flow.autoupdate.AutoUpdate
-import flow.autoupdate.AutoUpdate.autoUpdate
 import flow.bpm.BeatClock
 import flow.envelope.LinearCapacitor
+import flow.envelope.keyAutoUpdate
 import flow.input.InputScheme
 import flow.rendering.RenderPipeline
 import flow.ui.UiDisplay
@@ -31,6 +31,11 @@ data class FlowProgramConfig(
 open class FlowProgram private constructor(
     private val config: FlowProgramConfig = FlowProgramConfig(),
 ): ProgramImplementation(suspend = false) {
+
+    /**
+     *
+     */
+    val flowProgram = this
 
     /**
      *
@@ -80,9 +85,7 @@ open class FlowProgram private constructor(
     internal fun beforeInit() {
         extend(AutoUpdate)
 
-        uiDisplay.alphaCap = LinearCapacitor(0.1, 0.5).autoUpdate {
-            update(beatClock.deltaSeconds, inputScheme.isKeyActive("f1").not())
-        }
+        uiDisplay.alphaCap = LinearCapacitor(0.1, 0.5, offValue = 1.0, holdValue = 0.0).keyAutoUpdate(this, "f1")
 
         // Define controls for Input Scheme
         inputScheme.apply {
