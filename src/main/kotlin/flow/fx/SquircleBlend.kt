@@ -6,6 +6,12 @@ import org.openrndr.extra.parameters.DoubleParameter
 import org.openrndr.extra.parameters.IntParameter
 import org.openrndr.resourceText
 
+/**
+ * Squircle Blend
+ *
+ * @param blend How much to blend the squircle effect from source0 to source1
+ * @param mode The squircle shape mode
+ */
 @Description("Squircle Blend")
 class SquircleBlend: Filter2to1(
     filterShaderFromCode(resourceText("/squircleBlend.glsl"), "squircleBlend")
