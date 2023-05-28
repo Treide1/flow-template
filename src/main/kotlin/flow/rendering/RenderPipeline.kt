@@ -2,6 +2,7 @@
 
 package flow.rendering
 
+import flow.FlowProgram
 import flow.fx.MedianDenoisingFilter
 import flow.fx.MirrorFilter
 import flow.fx.SquircleBlend
@@ -15,14 +16,12 @@ import org.openrndr.extra.fx.color.ChromaticAberration
 import org.openrndr.extra.fx.color.LumaOpacity
 import org.openrndr.extra.fx.distort.Perturb
 import org.openrndr.extra.fx.distort.VerticalWave
-import org.openrndr.extra.gui.GUI
 import org.openrndr.extra.gui.addTo
 
 class RenderPipeline(
     width: Int,
     height: Int,
-    val drawer: Drawer,
-    val gui: GUI? = null,
+    val flowProgram: FlowProgram
     // builder: RenderPipelineBuilder.() -> Unit = {} // TODO: for scenes api
 ) {
 
@@ -66,11 +65,11 @@ class RenderPipeline(
     fun render(drawBlock: RenderPipeline.() -> Unit = {}) {
 
         // Draw onto drawTarget
-        drawer.isolatedWithTarget(drawTarget) {
+        flowProgram.drawer.isolatedWithTarget(drawTarget) {
             drawBlock()
         }
 
-        drawer.image(imageBuffer)
+        flowProgram. drawer.image(imageBuffer)
     }
 
     fun clear(colorBuffer: ColorBuffer = drawBuffer, color: ColorRGBa = ColorRGBa.TRANSPARENT) {
@@ -78,9 +77,7 @@ class RenderPipeline(
     }
 
     private fun <T: Filter> T.addToGui(): T {
-        if (gui != null) {
-            this.addTo(gui)
-        }
+        if (flowProgram.config.isWithGui) this.addTo(flowProgram.gui)
         return this
     }
 
@@ -122,7 +119,7 @@ class RenderPipeline(
      *
      */
     fun draw(function: Drawer.() -> Unit) {
-        drawer.isolatedWithTarget(drawTarget, function)
+        flowProgram.drawer.isolatedWithTarget(drawTarget, function)
     }
 
     /**

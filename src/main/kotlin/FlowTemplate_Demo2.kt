@@ -60,6 +60,8 @@ fun main() = application {
         )
 
         // Setup Fx
+        val blendFac by LinearCapacitor(1.0, 1.0).keyAutoUpdate(flowProgram, "b", alsoTrackWithType = TOGGLE)
+
         renderPipeline.apply {
             lumaOpacity.autoUpdate {
                 foregroundOpacity = ebbAndFlow
@@ -73,6 +75,10 @@ fun main() = application {
 
             verticalWave.autoUpdate {
                 amplitude = kick * kickFac * 0.02
+            }
+
+            squircleBlend.autoUpdate {
+                blend = blendFac
             }
         }
 
@@ -130,17 +136,13 @@ fun main() = application {
                 glitchGroup.draw()
 
                 drawBuffer.applyFx(
-                    //lumaOpacity,
-                    //bloom,
+                    bloom,
                     verticalWave,
                     chromaticAberration
                 )
-                //sourceAtop.apply(drawBuffer, tmpBuffer, imageBuffer)
                 squircleBlend.apply(drawBuffer, tmpBuffer, imageBuffer)
-                imageBuffer.applyFx(
-                    //bloom,
-                    //medianDenoise,
-                )
+
+                // TODO: allow for lumaOpacity+sourceAtop transition in different scene
             }
 
             // Draw final image

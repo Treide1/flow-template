@@ -2,6 +2,7 @@ package flow.envelope
 
 import flow.FlowProgram
 import flow.autoupdate.AutoUpdate.autoUpdate
+import flow.input.InputScheme
 import util.lerp
 import kotlin.reflect.KProperty
 
@@ -83,7 +84,12 @@ class LinearCapacitor(
     }
 }
 
-fun Capacitor.keyAutoUpdate(flowProgram: FlowProgram, keyName: String): Capacitor {
+fun Capacitor.keyAutoUpdate(
+    flowProgram: FlowProgram,
+    keyName: String,
+    alsoTrackWithType: InputScheme.TrackTypes? = null
+): Capacitor {
+    if (alsoTrackWithType != null) flowProgram.inputScheme.track(alsoTrackWithType, keyName, "Capacitor \"$keyName\"")
     return this.autoUpdate {
         update(flowProgram.beatClock.deltaSeconds, flowProgram.inputScheme.isKeyActive(keyName))
     }

@@ -29,7 +29,7 @@ data class FlowProgramConfig(
  *
  */
 open class FlowProgram private constructor(
-    private val config: FlowProgramConfig = FlowProgramConfig(),
+    val config: FlowProgramConfig = FlowProgramConfig(),
 ): ProgramImplementation(suspend = false) {
 
     /**
@@ -50,7 +50,7 @@ open class FlowProgram private constructor(
     /**
      *
      */
-    val renderPipeline by lazy { RenderPipeline(width, height, drawer, if (config.isWithGui) gui else null) }
+    val renderPipeline by lazy { RenderPipeline(width, height, flowProgram) }
 
     // TODO: provide access to attachments like this:
     /*{
