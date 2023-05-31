@@ -21,18 +21,15 @@ import org.openrndr.extra.gui.addTo
 class RenderPipeline(
     width: Int,
     height: Int,
-    val flowProgram: FlowProgram
-    // builder: RenderPipelineBuilder.() -> Unit = {} // TODO: for scenes api
+    private val flowProgram: FlowProgram
 ) {
-
-    // init { builder(RenderPipelineBuilder()) }
 
     /**
      * The target onto which the [render] function draws.
      */
     val drawTarget = renderTarget(width, height) {
         colorBuffer(ColorFormat.RGBa, ColorType.FLOAT32)
-        depthBuffer() // Shapes and contours require a depth buffer. Otherwise, unused.
+        depthBuffer() // Shapes and contours require a depth buffer. Unused besides that.
     }
 
     /**
@@ -40,7 +37,10 @@ class RenderPipeline(
      */
     val drawBuffer = drawTarget.colorBuffer(0)
 
-    val tmpBuffer = drawBuffer.createEquivalent()
+    /**
+     * A color buffer for temporary draw or fx results.
+     */
+    val tmpBuffer by lazy { drawBuffer.createEquivalent() }
 
     /**
      * Final render buffer that is displayed on screen.
@@ -50,32 +50,36 @@ class RenderPipeline(
     /**
      * Stencil target for effects. (Currently only MirrorFx)
      */
-    val stencilTarget = renderTarget(width, height) {
+    val stencilTarget by lazy { renderTarget(width, height) {
         colorBuffer(ColorFormat.R, ColorType.UINT8)
-    }
+    } }
 
     /**
      * The buffer of [stencilTarget].
      */
-    val stencilBuffer = stencilTarget.colorBuffer(0)
+    val stencilBuffer by lazy { stencilTarget.colorBuffer(0) }
 
     /**
      *
      */
-    fun render(drawBlock: RenderPipeline.() -> Unit = {}) {
+    fun render(block: RenderPipeline.() -> Unit = {}) {
 
         // Draw onto drawTarget
         flowProgram.drawer.isolatedWithTarget(drawTarget) {
-            drawBlock()
+            block()
         }
 
         flowProgram. drawer.image(imageBuffer)
     }
 
-    fun clear(colorBuffer: ColorBuffer = drawBuffer, color: ColorRGBa = ColorRGBa.TRANSPARENT) {
-        colorBuffer.fill(color)
+    /**
+     * Clears the [ColorBuffer] with the given [color].
+     */
+    fun ColorBuffer.clear(color: ColorRGBa = ColorRGBa.TRANSPARENT) {
+        this.fill(color)
     }
 
+    // Add filter to gui if the gui is configured
     private fun <T: Filter> T.addToGui(): T {
         if (flowProgram.config.isWithGui) this.addTo(flowProgram.gui)
         return this
@@ -93,57 +97,24 @@ class RenderPipeline(
     val squircleBlend by lazy { SquircleBlend().addToGui() }
     val medianDenoise by lazy { MedianDenoisingFilter().addToGui() }
 
-    fun ColorBuffer.applyFx(vararg filters: Filter): ColorBuffer {
-        filters.forEach {
-            it.apply(this)
-        }
-        return this
-    }
-
-
     /**
      * Shortcut for [Filter.apply] with (buffer, buffer).
-     * Allows to use inbetween [copyBuffer] if the [useCopyBuffer] flag is true.
+     * Allows to use an inbetween [ColorBuffer] if the [useCopyBuffer] flag is set.
      */
-    fun Filter.apply(buffer: ColorBuffer, useCopyBuffer: Boolean = false, copyBuffer: ColorBuffer = tmpBuffer) {
-        if (useCopyBuffer) {
-            this.apply(buffer, copyBuffer)
-            copyBuffer.copyTo(buffer)
+    fun Filter.apply(buffer: ColorBuffer, useCopyBuffer: ColorBuffer? = null) {
+        if (useCopyBuffer != null) {
+            this.apply(buffer, useCopyBuffer)
+            useCopyBuffer.copyTo(buffer)
         }
         else {
             this.apply(buffer, buffer)
         }
     }
-
-    /**
-     *
-     */
-    fun draw(function: Drawer.() -> Unit) {
-        flowProgram.drawer.isolatedWithTarget(drawTarget, function)
-    }
-
-    /**
-     *
-     */
-    fun fx(function: RenderPipeline.() -> Unit) {
-        function()
-    }
 }
 
 /**
- *
+ * Shortcut for [Drawer.image] with [RenderPipeline.imageBuffer].
  */
 fun Drawer.image(renderPipeline: RenderPipeline) {
     this.image(renderPipeline.imageBuffer)
-}
-
-class RenderPipelineBuilder {
-
-    fun attachDrawer(name: String, out: Boolean = false) {
-        // TODO()
-    }
-
-    fun attachStencil(name: String) {
-        // TODO()
-    }
 }

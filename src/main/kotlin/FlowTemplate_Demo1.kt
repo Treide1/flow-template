@@ -319,7 +319,7 @@ fun main() = application {
         extend {
             // Perform the render operation with the specified draw block
             renderPipeline.render {
-                clear()
+                drawBuffer.clear()
                 // Draw visual groups
                 audioGroup.draw()
                 circleGroup.draw()
@@ -338,7 +338,7 @@ fun main() = application {
                 // Resolve the content of the draw buffer to the image buffer. (For example, rescale it to fit to screen.)
                 drawBuffer.copyTo(imageBuffer)
                 // Apply mirror effect
-                mirrorFx.apply(imageBuffer, useCopyBuffer = true)
+                mirrorFx.apply(imageBuffer, useCopyBuffer = tmpBuffer)
                 // Apply 3x3 median denoise to reduce salt-and-pepper noise
                 medianDenoise.apply(imageBuffer)
             }

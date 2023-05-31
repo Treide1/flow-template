@@ -128,19 +128,17 @@ fun main() = application {
         extend {
 
             renderPipeline.render {
-                clear()
+                drawBuffer.clear()
                 galaxyGroup.draw()
                 drawBuffer.copyTo(tmpBuffer)
 
                 clear()
                 glitchGroup.draw()
 
-                drawBuffer.applyFx(
-                    bloom,
-                    verticalWave,
-                    chromaticAberration
-                )
-                squircleBlend.apply(drawBuffer, tmpBuffer, imageBuffer)
+                bloom.apply(drawBuffer)
+                verticalWave.apply(drawBuffer)
+                chromaticAberration.apply(drawBuffer)
+                squircleBlend.apply(drawBuffer, tmpBuffer, target = imageBuffer)
 
                 // TODO: allow for lumaOpacity+sourceAtop transition in different scene
             }
