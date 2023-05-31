@@ -86,7 +86,7 @@ fun main() = application {
         val glitchGroup = object: VisualGroup(program) {
 
             val videoPlayer = VideoPlayerFFMPEG.fromFile(
-                fileName="src/main/resources/videos/network_12716(1080p).mp4",
+                fileName = "src/main/resources/videos/network_12716(1080p).mp4",
                 mode = PlayMode.VIDEO
             )
 
@@ -122,17 +122,14 @@ fun main() = application {
             trackValue("Galaxy zoom") { galaxyGroup.zoomVariations.value }
         }
 
-        // val tmpBuffer = renderPipeline.createBuffer() // TODO
-
         // Draw loop
         extend {
-
             renderPipeline.render {
                 drawBuffer.clear()
                 galaxyGroup.draw()
                 drawBuffer.copyTo(tmpBuffer)
 
-                clear()
+                drawBuffer.clear()
                 glitchGroup.draw()
 
                 bloom.apply(drawBuffer)
@@ -151,7 +148,6 @@ fun main() = application {
         }
 
         inputScheme.apply {
-
             track(TOGGLE, "k", "Controls kickFac")
 
             keyDown {
