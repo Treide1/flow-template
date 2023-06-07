@@ -27,15 +27,15 @@ class RenderPipeline(
     /**
      * The target onto which the [render] function draws.
      */
-    val drawTarget = renderTarget(width, height) {
+    val drawTarget by lazy { renderTarget(width, height) {
         colorBuffer(ColorFormat.RGBa, ColorType.FLOAT32)
         depthBuffer() // Shapes and contours require a depth buffer. Unused besides that.
-    }
+    } }
 
     /**
      * The buffer of the [drawTarget].
      */
-    val drawBuffer = drawTarget.colorBuffer(0)
+    val drawBuffer by lazy { drawTarget.colorBuffer(0) }
 
     /**
      * A color buffer for temporary draw or fx results.
@@ -45,7 +45,7 @@ class RenderPipeline(
     /**
      * Final render buffer that is displayed on screen.
      */
-    val imageBuffer = drawBuffer.createEquivalent()
+    val imageBuffer by lazy { drawBuffer.createEquivalent() }
 
     /**
      * Stencil target for effects. (Currently only MirrorFx)
