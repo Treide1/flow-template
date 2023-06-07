@@ -4,7 +4,7 @@ package flow.fx
 
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.ColorBuffer
-import org.openrndr.draw.Filter
+import org.openrndr.draw.Filter1to1
 import org.openrndr.draw.filterShaderFromCode
 import org.openrndr.resourceText
 import kotlin.math.max
@@ -38,7 +38,7 @@ import kotlin.math.max
  */
 class MirrorFilter(
     stencilBuffer: ColorBuffer
-) : Filter(
+) : Filter1to1(
     filterShaderFromCode(resourceText("/mirrorFlameVars.glsl"), "mirrorFlameVars")
 ) {
     /**
