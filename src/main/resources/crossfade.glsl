@@ -10,5 +10,7 @@ uniform float blend;
 
 void main()
 {
-    o_color = (1.0 - blend) * texture(tex0, v_texCoord0) + blend * texture(tex1, v_texCoord0);
+    vec3 c0 = texture(tex0, v_texCoord0).rgb;
+    vec3 c1 = texture(tex1, v_texCoord0).rgb;
+    o_color = vec4(mix(c0, c1, blend), 1.0);
 }
