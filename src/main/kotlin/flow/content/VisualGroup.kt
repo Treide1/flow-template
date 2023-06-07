@@ -11,7 +11,7 @@ import org.openrndr.draw.Drawer
  */
 abstract class VisualGroup(program: Program) {
 
-    private val drawer = program.drawer
+    var drawer = program.drawer
 
     /**
      * The draw procedure to be implemented.
