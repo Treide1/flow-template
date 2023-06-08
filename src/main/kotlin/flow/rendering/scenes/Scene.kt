@@ -1,69 +1,22 @@
 package flow.rendering.scenes
 
+import flow.util.Unstable
 import mu.KotlinLogging
-import org.openrndr.draw.ColorBuffer
-import org.openrndr.draw.Drawer
-import org.openrndr.draw.Session
+import org.openrndr.draw.*
 import org.openrndr.extra.compositor.Composite
 import org.openrndr.extra.compositor.Layer
 import org.openrndr.extra.compositor.compose
+import org.openrndr.ffmpeg.VideoPlayerFFMPEG
 
 private val logger = KotlinLogging.logger {}
 
-/**
- *
- */
-class Scene(
-    val nav: SceneNavigator,
-    val composeFunction: Layer.() -> Unit
-) {
+@Unstable("Prone to crash")
+abstract class Scene {
+    abstract fun start()
+    abstract fun render(drawer: Drawer): ColorBuffer
+    abstract fun finish()
+
     var session: Session? = null
-
-    data class SceneResource(
-        val composite: Composite
-    )
-
-    var resource: SceneResource? = null
-
-    fun start() {
-        if (resource != null) {
-            logger.info { "Skipping start of scene=$this" }
-        }
-        else {
-            logger.info { "Starting scene=$this" }
-            session = nav.parentSession.fork()
-            logger.info { "Forked new session=$session" }
-            resource = SceneResource(composite = compose(composeFunction))
-        }
-    }
-
-    /**
-     * This will intentionally crash if not started, or after finish !
-     */
-    fun render(drawer: Drawer): ColorBuffer {
-        return withSession(session!!) {
-            val composite = resource!!.composite
-
-            logger.debug { "Rendering scene=$this" }
-            composite.draw(drawer)
-            composite.result
-        }
-    }
-
-    fun finish() {
-        if (session == null) {
-            logger.info { "Skipping finish of scene=$this" }
-        }
-        else {
-            logger.info { "Finishing scene=$this" }
-
-            resource = null
-
-            session!!.end()
-            Session.stack.remove(session!!)
-            session = null
-        }
-    }
 
     val name = "Scene-${nameCounter++}"
 
@@ -71,12 +24,95 @@ class Scene(
         return "Scene(name='$name', session=$session)"
     }
 
-    fun verboseToString(): String {
-        return "Scene(name='$name', session=$session, resource=$resource)"
-    }
-
     companion object {
         private var nameCounter = 0
+    }
+}
+
+/**
+ *
+ */
+class CompositeScene(
+    val nav: SceneNavigator,
+    val composeFunction: Layer.() -> Unit
+): Scene() {
+
+    var composite: Composite? = null
+
+    override fun start() {
+        if (composite != null) {
+            logger.info { "Skipping start of scene=$this" }
+        }
+        else {
+            logger.info { "Starting scene=$this" }
+            session = nav.parentSession.forkAndPop()
+            logger.info { "Forked new session=$session" }
+            composite = withSession(session!!) { compose(composeFunction) }
+        }
+    }
+
+    /**
+     * This will intentionally crash if not started, or after finish !
+     */
+    override fun render(drawer: Drawer): ColorBuffer {
+        logger.debug { "Rendering scene=$this" }
+        withSession(session!!) { composite!!.draw(drawer) }
+        return composite!!.result
+    }
+
+    override fun finish() {
+        if (session == null) {
+            logger.info { "Skipping finish of scene=$this" }
+        }
+        else {
+            logger.info { "Finishing scene=$this" }
+
+            composite = null
+
+            session!!.end()
+            //Session.stack.remove(session!!)
+            session = null
+        }
+    }
+}
+
+class VideoScene(
+    val nav: SceneNavigator,
+    // val videoPlayer: VideoPlayerFFMPEG
+    val createVideoPlayer: () -> VideoPlayerFFMPEG
+) : Scene() {
+
+    var rt: RenderTarget? = null
+    var videoPlayer: VideoPlayerFFMPEG? = null
+
+    override fun start() {
+        session = nav.parentSession.forkAndPop()
+        withSession(session!!) {
+            videoPlayer = createVideoPlayer()
+            videoPlayer!!.play()
+            rt = renderTarget(videoPlayer!!.width, videoPlayer!!.height) {
+                colorBuffer()
+            }
+        }
+        videoPlayer!!.ended.listen { videoPlayer!!.restart() }
+    }
+
+    override fun render(drawer: Drawer): ColorBuffer {
+        drawer.isolatedWithTarget(rt!!) {
+            videoPlayer!!.draw(drawer)
+        }
+        return rt!!.colorBuffer(0)
+    }
+
+    override fun finish() {
+        rt!!.destroy()
+        rt = null
+
+        videoPlayer!!.dispose()
+        videoPlayer = null
+
+        session!!.end()
+        session = null
     }
 
 }

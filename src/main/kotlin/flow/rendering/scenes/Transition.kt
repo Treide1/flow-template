@@ -1,5 +1,6 @@
 package flow.rendering.scenes
 
+import flow.util.Unstable
 import mu.KotlinLogging
 import org.openrndr.draw.*
 
@@ -8,46 +9,41 @@ private val logger = KotlinLogging.logger {}
 /**
  *
  */
-class Transition(
+@Unstable("Prone to crash")
+open class Transition(
     val nav: SceneNavigator,
     val function: TransitionFunction
 ) {
 
     var session: Session? = null
 
-    class TransitionResource(
-        var sourceScene: Scene,
-        var targetScene: Scene,
-    ) {
-        val transitionBuffer by lazy { sourceScene.resource!!.composite.result.createEquivalent() }
+    class BufferCache(val session: Session, val width: Int, val height: Int) {
+        val buffers = mutableMapOf<Int, ColorBuffer>()
+
+        operator fun get(index: Int): ColorBuffer {
+            return buffers.getOrPut(index) {
+                colorBuffer(width, height, session = session)
+            }
+        }
     }
 
-    var resource: TransitionResource? = null
+    var bufferCache = BufferCache(session ?: Session.active, nav.program.width, nav.program.height)
 
-    val transitionBuffer: ColorBuffer?
-        get() = resource?.transitionBuffer
-
-    fun start(source: Scene, target: Scene) {
+    fun start() {
         if (session != null) {
             logger.info { "Skipping start of transition=$this" }
         }
         else {
             logger.info { "Starting transition=$this" }
-            session = nav.parentSession.fork()
+            session = nav.parentSession.forkAndPop()
             logger.info { "Forked new session=$session" }
-            resource = TransitionResource(sourceScene = source, targetScene = target)
+            bufferCache = BufferCache(session!!, nav.program.width, nav.program.height)
+            logger.info { "Started transition=$this" }
         }
     }
 
-    fun render(drawer: Drawer, progress: Double): ColorBuffer {
+    fun render(b0: ColorBuffer, b1: ColorBuffer, progress: Double): ColorBuffer {
         return withSession(session!!) {
-            logger.debug { "Rendering transition=$this" }
-            logger.debug { "Transition progress=$progress" }
-            val sourceScene = resource!!.sourceScene
-            val targetScene = resource!!.targetScene
-
-            val b0 = sourceScene.render(drawer)
-            val b1 = targetScene.render(drawer)
             this.function(b0, b1, progress)
         }
     }
@@ -58,11 +54,9 @@ class Transition(
         }
         else {
             logger.info { "Finishing transition=$this" }
-
-            resource = null
-
             session!!.end()
-            Session.stack.remove(session!!)
+
+            logger.info { "Destroyed and removed session=$session from stack" }
             session = null
         }
     }
@@ -70,14 +64,7 @@ class Transition(
     val name = "Transition-${nameCounter++}"
 
     override fun toString(): String {
-        return  "Transition(name='$name', session=$session, sourceScene='${resource?.sourceScene?.name}', " +
-                "targetScene='${resource?.targetScene?.name}')"
-    }
-
-    fun verboseToString(): String {
-        return "Transition(name='$name', session=$session, resource=$resource, " +
-                "sourceScene=${resource?.sourceScene?.verboseToString()}, " +
-                "targetScene=${resource?.targetScene?.verboseToString()})"
+        return  "Transition(name='$name', session=$session)"
     }
 
     companion object {

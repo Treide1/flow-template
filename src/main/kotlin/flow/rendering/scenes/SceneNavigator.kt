@@ -3,6 +3,7 @@ package flow.rendering.scenes
 import flow.fx.Crossfade
 import flow.rendering.scenes.NavigationState.PlayingScene
 import flow.rendering.scenes.NavigationState.PlayingTransition
+import flow.util.Unstable
 import mu.KotlinLogging
 import org.openrndr.Extension
 import org.openrndr.Program
@@ -13,12 +14,14 @@ import org.openrndr.draw.Session
 import org.openrndr.draw.persistent
 import org.openrndr.extra.compositor.Layer
 import org.openrndr.extra.compositor.draw
-import org.openrndr.extra.fx.blend.Add
-import org.openrndr.extra.fx.blend.Overlay
 import org.openrndr.extra.fx.color.LumaOpacity
-import org.openrndr.math.map
+import org.openrndr.ffmpeg.VideoPlayerFFMPEG
 import org.openrndr.math.smoothstep
 
+/**
+ * A function on a [Transition] is a function that takes two [ColorBuffer]s and a progress value between 0.0 and 1.0.
+ * The return value has to be a [ColorBuffer] that is the result of the transition.
+ */
 typealias TransitionFunction =
         Transition.(firstSceneBuffer: ColorBuffer, secondSceneBuffer: ColorBuffer, progress: Double) -> ColorBuffer
 
@@ -41,6 +44,7 @@ private val logger = KotlinLogging.logger {}
  * Transition |      x----x
  * ```
  */
+@Unstable("Prone to crash")
 abstract class SceneNavigator(val program: Program) {
 
     /**
@@ -57,19 +61,26 @@ abstract class SceneNavigator(val program: Program) {
     /**
      *
      */
-    fun scene(compose: Layer.() -> Unit): Scene {
-        return Scene(this, compose)
+    fun compositeScene(compose: Layer.() -> Unit): CompositeScene {
+        return CompositeScene(this, compose)
+    }
+
+    /**
+     * Creates a [VideoScene] that will play the given [videoPlayer].
+     */
+    fun videoScene(createVideoPlayer: () -> VideoPlayerFFMPEG): VideoScene {
+        return VideoScene(this, createVideoPlayer)
     }
 
 
     /**
-     *
+     * Creates a [Transition] that will apply the given [function] to the two given scenes.
      */
     fun transition(function: TransitionFunction): Transition {
         return Transition(this, function)
     }
 
-    val defaultScene = scene {
+    val defaultScene = compositeScene {
         draw {
             clearColor = defaultClearColor
         }
@@ -79,6 +90,7 @@ abstract class SceneNavigator(val program: Program) {
     val luma = persistent { LumaOpacity() }
 
     val defaultTransition = transition {s0, s1, progress ->
+        val tmp = bufferCache[0]
         luma.apply {
             foregroundOpacity = progress
             backgroundLuma = progress.smoothstep(0.0, 1.0)
@@ -87,8 +99,8 @@ abstract class SceneNavigator(val program: Program) {
         // luma.apply(s1, s1)
 
         join.blend = progress
-        join.apply(s0, s1, transitionBuffer!!)
-        transitionBuffer!!
+        join.apply(s0, s1, tmp)
+        tmp
     }
 
     private var state: NavigationState = PlayingScene(defaultScene)
@@ -128,22 +140,23 @@ abstract class SceneNavigator(val program: Program) {
     ) {
         if (state is PlayingTransition) return
 
-        val _state = state as PlayingScene
+        val state = state as PlayingScene
 
         if (durationSeconds <= 0.0) {
-            _state.scene.finish()
+            state.scene.finish()
             targetScene.start()
 
-            state = PlayingScene(targetScene)
+            this.state = PlayingScene(targetScene)
             return
         }
 
-        val sourceScene = _state.scene
+        val sourceScene = state.scene
 
-        transition.start(sourceScene, targetScene)
+        transition.start()
         targetScene.start()
+        // transition.start()
 
-        state = PlayingTransition(
+        this.state = PlayingTransition(
             sourceScene = sourceScene,
             targetScene = targetScene,
             transition = transition,
@@ -158,46 +171,42 @@ abstract class SceneNavigator(val program: Program) {
     fun render(drawer: Drawer): ColorBuffer {
         logSessionStack()
 
-        // If a transition is present, update it
-        val progress = when (state) {
-            is PlayingScene -> null
-            is PlayingTransition -> {
-                val state = state as PlayingTransition
-                val start = state.startTime
-                val end = start + state.durationSeconds
-                program.seconds.map(start, end, 0.0, 1.0)
-            }
-        }
+        var state = state // Immutable copy to avoid concurrent modification
 
         // If the transition is finished, switch to the target scene
-        if (progress != null && progress >= 1.0) {
+        if (state is PlayingTransition && program.seconds >= state.startTime + state.durationSeconds) {
             logger.info { "Transition complete. Finishing it and source scene." }
-            (state as PlayingTransition).apply {
-                sourceScene.finish()
-                transition.finish()
-            }
-            val target = (state as PlayingTransition).targetScene
-            state = PlayingScene(target)
+
+            val ss = state.sourceScene
+            logger.debug { "Finishing sourceScene=$ss with session index=${Debugger.indexOf(ss.session!!)}" }
+            state.sourceScene.finish()
+
+            val t = state.transition
+            logger.debug { "Finishing transition=$t with session index ${Debugger.indexOf(t.session!!)}" }
+            state.transition.finish()
+            this.state = PlayingScene(state.targetScene)
+
         }
 
+        // Update the state reference
+        state = this.state
 
         val cb = when (state) {
             is PlayingScene -> {
                 // Render the scene
-                val scene = (state as PlayingScene).scene
-                scene.render(drawer)
+                state.scene.render(drawer)
             }
             is PlayingTransition -> {
-                if (progress == 0.0) {
-                    println("progress is 0.0, rendering source scene instead")
-                    val scene = (state as PlayingTransition).sourceScene
-                    scene.render(drawer)
+                // Calculate the progress of the transition
+                val progress = if (state.durationSeconds > 0.0) {
+                    (program.seconds - state.startTime) / state.durationSeconds
+                } else {
+                    1.0
                 }
-                else {
-                    // Renders both scenes, then the transition
-                    val transition = (state as PlayingTransition).transition
-                    transition.render(drawer, progress!!)
-                }
+                // Renders both scenes, then the transition
+                val b0 = state.sourceScene.render(drawer)
+                val b1 = state.targetScene.render(drawer)
+                state.transition.render(b0, b1, progress)
             }
         }
         println("_________________________")
@@ -206,20 +215,38 @@ abstract class SceneNavigator(val program: Program) {
 
 }
 
-fun logSessionStack(){
+object Debugger {
+    var sessionCounter = 0
+    val sessionTracker = mutableMapOf<Session, Int>()
+
+    fun indexOf(session: Session): Int {
+        return sessionTracker.getOrPut(session) {
+            sessionCounter++
+        }
+    }
+}
+
+fun Session.forkAndPop(): Session {
+    val s = this.fork()
+    Session.stack.removeLast()
+    return s
+}
+
+
+fun logSessionStack() {
     val stack = Session.stack.map { it }
     logger.debug { "Session stack (size=${stack.size}): " }
     stack.forEachIndexed { index, s ->
         val stats = s.statistics
-        logger.debug { "#$index: Session(this=$s, parent=${s.parent}, renderTargets=${stats.renderTargets}, colorBuffers=${stats.colorBuffers})" }
+        logger.debug { "#${Debugger.indexOf(s)}: Session(this=$s, parent=${s.parent}, renderTargets=${stats.renderTargets}, colorBuffers=${stats.colorBuffers})" }
     }
 }
 
 inline fun <T> withSession(session: Session, block: () -> T): T {
     Session.stack.addLast(session)
-    val pos = Session.stack.size - 1
+    // val pos = Session.stack.size - 1
     val result = block()
-    Session.stack.removeAt(pos)
+    Session.stack.remove(session) // removeAt(pos)
     return result
 }
 

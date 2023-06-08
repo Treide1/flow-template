@@ -7,8 +7,10 @@ import flow.color.ColorRepo
 import flow.content.VisualGroup
 import flow.envelope.LinearCapacitor
 import flow.envelope.keyAutoUpdate
+import flow.fx.Crossfade
 import flow.fx.galaxyShadeStyle
 import flow.input.InputScheme.TrackTypes.TOGGLE
+import flow.rendering.scenes.Scene
 import flow.rendering.scenes.SceneNavigator
 import org.openrndr.Fullscreen
 import org.openrndr.application
@@ -20,6 +22,8 @@ import org.openrndr.ffmpeg.VideoPlayerFFMPEG
 import org.openrndr.math.map
 import org.openrndr.math.smoothstep
 import flow.util.CyclicFlag
+import org.openrndr.extra.fx.color.ChromaticAberration
+import org.openrndr.extra.fx.distort.VerticalWave
 import kotlin.math.exp
 import kotlin.math.pow
 
@@ -93,39 +97,56 @@ fun main() = application {
 
             override val defaultClearColor = ColorRGBa.TRANSPARENT
 
-            val s1 = scene {
+            val s1 = compositeScene {
                 draw {
                     galaxyGroup.draw()
                 }
 
-                post(renderPipeline.chromaticAberration) {
+                post(ChromaticAberration()) {
                     aberrationFactor = kick * kickFac * 20.0
                 }
-                post(renderPipeline.verticalWave) {
+                post(VerticalWave()) {
                     amplitude = kick * kickFac * 0.02
                 }
             }
 
-            val s2 = scene {
-                val videoPlayer = VideoPlayerFFMPEG.fromFile(
+            val s2 = videoScene {
+                VideoPlayerFFMPEG.fromFile(
                     fileName = "src/main/resources/videos/network_12716(1080p).mp4",
                     mode = PlayMode.VIDEO
                 )
-
-                videoPlayer.ended.listen { videoPlayer.restart() }
-                videoPlayer.play()
-
-                draw {
-                    videoPlayer.draw(drawer)
-                }
             }
 
             var remainingTransitions = 0
 
-            val t1 = transition { s0, s1, t ->
-                renderPipeline.squircleBlend.blend = t
-                renderPipeline.squircleBlend.apply(s0, s1, transitionBuffer!!)
-                transitionBuffer!!
+            val t1 = transition { s0, s1, progress ->
+                val tmp = bufferCache[0]
+                renderPipeline.squircleBlend.blend = progress
+                renderPipeline.squircleBlend.apply(s0, s1, tmp)
+                tmp
+            }
+
+            val t2 = transition { s0, s1, t ->
+                val lumaTmp = bufferCache[0]
+                val joinTmp = bufferCache[1]
+                renderPipeline.lumaOpacity.apply {
+                    foregroundOpacity = t
+                    backgroundLuma = t
+                    foregroundLuma = backgroundLuma / 2.0
+                    apply(s1, lumaTmp)
+                }
+                val cf = Crossfade()
+                cf.blend = t
+                cf.apply(s0, lumaTmp, joinTmp)
+                joinTmp
+            }
+        }
+
+        fun otherScene(): Scene {
+            return if (sceneNav.currentScene == sceneNav.s1) {
+                sceneNav.s2
+            } else {
+                sceneNav.s1
             }
         }
 
@@ -141,12 +162,7 @@ fun main() = application {
             if (sceneNav.remainingTransitions > 0 && sceneNav.currentTransition == null) {
                 sceneNav.remainingTransitions--
 
-                val otherScene = if (sceneNav.currentScene == sceneNav.s1) {
-                    sceneNav.s2
-                } else {
-                    sceneNav.s1
-                }
-                sceneNav.startTransition(sceneNav.t1, otherScene, 2.0)
+                sceneNav.startTransition(sceneNav.t1, otherScene(), 2.0)
             }
 
             val img = sceneNav.render(drawer)
@@ -161,6 +177,7 @@ fun main() = application {
             keyDown {
                 "z".bind("Next zoom variation") { galaxyGroup.zoomVariations.next() }
                 "t".bind("Queue transition") { sceneNav.remainingTransitions++ }
+                "l".bind("Luma transition") { sceneNav.startTransition(sceneNav.t2, otherScene(), 2.0) }
             }
         }
     }

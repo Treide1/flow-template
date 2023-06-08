@@ -71,3 +71,5 @@ fun createTriangleContour(position: Vector2, radius: Double, rotation: Double): 
 const val TWO_PI = 2.0 * Math.PI
 const val HALF_PI = 0.5 * Math.PI
 const val QUARTER_PI = 0.25 * Math.PI
+
+annotation class Unstable(val reason: String = "Unstable API")
