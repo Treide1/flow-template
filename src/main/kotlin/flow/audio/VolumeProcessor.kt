@@ -9,7 +9,7 @@ import flow.audio.Audio.Companion.LOWEST_SPL
 import flow.realtime.filters.OneEuroFilter
 import org.openrndr.math.clamp
 import org.openrndr.math.map
-import util.QueueCache
+import flow.util.QueueCache
 
 /**
  * Audio processor that calculates the decibel value of the signal.

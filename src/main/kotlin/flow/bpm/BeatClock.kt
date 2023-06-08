@@ -11,7 +11,7 @@ import org.openrndr.draw.Drawer
 import org.openrndr.math.map
 import org.openrndr.math.saturate
 import org.openrndr.panel.elements.round
-import util.lerp
+import flow.util.lerp
 import kotlin.math.floor
 
 /**

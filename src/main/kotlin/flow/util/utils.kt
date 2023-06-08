@@ -1,6 +1,6 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "unused")
 
-package util
+package flow.util
 
 import org.openrndr.math.Vector2
 import org.openrndr.shape.ShapeContour

@@ -1,3 +1,5 @@
+package demos
+
 import flow.FlowProgram.Companion.flowProgram
 import flow.FlowProgramConfig
 import flow.autoupdate.AutoUpdate.autoUpdate
@@ -7,15 +9,17 @@ import flow.envelope.LinearCapacitor
 import flow.envelope.keyAutoUpdate
 import flow.fx.galaxyShadeStyle
 import flow.input.InputScheme.TrackTypes.TOGGLE
-import flow.rendering.image
+import flow.rendering.scenes.SceneNavigator
 import org.openrndr.Fullscreen
 import org.openrndr.application
+import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.Drawer
+import org.openrndr.extra.compositor.*
 import org.openrndr.ffmpeg.PlayMode
 import org.openrndr.ffmpeg.VideoPlayerFFMPEG
 import org.openrndr.math.map
 import org.openrndr.math.smoothstep
-import util.CyclicFlag
+import flow.util.CyclicFlag
 import kotlin.math.exp
 import kotlin.math.pow
 
@@ -59,48 +63,15 @@ fun main() = application {
             "270" to "#E0C18D",
         )
 
-        // Setup Fx
-        val blendFac by LinearCapacitor(1.0, 1.0).keyAutoUpdate(flowProgram, "b", alsoTrackWithType = TOGGLE)
-
         renderPipeline.apply {
             lumaOpacity.autoUpdate {
                 foregroundOpacity = ebbAndFlow
                 backgroundLuma = ebbAndFlow.smoothstep(0.0, 1.0)
                 foregroundLuma = backgroundLuma / 2.0
             }
-
-            chromaticAberration.autoUpdate {
-                aberrationFactor = kick * kickFac * 20.0
-            }
-
-            verticalWave.autoUpdate {
-                amplitude = kick * kickFac * 0.02
-            }
-
-            squircleBlend.autoUpdate {
-                blend = blendFac
-            }
         }
 
         // Define visual groups
-        val glitchGroup = object: VisualGroup(program) {
-
-            val videoPlayer = VideoPlayerFFMPEG.fromFile(
-                fileName = "src/main/resources/videos/network_12716(1080p).mp4",
-                mode = PlayMode.VIDEO
-            )
-
-            init {
-                videoPlayer.ended.listen { videoPlayer.restart() }
-                videoPlayer.play()
-            }
-
-            override fun Drawer.draw() {
-                videoPlayer.draw(this)
-            }
-
-        }
-
         val galaxyGroup = object: VisualGroup(program) {
 
             val zoomVariations = CyclicFlag("Step by step", "Full Zoom")
@@ -117,33 +88,70 @@ fun main() = application {
             }
         }
 
+        // Define scenes and transitions
+        val sceneNav = object: SceneNavigator(program) {
+
+            override val defaultClearColor = ColorRGBa.TRANSPARENT
+
+            val s1 = scene {
+                draw {
+                    galaxyGroup.draw()
+                }
+
+                post(renderPipeline.chromaticAberration) {
+                    aberrationFactor = kick * kickFac * 20.0
+                }
+                post(renderPipeline.verticalWave) {
+                    amplitude = kick * kickFac * 0.02
+                }
+            }
+
+            val s2 = scene {
+                val videoPlayer = VideoPlayerFFMPEG.fromFile(
+                    fileName = "src/main/resources/videos/network_12716(1080p).mp4",
+                    mode = PlayMode.VIDEO
+                )
+
+                videoPlayer.ended.listen { videoPlayer.restart() }
+                videoPlayer.play()
+
+                draw {
+                    videoPlayer.draw(drawer)
+                }
+            }
+
+            var remainingTransitions = 0
+
+            val t1 = transition { s0, s1, t ->
+                renderPipeline.squircleBlend.blend = t
+                renderPipeline.squircleBlend.apply(s0, s1, transitionBuffer!!)
+                transitionBuffer!!
+            }
+        }
+
         // Init UI display
         uiDisplay.apply {
             trackValue("Galaxy zoom") { galaxyGroup.zoomVariations.value }
         }
 
-        // Draw loop
+        // Main draw loop
         extend {
-            renderPipeline.render {
-                drawBuffer.clear()
-                galaxyGroup.draw()
-                drawBuffer.copyTo(tmpBuffer)
+            if (frameCount == 5) sceneNav.startTransition(sceneNav.defaultTransition, sceneNav.s1, 0.5)
 
-                drawBuffer.clear()
-                glitchGroup.draw()
+            if (sceneNav.remainingTransitions > 0 && sceneNav.currentTransition == null) {
+                sceneNav.remainingTransitions--
 
-                bloom.apply(drawBuffer)
-                verticalWave.apply(drawBuffer)
-                chromaticAberration.apply(drawBuffer)
-                squircleBlend.apply(drawBuffer, tmpBuffer, target = imageBuffer)
-
-                // TODO: allow for lumaOpacity+sourceAtop transition in different scene
+                val otherScene = if (sceneNav.currentScene == sceneNav.s1) {
+                    sceneNav.s2
+                } else {
+                    sceneNav.s1
+                }
+                sceneNav.startTransition(sceneNav.t1, otherScene, 2.0)
             }
 
-            // Draw final image
-            drawer.image(renderPipeline)
+            val img = sceneNav.render(drawer)
+            drawer.image(img)
 
-            // Draw controls
             uiDisplay.displayOnDrawer(drawer)
         }
 
@@ -152,6 +160,7 @@ fun main() = application {
 
             keyDown {
                 "z".bind("Next zoom variation") { galaxyGroup.zoomVariations.next() }
+                "t".bind("Queue transition") { sceneNav.remainingTransitions++ }
             }
         }
     }

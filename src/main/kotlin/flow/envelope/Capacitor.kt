@@ -3,7 +3,7 @@ package flow.envelope
 import flow.FlowProgram
 import flow.autoupdate.AutoUpdate.autoUpdate
 import flow.input.InputScheme
-import util.lerp
+import flow.util.lerp
 import kotlin.reflect.KProperty
 
 

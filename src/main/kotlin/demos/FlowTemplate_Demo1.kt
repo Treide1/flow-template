@@ -1,3 +1,5 @@
+package demos
+
 import flow.FlowProgram.Companion.flowProgram
 import flow.FlowProgramConfig
 import flow.audio.Audio
@@ -21,10 +23,10 @@ import org.openrndr.math.Vector2
 import org.openrndr.math.map
 import org.openrndr.math.smootherstep
 import org.openrndr.panel.elements.round
-import util.CyclicFlag
-import util.TWO_PI
-import util.createTriangleContour
-import util.lerp
+import flow.util.CyclicFlag
+import flow.util.TWO_PI
+import flow.util.createTriangleContour
+import flow.util.lerp
 import kotlin.math.*
 
 /**
