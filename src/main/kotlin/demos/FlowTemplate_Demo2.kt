@@ -10,7 +10,6 @@ import flow.envelope.keyAutoUpdate
 import flow.fx.Crossfade
 import flow.fx.galaxyShadeStyle
 import flow.input.InputScheme.TrackTypes.TOGGLE
-import flow.rendering.scenes.Scene
 import flow.rendering.scenes.SceneNavigator
 import org.openrndr.Fullscreen
 import org.openrndr.application
@@ -22,10 +21,12 @@ import org.openrndr.ffmpeg.VideoPlayerFFMPEG
 import org.openrndr.math.map
 import org.openrndr.math.smoothstep
 import flow.util.CyclicFlag
+import flow.util.TWO_PI
 import org.openrndr.extra.fx.color.ChromaticAberration
 import org.openrndr.extra.fx.distort.VerticalWave
 import kotlin.math.exp
 import kotlin.math.pow
+import kotlin.math.sin
 
 /**
  * Demo 2 of the "Flow" template.
@@ -42,12 +43,8 @@ fun main() = application {
     ) {
 
         // Define beat-based values
-        val kick by beatClock.bindEnvelopeBySegments(1.0) {
-            lastX = 0.9
-            segmentJoin(0.50, 1.0)
-            segmentJoin(0.75, 0.1) via { org.openrndr.math.smootherstep(0.0, 1.0, it) }
-            segmentJoin(0.85, 0.0)
-            segmentJoin(1.00, 0.9) via { x: Double -> x.pow(3.0) }
+        val kick by beatClock.bindEnvelope(1.0) { phase ->
+            sin(phase * TWO_PI).coerceAtLeast(0.0)
         }
 
         val kickFac by LinearCapacitor(0.1, 0.1).keyAutoUpdate(this, "k")
@@ -97,20 +94,22 @@ fun main() = application {
 
             override val defaultClearColor = ColorRGBa.TRANSPARENT
 
-            val s1 = compositeScene {
-                draw {
-                    galaxyGroup.draw()
-                }
+            val compositeS = compositeScene {
+                layer {
+                    draw {
+                        galaxyGroup.draw()
+                    }
 
-                post(ChromaticAberration()) {
-                    aberrationFactor = kick * kickFac * 20.0
-                }
-                post(VerticalWave()) {
-                    amplitude = kick * kickFac * 0.02
+                    post(ChromaticAberration()) {
+                        aberrationFactor = kick * kickFac * 20.0
+                    }
+                    post(VerticalWave()) {
+                        amplitude = kick * kickFac * 0.02
+                    }
                 }
             }
 
-            val s2 = videoScene {
+            val videoS = videoScene {
                 VideoPlayerFFMPEG.fromFile(
                     fileName = "src/main/resources/videos/network_12716(1080p).mp4",
                     mode = PlayMode.VIDEO
@@ -119,16 +118,16 @@ fun main() = application {
 
             var remainingTransitions = 0
 
-            val t1 = transition { s0, s1, progress ->
-                val tmp = bufferCache[0]
+            val squircleT = transition { s0, s1, progress ->
+                val tmp = getTmpBuffer(0)
                 renderPipeline.squircleBlend.blend = progress
                 renderPipeline.squircleBlend.apply(s0, s1, tmp)
                 tmp
             }
 
-            val t2 = transition { s0, s1, t ->
-                val lumaTmp = bufferCache[0]
-                val joinTmp = bufferCache[1]
+            val lumaT = transition { s0, s1, t ->
+                val lumaTmp = getTmpBuffer(0)
+                val joinTmp = getTmpBuffer(1)
                 renderPipeline.lumaOpacity.apply {
                     foregroundOpacity = t
                     backgroundLuma = t
@@ -136,33 +135,37 @@ fun main() = application {
                     apply(s1, lumaTmp)
                 }
                 val cf = Crossfade()
-                cf.blend = t
+                cf.blend = t * t
                 cf.apply(s0, lumaTmp, joinTmp)
                 joinTmp
             }
         }
 
-        fun otherScene(): Scene {
-            return if (sceneNav.currentScene == sceneNav.s1) {
-                sceneNav.s2
+        fun transitionToOtherScene() {
+            if (sceneNav.currentScene == sceneNav.compositeS) {
+                sceneNav.startTransition(sceneNav.lumaT, sceneNav.videoS, 1.5)
             } else {
-                sceneNav.s1
+                sceneNav.startTransition(sceneNav.squircleT, sceneNav.compositeS, 2.5)
             }
         }
 
         // Init UI display
         uiDisplay.apply {
             trackValue("Galaxy zoom") { galaxyGroup.zoomVariations.value }
+            trackValue("Remaining transitions") { "${sceneNav.remainingTransitions}" }
+            trackValue("Kick") { kick.toString() }
+            trackValue("Kick Fac") { kickFac.toString() }
+
         }
 
         // Main draw loop
         extend {
-            if (frameCount == 5) sceneNav.startTransition(sceneNav.defaultTransition, sceneNav.s1, 0.5)
+            if (frameCount == 5) sceneNav.startTransition(sceneNav.defaultTransition, sceneNav.compositeS, 0.5)
 
             if (sceneNav.remainingTransitions > 0 && sceneNav.currentTransition == null) {
                 sceneNav.remainingTransitions--
 
-                sceneNav.startTransition(sceneNav.t1, otherScene(), 2.0)
+                transitionToOtherScene()
             }
 
             val img = sceneNav.render(drawer)
@@ -177,7 +180,6 @@ fun main() = application {
             keyDown {
                 "z".bind("Next zoom variation") { galaxyGroup.zoomVariations.next() }
                 "t".bind("Queue transition") { sceneNav.remainingTransitions++ }
-                "l".bind("Luma transition") { sceneNav.startTransition(sceneNav.t2, otherScene(), 2.0) }
             }
         }
     }

@@ -1,70 +1,47 @@
 package flow.rendering.scenes
 
-import flow.util.Unstable
 import mu.KotlinLogging
 import org.openrndr.draw.*
 
 private val logger = KotlinLogging.logger {}
 
 /**
+ * Transitions for the [SceneNavigator].
  *
+ * A transition can be drawn using [render], which takes two [ColorBuffer]s
+ * from two scenes and a progress how far to blend between them.
+ *
+ * Before the first [render] call, [start] needs to be called.
+ * After the last [render] call, [finish] needs to be called.
  */
-@Unstable("Prone to crash")
 open class Transition(
     val nav: SceneNavigator,
     val function: TransitionFunction
 ) {
 
-    var session: Session? = null
+    val renderTargets = mutableMapOf<Int, RenderTarget>()
 
-    class BufferCache(val session: Session, val width: Int, val height: Int) {
-        val buffers = mutableMapOf<Int, ColorBuffer>()
-
-        operator fun get(index: Int): ColorBuffer {
-            return buffers.getOrPut(index) {
-                colorBuffer(width, height, session = session)
-            }
-        }
-    }
-
-    var bufferCache = BufferCache(session ?: Session.active, nav.program.width, nav.program.height)
+    fun getTmpBuffer(index: Int) = renderTargets.getOrPut(index) {
+        nav.renderTargetPool.acquireAny()
+    }.colorBuffer(0)
 
     fun start() {
-        if (session != null) {
-            logger.info { "Skipping start of transition=$this" }
-        }
-        else {
-            logger.info { "Starting transition=$this" }
-            session = nav.parentSession.forkAndPop()
-            logger.info { "Forked new session=$session" }
-            bufferCache = BufferCache(session!!, nav.program.width, nav.program.height)
-            logger.info { "Started transition=$this" }
-        }
+        // pass
     }
 
     fun render(b0: ColorBuffer, b1: ColorBuffer, progress: Double): ColorBuffer {
-        return withSession(session!!) {
-            this.function(b0, b1, progress)
-        }
+        return function(this, b0, b1, progress)
     }
 
     fun finish() {
-        if (session == null) {
-            logger.info { "Skipping finish of transition=$this" }
-        }
-        else {
-            logger.info { "Finishing transition=$this" }
-            session!!.end()
-
-            logger.info { "Destroyed and removed session=$session from stack" }
-            session = null
-        }
+        renderTargets.values.forEach { nav.renderTargetPool.release(it) }
+        renderTargets.clear()
     }
 
     val name = "Transition-${nameCounter++}"
 
     override fun toString(): String {
-        return  "Transition(name='$name', session=$session)"
+        return  "Transition(name='$name', renderTargets=$renderTargets)"
     }
 
     companion object {

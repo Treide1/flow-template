@@ -56,6 +56,38 @@ class QueueCache<T>(val size: Int){
     }
 }
 
+/**
+ * Resource Pool that allows for ...
+ */
+class Pool<T>(
+    initialCount: Int,
+    val creation: (Int) -> T,
+) {
+    val resourceList = List(initialCount, creation).toMutableList()
+
+    private val inUse = mutableListOf<T>()
+
+    fun withAny(block: (T) -> Unit) {
+        val element = acquireAny()
+        block(element)
+        release(element)
+    }
+
+    fun acquireAny(): T {
+        var element = inUse.firstOrNull { it !in resourceList }
+        if (element == null) {
+            element = creation(resourceList.size)
+            resourceList.add(element)
+        }
+        inUse.add(element!!)
+        return element
+    }
+
+    fun release(element: T) {
+        inUse.remove(element)
+    }
+}
+
 fun createTriangleContour(position: Vector2, radius: Double, rotation: Double): ShapeContour {
 
     val triangleVertices = List(3) { Vector2(radius, 0.0).rotate(90.0 + it*120.0) }

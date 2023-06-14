@@ -1,29 +1,30 @@
+@file:Suppress("unused")
+
 package flow.rendering.scenes
 
 import flow.fx.Crossfade
 import flow.rendering.scenes.NavigationState.PlayingScene
 import flow.rendering.scenes.NavigationState.PlayingTransition
-import flow.util.Unstable
+import flow.util.Pool
 import mu.KotlinLogging
 import org.openrndr.Extension
 import org.openrndr.Program
 import org.openrndr.color.ColorRGBa
-import org.openrndr.draw.ColorBuffer
-import org.openrndr.draw.Drawer
-import org.openrndr.draw.Session
-import org.openrndr.draw.persistent
+import org.openrndr.draw.*
 import org.openrndr.extra.compositor.Layer
 import org.openrndr.extra.compositor.draw
-import org.openrndr.extra.fx.color.LumaOpacity
 import org.openrndr.ffmpeg.VideoPlayerFFMPEG
-import org.openrndr.math.smoothstep
 
 /**
- * A function on a [Transition] is a function that takes two [ColorBuffer]s and a progress value between 0.0 and 1.0.
+ * A function on a [Transition] that takes two [ColorBuffer]s and a progress value between 0.0 and 1.0.
  * The return value has to be a [ColorBuffer] that is the result of the transition.
  */
 typealias TransitionFunction =
-        Transition.(firstSceneBuffer: ColorBuffer, secondSceneBuffer: ColorBuffer, progress: Double) -> ColorBuffer
+        Transition.(
+            firstSceneBuffer: ColorBuffer,
+            secondSceneBuffer: ColorBuffer,
+            progress: Double
+        ) -> ColorBuffer
 
 private val logger = KotlinLogging.logger {}
 
@@ -44,29 +45,24 @@ private val logger = KotlinLogging.logger {}
  * Transition |      x----x
  * ```
  */
-@Unstable("Prone to crash")
 abstract class SceneNavigator(val program: Program) {
 
     /**
-     *
-     */
-    val parentSession = Session.active
-
-    /**
-     *
+     * The default clear color of the [defaultScene].
      */
     open val defaultClearColor: ColorRGBa = ColorRGBa.TRANSPARENT
 
 
     /**
-     *
+     * Creates a [CompositeScene] that will render the given [compose] function.
      */
     fun compositeScene(compose: Layer.() -> Unit): CompositeScene {
         return CompositeScene(this, compose)
     }
 
     /**
-     * Creates a [VideoScene] that will play the given [videoPlayer].
+     * Creates a [VideoScene] that will play the video player result of [createVideoPlayer].
+     * (On [VideoScene.start], a new video player is created by calling [createVideoPlayer])
      */
     fun videoScene(createVideoPlayer: () -> VideoPlayerFFMPEG): VideoScene {
         return VideoScene(this, createVideoPlayer)
@@ -80,69 +76,104 @@ abstract class SceneNavigator(val program: Program) {
         return Transition(this, function)
     }
 
+    /**
+     * The default scene that just clears the screen with [defaultClearColor].
+     */
     val defaultScene = compositeScene {
         draw {
             clearColor = defaultClearColor
         }
     }
 
-    val join = persistent { Crossfade() }
-    val luma = persistent { LumaOpacity() }
-
-    val defaultTransition = transition {s0, s1, progress ->
-        val tmp = bufferCache[0]
-        luma.apply {
-            foregroundOpacity = progress
-            backgroundLuma = progress.smoothstep(0.0, 1.0)
-            foregroundLuma = backgroundLuma / 2.0
+    /**
+     * The pool of [RenderTarget]s used by this navigator.
+     */
+    val renderTargetPool = Pool(4) {
+        renderTarget(program.width, program.height) {
+            colorBuffer()
+            depthBuffer()
         }
-        // luma.apply(s1, s1)
+    }
 
+    val join = persistent { Crossfade() }
+
+    /**
+     * The default transition. Uses [Crossfade] to blend between the two scenes.
+     */
+    val defaultTransition = transition {s0, s1, progress ->
+        val tmp = getTmpBuffer(0)
         join.blend = progress
         join.apply(s0, s1, tmp)
         tmp
     }
 
-    private var state: NavigationState = PlayingScene(defaultScene)
-
-    val currentScene: Scene?
-        get() = when (state) {
-            is PlayingScene -> (state as PlayingScene).scene
-            is PlayingTransition -> null
-        }
-
-    val currentTransitionSource: Scene?
-        get() = when (state) {
-            is PlayingScene -> null
-            is PlayingTransition -> (state as PlayingTransition).sourceScene
-        }
-
-    val currentTransitionTarget: Scene?
-        get() = when (state) {
-            is PlayingScene -> null
-            is PlayingTransition -> (state as PlayingTransition).targetScene
-        }
-
-    val currentTransition: Transition?
-        get() = when (state) {
-            is PlayingScene -> null
-            is PlayingTransition -> (state as PlayingTransition).transition
+    /**
+     * The current state of this navigator.
+     */
+    var state: NavigationState = PlayingScene(defaultScene)
+        private set(value) {
+            field = value
+            logger.info { "State changed to $value" }
         }
 
     init {
         (state as PlayingScene).scene.start()
     }
 
+    /**
+     * The current scene if in state [NavigationState.PlayingScene]. Otherwise: null.
+     */
+    val currentScene: Scene?
+        get() = when (state) {
+            is PlayingScene -> (state as PlayingScene).scene
+            is PlayingTransition -> null
+        }
+
+    /**
+     * The current transition's source scene if in state [NavigationState.PlayingTransition]. Otherwise: null.
+     */
+    val currentTransitionSource: Scene?
+        get() = when (state) {
+            is PlayingScene -> null
+            is PlayingTransition -> (state as PlayingTransition).sourceScene
+        }
+
+    /**
+     * The current transition's target scene if in state [NavigationState.PlayingTransition]. Otherwise: null.
+     */
+    val currentTransitionTarget: Scene?
+        get() = when (state) {
+            is PlayingScene -> null
+            is PlayingTransition -> (state as PlayingTransition).targetScene
+        }
+
+    /**
+     * The current transition if in state [NavigationState.PlayingTransition]. Otherwise: null.
+     */
+    val currentTransition: Transition?
+        get() = when (state) {
+            is PlayingScene -> null
+            is PlayingTransition -> (state as PlayingTransition).transition
+        }
+
+    /**
+     * Starts a transition to the given [targetScene] using the given [transition].
+     * This will take [durationSeconds] seconds (if positive, or happens instantly otherwise).
+     */
     fun startTransition(
         transition: Transition,
         targetScene: Scene,
         durationSeconds: Double
     ) {
-        if (state is PlayingTransition) return
+        if (state is PlayingTransition) {
+            logger.info { "Already playing a transition. Ignoring startTransition." }
+            return
+        }
 
         val state = state as PlayingScene
 
         if (durationSeconds <= 0.0) {
+            logger.info { "Duration=$durationSeconds is 0.0 or negative. Finishing source scene and starting target scene." }
             state.scene.finish()
             targetScene.start()
 
@@ -150,11 +181,10 @@ abstract class SceneNavigator(val program: Program) {
             return
         }
 
+        logger.info { "Starting transition=$transition" }
         val sourceScene = state.scene
-
-        transition.start()
         targetScene.start()
-        // transition.start()
+        transition.start()
 
         this.state = PlayingTransition(
             sourceScene = sourceScene,
@@ -166,11 +196,10 @@ abstract class SceneNavigator(val program: Program) {
     }
 
     /**
-     *
+     * Updates the [state] and renders the current scene or transition.
+     * Returns the [ColorBuffer] that was rendered to.
      */
     fun render(drawer: Drawer): ColorBuffer {
-        logSessionStack()
-
         var state = state // Immutable copy to avoid concurrent modification
 
         // If the transition is finished, switch to the target scene
@@ -178,14 +207,13 @@ abstract class SceneNavigator(val program: Program) {
             logger.info { "Transition complete. Finishing it and source scene." }
 
             val ss = state.sourceScene
-            logger.debug { "Finishing sourceScene=$ss with session index=${Debugger.indexOf(ss.session!!)}" }
-            state.sourceScene.finish()
+            logger.debug { "Finishing sourceScene=$ss" }
+            ss.finish()
 
             val t = state.transition
-            logger.debug { "Finishing transition=$t with session index ${Debugger.indexOf(t.session!!)}" }
-            state.transition.finish()
+            logger.debug { "Finishing transition=$t" }
+            t.finish()
             this.state = PlayingScene(state.targetScene)
-
         }
 
         // Update the state reference
@@ -198,70 +226,31 @@ abstract class SceneNavigator(val program: Program) {
             }
             is PlayingTransition -> {
                 // Calculate the progress of the transition
-                val progress = if (state.durationSeconds > 0.0) {
-                    (program.seconds - state.startTime) / state.durationSeconds
-                } else {
-                    1.0
-                }
+                val progress = (program.seconds - state.startTime) / state.durationSeconds
                 // Renders both scenes, then the transition
                 val b0 = state.sourceScene.render(drawer)
                 val b1 = state.targetScene.render(drawer)
                 state.transition.render(b0, b1, progress)
             }
         }
-        println("_________________________")
         return cb
     }
 
 }
 
-object Debugger {
-    var sessionCounter = 0
-    val sessionTracker = mutableMapOf<Session, Int>()
-
-    fun indexOf(session: Session): Int {
-        return sessionTracker.getOrPut(session) {
-            sessionCounter++
-        }
-    }
-}
-
-fun Session.forkAndPop(): Session {
-    val s = this.fork()
-    Session.stack.removeLast()
-    return s
-}
-
-
-fun logSessionStack() {
-    val stack = Session.stack.map { it }
-    logger.debug { "Session stack (size=${stack.size}): " }
-    stack.forEachIndexed { index, s ->
-        val stats = s.statistics
-        logger.debug { "#${Debugger.indexOf(s)}: Session(this=$s, parent=${s.parent}, renderTargets=${stats.renderTargets}, colorBuffers=${stats.colorBuffers})" }
-    }
-}
-
-inline fun <T> withSession(session: Session, block: () -> T): T {
-    Session.stack.addLast(session)
-    // val pos = Session.stack.size - 1
-    val result = block()
-    Session.stack.remove(session) // removeAt(pos)
-    return result
-}
-
 /**
- *
+ * Enumerates the possible states of a [SceneNavigator].
  */
 sealed class NavigationState {
 
     /**
-     *
+     * The scene is currently playing. It only has a single [scene].
      */
     data class PlayingScene(val scene: Scene) : NavigationState()
 
     /**
-     *
+     * A transition is currently playing. It has a [sourceScene], a [targetScene] and a [transition].
+     * The transition has started at [startTime] and will take [durationSeconds] seconds.
      */
     data class PlayingTransition(
         val sourceScene: Scene,
