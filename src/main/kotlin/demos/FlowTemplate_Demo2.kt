@@ -22,9 +22,11 @@ import org.openrndr.math.map
 import org.openrndr.math.smoothstep
 import flow.util.CyclicFlag
 import flow.util.TWO_PI
+import org.openrndr.draw.tint
 import org.openrndr.extra.fx.color.ChromaticAberration
 import org.openrndr.extra.fx.distort.VerticalWave
 import kotlin.math.exp
+import kotlin.math.floor
 import kotlin.math.pow
 import kotlin.math.sin
 
@@ -64,14 +66,6 @@ fun main() = application {
             "270" to "#E0C18D",
         )
 
-        renderPipeline.apply {
-            lumaOpacity.autoUpdate {
-                foregroundOpacity = ebbAndFlow
-                backgroundLuma = ebbAndFlow.smoothstep(0.0, 1.0)
-                foregroundLuma = backgroundLuma / 2.0
-            }
-        }
-
         // Define visual groups
         val galaxyGroup = object: VisualGroup(program) {
 
@@ -109,11 +103,31 @@ fun main() = application {
                 }
             }
 
+            val videoFlickerFreq = CyclicFlag(null, 1, 2, 4)
+
             val videoS = videoScene {
                 VideoPlayerFFMPEG.fromFile(
                     fileName = "src/main/resources/videos/network_12716(1080p).mp4",
                     mode = PlayMode.VIDEO
                 )
+            }.autoUpdate {
+                val angle = ebbAndFlow * 180.0 + 90.0
+                val relAngle = angle / 90.0
+                val i = floor(relAngle).toInt() % 4
+                val j = (i + 1) % 4
+                val frac = relAngle - i
+
+                val mix = colorRepo[i].mix(colorRepo[j], frac)
+                val p = beatClock.phase
+                val v = when (videoFlickerFreq.value) {
+                    null -> 1.0
+                    1 -> (p%1        - 1).pow(2) * 1.5 + 0.5
+                    2 -> ((p%0.50)*2 - 1).pow(2) * 2.0 + 0.25
+                    4 -> ((p%0.25)*4 - 1).pow(2) * 2.5
+                    else -> 1.0
+                }
+                val valuedMix = mix.toXSVa().copy(v=v).toRGBa()
+                tint = tint(valuedMix)
             }
 
             var remainingTransitions = 0
@@ -142,11 +156,7 @@ fun main() = application {
         }
 
         fun transitionToOtherScene() {
-            if (sceneNav.currentScene == sceneNav.compositeS) {
-                sceneNav.startTransition(sceneNav.lumaT, sceneNav.videoS, 1.5)
-            } else {
-                sceneNav.startTransition(sceneNav.squircleT, sceneNav.compositeS, 2.5)
-            }
+
         }
 
         // Init UI display
@@ -155,17 +165,22 @@ fun main() = application {
             trackValue("Remaining transitions") { "${sceneNav.remainingTransitions}" }
             trackValue("Kick") { kick.toString() }
             trackValue("Kick Fac") { kickFac.toString() }
-
         }
 
         // Main draw loop
         extend {
-            if (frameCount == 5) sceneNav.startTransition(sceneNav.defaultTransition, sceneNav.compositeS, 0.5)
+            sceneNav.apply {
+                if (frameCount == 0) startTransition(defaultTransition, compositeS, 0.5)
 
-            if (sceneNav.remainingTransitions > 0 && sceneNav.currentTransition == null) {
-                sceneNav.remainingTransitions--
+                if (remainingTransitions > 0 && currentTransition == null) {
+                    remainingTransitions--
 
-                transitionToOtherScene()
+                    if (currentScene == compositeS) {
+                        startTransition(lumaT, videoS, 2.5)
+                    } else {
+                        startTransition(squircleT, compositeS, 1.5)
+                    }
+                }
             }
 
             val img = sceneNav.render(drawer)
@@ -180,6 +195,7 @@ fun main() = application {
             keyDown {
                 "z".bind("Next zoom variation") { galaxyGroup.zoomVariations.next() }
                 "t".bind("Queue transition") { sceneNav.remainingTransitions++ }
+                "f".bind("Next video flicker") { sceneNav.videoFlickerFreq.next() }
             }
         }
     }
