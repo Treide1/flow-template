@@ -1,6 +1,7 @@
 package flow.rendering.scenes
 
 import mu.KotlinLogging
+import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.*
 import org.openrndr.extra.compositor.Layer
 import org.openrndr.extra.compositor.compose
@@ -121,8 +122,11 @@ class VideoScene(
         videoPlayer!!.ended.listen { videoPlayer!!.restart() }
     }
 
+    var tint = tint(ColorRGBa.WHITE)
+
     override fun render(drawer: Drawer): ColorBuffer {
         drawer.isolatedWithTarget(rt) {
+            drawStyle.colorMatrix = tint
             videoPlayer!!.draw(drawer)
         }
         return rt.colorBuffer(0)

@@ -181,7 +181,8 @@ abstract class SceneNavigator(val program: Program) {
             return
         }
 
-        logger.info { "Starting transition=$transition" }
+        logger.info { "Starting transition=$transition to scene=$targetScene" }
+
         val sourceScene = state.scene
         targetScene.start()
         transition.start()
