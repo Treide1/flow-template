@@ -20,14 +20,15 @@ import kotlin.math.log10
  * @param overlap Size of the overlap between audio buffers. Default is 0.
  * @param sampleRate Sample rate of the audio. Default is 44100. Deviations from system device *will* cause problems.
  */
-// TODO Refactor to make more clear + provide sampleRate/bufferSize resolution strategy
+// TODO: Refactor to make more clear + provide sampleRate/bufferSize resolution strategy
 class Audio(
     val bufferSize: Int = 1024,
     val overlap: Int = 0,
     val sampleRate: Int = 44100,
 ) {
 
-    private var isStarted = false
+    var isStarted = false
+        private set
 
     // Actual dispatcher running the audio process chain
     private lateinit var dispatcher: AudioDispatcher
