@@ -155,10 +155,6 @@ fun main() = application {
             }
         }
 
-        fun transitionToOtherScene() {
-
-        }
-
         // Init UI display
         uiDisplay.apply {
             trackValue("Galaxy zoom") { galaxyGroup.zoomVariations.value }
