@@ -1,6 +1,9 @@
 package flow.envelope
 
-import util.lerp
+import flow.FlowProgram
+import flow.autoupdate.AutoUpdate.autoUpdate
+import flow.input.InputScheme
+import flow.util.lerp
 import kotlin.reflect.KProperty
 
 
@@ -56,7 +59,7 @@ open class Capacitor(
         }
     }
 
-    operator fun getValue(requester: Any, property: KProperty<*>): Double {
+    operator fun getValue(requester: Any?, property: KProperty<*>): Double {
         return value
     }
 }
@@ -70,6 +73,7 @@ class LinearCapacitor(
     offValue,
     holdValue
 ) {
+
     init {
         if (openDuration > 0.0) onGateOpen = Envelope(openDuration) {
             offValue.lerp(holdValue, it / openDuration)
@@ -77,5 +81,16 @@ class LinearCapacitor(
         if (closeDuration > 0.0) onGateClosed = Envelope(closeDuration) {
             holdValue.lerp(offValue, it / closeDuration)
         }
+    }
+}
+
+fun Capacitor.keyAutoUpdate(
+    flowProgram: FlowProgram,
+    keyName: String,
+    alsoTrackWithType: InputScheme.TrackTypes? = null
+): Capacitor {
+    if (alsoTrackWithType != null) flowProgram.inputScheme.track(alsoTrackWithType, keyName, "Capacitor \"$keyName\"")
+    return this.autoUpdate {
+        update(flowProgram.beatClock.deltaSeconds, flowProgram.inputScheme.isKeyActive(keyName))
     }
 }

@@ -26,6 +26,9 @@ class ColorRepo<T: ColorModel<T>>(var palette: Map<String, T> = mapOf()) {
         return palette.values.toList()[index]
     }
 
+    /**
+     * Enumeration of common color roles.
+     */
     enum class ColorRoles {
         PRIMARY,
         PRIMARY_VARIANT,
@@ -34,6 +37,7 @@ class ColorRepo<T: ColorModel<T>>(var palette: Map<String, T> = mapOf()) {
         TERTIARY,
         TERTIARY_VARIANT,
 
+        CONTRARY,
         ACCENT,
         NEUTRAL,
         BACKGROUND,
@@ -49,6 +53,17 @@ class ColorRepo<T: ColorModel<T>>(var palette: Map<String, T> = mapOf()) {
             SECONDARY.name to "#A38641",
             TERTIARY.name  to "#CE60F0",
         ).mapValues{ (_, hex) -> ColorRGBa.fromHex(hex).toXSVa() }
+
+        /**
+         *
+         */
+        fun fromHexMapOf(vararg pairs: Pair<String, String>): ColorRepo<ColorRGBa> {
+            return ColorRepo(
+                mapOf(*pairs).mapValues { (_, hex) ->
+                    ColorRGBa.fromHex(hex)
+                }
+            )
+        }
     }
 
     // TODO-OPT: Define blend procedures, provide palette builders like from Adobe website

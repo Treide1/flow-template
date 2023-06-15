@@ -27,6 +27,8 @@ class Audio(
     val sampleRate: Int = 44100,
 ) {
 
+    private var isStarted = false
+
     // Actual dispatcher running the audio process chain
     private lateinit var dispatcher: AudioDispatcher
 
@@ -43,6 +45,9 @@ class Audio(
      * Gracefully terminate with [stop].
      */
     fun start() {
+        if (isStarted) return
+        else isStarted = true
+
         // Setup
         dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate, bufferSize, overlap)
         resetProcessorPair = ResetProcessorPair(bufferSize)
@@ -64,6 +69,9 @@ class Audio(
      * Stops the audio chain and (attempts to) gracefully terminate the DSP process. Only makes sense after [start].
      */
     fun stop() {
+        if (isStarted.not()) return
+        else isStarted = false
+
         dispatcher.stop()
         runBlocking {
             delay(1000L)

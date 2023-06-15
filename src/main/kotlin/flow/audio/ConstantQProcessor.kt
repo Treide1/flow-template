@@ -8,7 +8,7 @@ import be.tarsos.dsp.ConstantQ
 import flow.realtime.filters.OneEuroFilter
 import org.openrndr.math.clamp
 import org.openrndr.math.map
-import util.QueueCache
+import flow.util.QueueCache
 import kotlin.math.log2
 import kotlin.math.sqrt
 

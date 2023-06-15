@@ -30,6 +30,11 @@ vec2 toUvCoords(vec2 mathCoords) {
     return vec2((mathCoords.x + 1.0) / 2.0, (mathCoords.y * yScl + 1.0) / 2.0);
 }
 
+uint getStencilValue(vec2 mathCoords) {
+    return texture(stencil, toUvCoords(mathCoords)).r; // equivalent to below for offset = 0
+    // return texelFetch(stencil, ivec2(uv * textureSize(stencil, 0) + vec2(0.0, 0.0)), 0).r;
+}
+
 #define PI 3.14159265359
 
 // Custom functions
@@ -167,15 +172,6 @@ vec2 waves(vec2 uv) {
 vec2 fisheye(vec2 uv) {
     float r = length(uv);
     return vec2(uv.y, uv.x) * 2.0 / (r + 1.0);
-}
-
-uint getStencilValue(vec2 mathCoords) {
-    return texture(stencil, toUvCoords(mathCoords)).r; // equivalent to below for offset = 0
-    // return texelFetch(stencil, ivec2(uv * textureSize(stencil, 0) + vec2(0.0, 0.0)), 0).r;
-}
-
-uint getStencilValueLegacy(vec2 mathCoords) {
-    return texture(stencil, toUvCoords(mathCoords)).r;
 }
 
 // Iterative lookup function
