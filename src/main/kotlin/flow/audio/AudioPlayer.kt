@@ -1,3 +1,5 @@
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+
 package flow.audio
 
 import ddf.minim.Minim
@@ -9,12 +11,15 @@ import java.io.FileInputStream
 import java.io.InputStream
 
 /**
- * Audio player for a single file.
+ * Audio player for a single audio file.
  *
  * Note: The audio format of the file is crucial.
  * As of now, the file must be a 16-bit Little-Endian, 44.1 kHz, stereo WAV file.
  */
-class AudioPlayer(val filename: String, val length: Double) {
+class AudioPlayer(
+    val filename: String,
+    val length: Double
+) {
 
     /**
      * The audio file must be in the data/audio folder.
