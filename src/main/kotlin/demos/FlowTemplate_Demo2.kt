@@ -72,14 +72,14 @@ fun main() = application {
             val zoomVariations = CyclicFlag("Step by step", "Full Zoom")
 
             override fun Drawer.draw() {
-                shadeStyle = galaxyShadeStyle(seconds)
                 val offset = when (zoomVariations.value) {
                     "Step by step" -> (beatClock.phase%32.0) / 8.0
                     "Full Zoom" -> (beatClock.phase%8.0).pow(4.0) / 200.0
                     else -> 0.0
                 }
                 val scl = 2.5 - 1.5 * ebbAndFlow.smoothstep(0.0, 1.5) + offset
-                rectangle(drawer.bounds.scaledBy(scl))
+                shadeStyle = galaxyShadeStyle(seconds, zoom = scl)
+                rectangle(drawer.bounds)
             }
         }
 
