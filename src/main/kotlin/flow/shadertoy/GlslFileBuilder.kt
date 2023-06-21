@@ -83,8 +83,12 @@ class GlslFileBuilder(val project: ShadertoyProject) {
             glslFile.writeText(glslCode)
         }
 
-
-        val gson = GsonBuilder().setPrettyPrinting().create()
+        val pathToProject = "/generated/${project.name}"
+        val gson = GsonBuilder()
+            .setPrettyPrinting()
+            .registerTypeAdapter(ShadertoyProject::class.java, ProjectToJson(pathToProject))
+            .registerTypeAdapter(ShadertoyTab::class.java, TabToJson(pathToProject))
+            .create()
 
         // Build a json from the project to be able to reconstruct it later
         val json = gson.toJsonTree(project).asJsonObject
