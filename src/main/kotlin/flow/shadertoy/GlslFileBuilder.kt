@@ -23,15 +23,14 @@ class GlslFileBuilder(val project: ShadertoyProject) {
      */
     fun generate() {
         // Read out common code before the others tabs. Then it can be integrated into their code.
-        val commonCode = project.common?.code ?: "// No 'common.glsl' Code Added"
+        val commonCode = project.common?.code ?: "// No 'common.glsl' code added"
 
         // Build each tab that is import for GLSL code generation
         project.getGlslTabs().forEach { tab ->
-            val code = tab.code!!
 
             // Make the shadertoy code GLSL version 330 compatible
             // This means: Using the correct main signature
-            val updatedCode = code
+            val updatedCode = tab.code
                 .replace(
                     "void mainImage( out vec4 fragColor, in vec2 fragCoord )", // TODO: make whitespace-robust
                     "void main()"

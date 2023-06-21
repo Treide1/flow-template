@@ -2,6 +2,7 @@
 
 package flow.shadertoy
 
+import flow.shadertoy.Shader.RenderStep.Input.Sampler
 import flow.shadertoy.ShadertoyProject.ShadertoyTab.*
 import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.Channel
 import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.ChannelInput
@@ -12,7 +13,8 @@ typealias ShadertoyChannel = Channel
 typealias ShadertoyChannelInput = ChannelInput
 
 /**
- *
+ * For Shadertoy import discussion, see:<br>
+ * [Discourse](https://openrndr.discourse.group/t/from-shadertoy-to-openrndr/85)
  */
 class ShadertoyProject(
     val name: String,
@@ -34,7 +36,7 @@ class ShadertoyProject(
         val name: String,
         val type: String = "UNSUPPORTED",
         val outputId: Int? = null,
-        var code: String? = null,
+        var code: String = "// No code added",
         val channelSettings: ChannelSettings = ChannelSettings(),
     ) {
         class Common: ShadertoyTab("Common", "common", outputId = null)
@@ -47,7 +49,7 @@ class ShadertoyProject(
         class Sound: ShadertoyTab("Sound")
 
         override fun toString(): String {
-            return "${name}(type=${type}, outputId=${outputId}, code=${code?.substring(0, 10)?.let { "$it..." }})"
+            return "${name}(type=${type}, outputId=${outputId}, code='${code.substring(0, 10)}...')"
         }
 
         /**
@@ -81,7 +83,7 @@ class ShadertoyProject(
             /**
              *
              */
-            sealed class ChannelInput(val id: Int, val ctype: String = "UNSUPPORTED") {
+            sealed class ChannelInput(val id: Int, val ctype: String = "UNSUPPORTED", var sampler: Sampler = Sampler()) {
                 object KEYBOARD: ChannelInput(-1) // actually (33, "keyboard") but currently unsupported
                 object WEBCAM: ChannelInput(-1)
                 object MICROPHONE: ChannelInput(-1)

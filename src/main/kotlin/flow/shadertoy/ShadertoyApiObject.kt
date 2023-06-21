@@ -27,11 +27,6 @@ data class Shader(
         var inputs: List<Input> = listOf(),
         var outputs: List<Output> = listOf(),
         var code: String = "",
-
-        /**
-         * NEWLY ADDED. This is the path to the resource file. If it is set, it overwrites the code.
-         */
-        var codeResource: String? = null, // NEWLY ADDED
         var name: String = "",
         var description: String = "",
         var type: String = "",
