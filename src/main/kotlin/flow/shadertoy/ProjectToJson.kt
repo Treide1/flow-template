@@ -9,6 +9,9 @@ import java.util.Date
 
 internal const val UNSET_STRING = "_"
 
+/**
+ *
+ */
 class ProjectToJson(val resourcePath: String): JsonSerializer<ShadertoyProject> {
 
     override fun serialize(src: ShadertoyProject, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
@@ -46,6 +49,9 @@ class ProjectToJson(val resourcePath: String): JsonSerializer<ShadertoyProject> 
 
 }
 
+/**
+ *
+ */
 class TabToJson(val resourcePath: String): JsonSerializer<ShadertoyTab> {
 
     override fun serialize(src: ShadertoyTab, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {

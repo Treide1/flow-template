@@ -37,7 +37,7 @@ class ShadertoyProject(
         val type: String = "UNSUPPORTED",
         val outputId: Int? = null,
         var code: String = "// No code added",
-        val channelSettings: ChannelSettings = ChannelSettings(),
+        var channelSettings: ChannelSettings = ChannelSettings(),
     ) {
         class Common: ShadertoyTab("Common", "common", outputId = null)
         class Image: ShadertoyTab("Image", "image", outputId = null) // Output implicit, not part of definition
@@ -116,8 +116,30 @@ class ShadertoyProject(
                 ): ChannelInput(-1)
 
                 override fun toString(): String = "${this::class.java}(id=$id)"
+
+                companion object {
+                    fun getById(id: Int): ChannelInput {
+                        return when (id) {
+                            257 -> BUFFER_A_IN
+                            258 -> BUFFER_B_IN
+                            259 -> BUFFER_C_IN
+                            260 -> BUFFER_D_IN
+                            else -> throw IllegalArgumentException("Unsupported channel input id: $id")
+                        }
+                    }
+                }
             }
         }
     }
+}
+
+fun <T: ShadertoyProject.ShadertoyTab> T.setCode(code: String): T {
+    this.code = code
+    return this
+}
+
+fun <T: ShadertoyProject.ShadertoyTab> T.setSettings(settings: ChannelSettings): T {
+    this.channelSettings = settings
+    return this
 }
 

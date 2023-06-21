@@ -23,14 +23,14 @@ class Importer(val projectName: String) {
             val content = resourceTextOrNull("$dirPath/${f.fileName}") ?: continue
 
             when (f) {
-                FileType.COMMON_GLSL   -> project.common = Common().apply { code = content }
-                FileType.IMAGE_GLSL    -> project.image = Image().apply { code = content }
-                FileType.BUFFER_A_GLSL -> project.bufferA = BufferA().apply { code = content }
-                FileType.BUFFER_B_GLSL -> project.bufferB = BufferB().apply { code = content }
-                FileType.BUFFER_C_GLSL -> project.bufferC = BufferC().apply { code = content }
-                FileType.BUFFER_D_GLSL -> project.bufferD = BufferD().apply { code = content }
-                FileType.CUBE_A_GLSL   -> project.cubeA = CubeA().apply { code = content }
-                FileType.SOUND_GLSL    -> project.sound = Sound().apply { code = content }
+                FileType.COMMON_GLSL   -> project.common = Common()  .setCode(content)
+                FileType.IMAGE_GLSL    -> project.image = Image()    .setCode(content)
+                FileType.BUFFER_A_GLSL -> project.bufferA = BufferA().setCode(content)
+                FileType.BUFFER_B_GLSL -> project.bufferB = BufferB().setCode(content)
+                FileType.BUFFER_C_GLSL -> project.bufferC = BufferC().setCode(content)
+                FileType.BUFFER_D_GLSL -> project.bufferD = BufferD().setCode(content)
+                FileType.CUBE_A_GLSL   -> project.cubeA = CubeA()    .setCode(content)
+                FileType.SOUND_GLSL    -> project.sound = Sound()    .setCode(content)
             }
         }
 
