@@ -38,7 +38,7 @@ class ShadertoyProject(
         val channelSettings: ChannelSettings = ChannelSettings(),
     ) {
         class Common: ShadertoyTab("Common", "common", outputId = null)
-        class Image: ShadertoyTab("Image", "image", outputId = 37)
+        class Image: ShadertoyTab("Image", "image", outputId = null) // Output implicit, not part of definition
         class BufferA: ShadertoyTab("Buffer A", "buffer", outputId = 257)
         class BufferB: ShadertoyTab("Buffer B", "buffer", outputId = 258)
         class BufferC: ShadertoyTab("Buffer C", "buffer", outputId = 259)
