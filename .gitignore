@@ -9,3 +9,4 @@ gui-parameters/
 /src/main/kotlin/generated/
 /src/main/external/
 /ShaderError.glsl
+/src/main/resources/generated/
