@@ -38,7 +38,7 @@ class JsonToProject: JsonDeserializer<ShadertoyProject> {
                 val inputObj = input.asJsonObject
                 val channelInt = inputObj.get("channel").asInt
                 val id = inputObj.get("id").asInt
-                val sampler = gson.fromJson(inputObj.get("sampler").asString, Sampler::class.java)
+                val sampler = gson.fromJson(inputObj.get("sampler").asJsonObject, Sampler::class.java)
 
                 val channel = ChannelSettings.Channel.values()[channelInt]
                 val channelInput = ChannelSettings.ChannelInput.getById(id)
