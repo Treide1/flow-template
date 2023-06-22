@@ -4,12 +4,10 @@ import flow.FlowProgram
 import flow.shadertoy.GlslFileBuilder
 import flow.shadertoy.Importer
 import flow.shadertoy.ProjectRenderer
-import flow.shadertoy.ShadertoyProject
-import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.Channel.*
-import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.ChannelInput.*
+import org.openrndr.Program
 import org.openrndr.application
 
-class RetroSun(program: FlowProgram): ProjectRenderer(program, Importer().fromJson("/generated/retroSun")!!) {
+class RetroSun(program: Program): ProjectRenderer(program, Importer().fromJson("/generated/retroSun")) {
 
     // parameters and init
 

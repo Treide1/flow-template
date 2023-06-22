@@ -1,6 +1,5 @@
 package flow.shadertoy
 
-import flow.FlowProgram
 import flow.autoupdate.AutoUpdate.autoUpdate
 import flow.shadertoy.ShadertoyProject.ShadertoyTab
 import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.ChannelInput.*
@@ -13,7 +12,7 @@ import org.openrndr.math.Vector4
 /**
  *
  */
-abstract class ProjectRenderer(val program: FlowProgram, val project: ShadertoyProject) {
+abstract class ProjectRenderer(val program: Program, val project: ShadertoyProject) {
 
     // Buffers
     val imageBuffer = colorBuffer(
@@ -112,8 +111,8 @@ abstract class ProjectRenderer(val program: FlowProgram, val project: ShadertoyP
 
         autoUpdate {
             // iResolution does not need to be updated
+            iTimeDelta = program.seconds - iTime
             iTime = program.seconds
-            iTimeDelta = program.beatClock.deltaSeconds
             iFrame = program.frameCount.toDouble()
             // iMouse updated below
         }

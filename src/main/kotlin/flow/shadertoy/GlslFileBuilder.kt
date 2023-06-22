@@ -3,8 +3,6 @@ package flow.shadertoy
 import com.google.gson.GsonBuilder
 import flow.shadertoy.FileType.Companion.toFileName
 import flow.shadertoy.ShadertoyProject.ShadertoyTab
-import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.Channel
-import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.ChannelInput
 import java.io.File
 
 class GlslFileBuilder(val project: ShadertoyProject) {
@@ -114,6 +112,9 @@ class GlslFileBuilder(val project: ShadertoyProject) {
  */
 fun ShadertoyProject.getGlslTabs() = listOfNotNull(image, bufferA, bufferB, bufferC, bufferD, cubeA, sound)
 
+/**
+ *
+ */
 fun ShadertoyTab.getOrderedChannels(): List<Pair<ShadertoyChannel, ShadertoyChannelInput>> {
     return this.channelSettings.channelsMap.entries.sortedBy { it.key.ordinal }.map { it.toPair() }
 }
