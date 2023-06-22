@@ -2,6 +2,7 @@
 
 package flow.shadertoy
 
+import com.google.gson.GsonBuilder
 import flow.shadertoy.ShadertoyProject.ShadertoyTab
 import flow.shadertoy.ShadertoyProject.ShadertoyTab.*
 import org.openrndr.resourceText
@@ -9,12 +10,25 @@ import org.openrndr.resourceText
 /**
  *
  */
-class Importer(val projectName: String) {
+class Importer() {
 
     /**
      *
      */
-    fun fromResourceDirectory(dirPath: String): ShadertoyProject {
+    fun fromJson(dirPath: String): ShadertoyProject {
+        val json = resourceText("$dirPath/project.json")
+        val project = GsonBuilder()
+            .registerTypeAdapter(ShadertoyProject::class.java, JsonToProject())
+            .create()
+            .fromJson(json, ShadertoyProject::class.java)
+
+        return project
+    }
+
+    /**
+     *
+     */
+    fun fromResourceDirectory(projectName: String, dirPath: String): ShadertoyProject {
 
         val project = ShadertoyProject(projectName)
 
@@ -33,8 +47,6 @@ class Importer(val projectName: String) {
                 FileType.SOUND_GLSL    -> project.sound = Sound()    .setCode(content)
             }
         }
-
-        // TODO: Load in project settings from JSON file
 
         return project
     }
