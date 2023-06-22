@@ -4,24 +4,28 @@ import flow.autoupdate.AutoUpdate.autoUpdate
 import flow.shadertoy.ShadertoyProject.ShadertoyTab
 import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.ChannelInput.*
 import org.openrndr.MouseButton
+import org.openrndr.MouseEvents
 import org.openrndr.Program
 import org.openrndr.draw.*
 import org.openrndr.math.Vector3
 import org.openrndr.math.Vector4
 
 /**
+ * A renderer for a [ShadertoyProject].
  *
+ * Parses the [project] to a renderable procedure. Call [render] to render the project with runtime data.
  */
 abstract class ProjectRenderer(val program: Program, val project: ShadertoyProject) {
 
-    // Buffers
+    /**
+     * color buffer to render to
+     */
     val imageBuffer = colorBuffer(
         program.width,
         program.height,
         format = ColorFormat.RGBa,
         type = ColorType.FLOAT16,
     )
-
 
     // Util
     val w = program.width.toDouble()
@@ -57,7 +61,7 @@ abstract class ProjectRenderer(val program: Program, val project: ShadertoyProje
     val passOrder = mutableListOf<Step>()
 
     /**
-     *
+     * A step represents a single [filter] process, rendering to [buffer] using [channels] as inputs.
      */
     data class Step(
         val filter: ShadertoyFilter,
@@ -106,9 +110,36 @@ abstract class ProjectRenderer(val program: Program, val project: ShadertoyProje
         }
     }
 
-    init {
+    private fun MouseEvents.iMouseListen() {
         fun Double.flipY() = h - this
 
+        buttonDown.listen {
+            if (it.button != MouseButton.LEFT) return@listen
+
+            iMouse = iMouse.copy(
+                x = it.position.x, y = it.position.y.flipY(),
+                z = it.position.x, w = it.position.y.flipY()
+            )
+
+        }
+        dragged.listen {
+            if (it.button != MouseButton.LEFT) return@listen
+
+            iMouse = iMouse.copy(
+                x = it.position.x, y = it.position.y.flipY(),
+                w = iMouse.w.let { w -> if (w > 0.0) -w else w}
+            )
+        }
+        buttonUp.listen {
+            if (it.button != MouseButton.LEFT) return@listen
+
+            iMouse = iMouse.copy(
+                z = -iMouse.z
+            )
+        }
+    }
+
+    init {
         autoUpdate {
             // iResolution does not need to be updated
             iTimeDelta = program.seconds - iTime
@@ -116,36 +147,12 @@ abstract class ProjectRenderer(val program: Program, val project: ShadertoyProje
             iFrame = program.frameCount.toDouble()
             // iMouse updated below
         }
-        program.mouse.apply {
-            buttonDown.listen {
-                if (it.button != MouseButton.LEFT) return@listen
 
-                iMouse = iMouse.copy(
-                    x = it.position.x, y = it.position.y.flipY(),
-                    z = it.position.x, w = it.position.y.flipY()
-                )
-
-            }
-            dragged.listen {
-                if (it.button != MouseButton.LEFT) return@listen
-
-                iMouse = iMouse.copy(
-                    x = it.position.x, y = it.position.y.flipY(),
-                    w = iMouse.w.let { w -> if (w > 0.0) -w else w}
-                )
-            }
-            buttonUp.listen {
-                if (it.button != MouseButton.LEFT) return@listen
-
-                iMouse = iMouse.copy(
-                    z = -iMouse.z
-                )
-            }
-        }
+        program.mouse.iMouseListen()
     }
 
     /**
-     *
+     * Renders the project to the [imageBuffer] and returns it.
      */
     fun render(): ColorBuffer {
         passOrder.forEach {
@@ -159,18 +166,20 @@ abstract class ProjectRenderer(val program: Program, val project: ShadertoyProje
             val to = it.buffer
             it.filter.apply(from, to)
         }
-        return imageBuffer //imagePass.buffer
+        return imageBuffer
     }
 }
 
 /**
+ * Filter class for the code from a shadertoy tab that has been converted to OPENRNDR GLSL 330 code.
  *
+ * The common shadertoy uniforms are available as parameters.
  */
 class ShadertoyFilter(
-    val shaderCode: String,
+    val convertedCode: String,
     val name: String,
     program: Program,
-) : Filter(filterShaderFromCode(shaderCode, name, includeShaderConfiguration = false)) {
+) : Filter(filterShaderFromCode(convertedCode, name, includeShaderConfiguration = false)) {
 
     val w = program.width.toDouble()
     val h = program.height.toDouble()
