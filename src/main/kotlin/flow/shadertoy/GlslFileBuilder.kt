@@ -114,6 +114,6 @@ class GlslFileBuilder(val project: ShadertoyProject) {
  */
 fun ShadertoyProject.getGlslTabs() = listOfNotNull(image, bufferA, bufferB, bufferC, bufferD, cubeA, sound)
 
-fun ShadertoyTab.getOrderedChannels(): List<Pair<Channel, ChannelInput>> {
+fun ShadertoyTab.getOrderedChannels(): List<Pair<ShadertoyChannel, ShadertoyChannelInput>> {
     return this.channelSettings.channelsMap.entries.sortedBy { it.key.ordinal }.map { it.toPair() }
 }
