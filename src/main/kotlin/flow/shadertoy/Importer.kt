@@ -10,7 +10,7 @@ import org.openrndr.resourceText
 /**
  *
  */
-class Importer() {
+object Importer {
 
     /**
      *
@@ -58,11 +58,33 @@ class Importer() {
         TODO()
     }
 
-    companion object {
-
-        fun resourceTextOrNull(path: String): String? {
-            return try { resourceText(path) } catch (e: Exception) { null }
+    /**
+     *
+     */
+    private fun ShadertoyProject.loadAllGlslFiles(dirPath: String) {
+        for (f in FileType.values()) {
+            val content = resourceTextOrNull("$dirPath/${f.fileName}") ?: continue
+            this.setCodeByFileType(content, f)
         }
+    }
+
+
+    private fun ShadertoyProject.setCodeByFileType(content: String, fileType: FileType) {
+        when (fileType) {
+            FileType.COMMON_GLSL   -> common = Common()  .setCode(content)
+            FileType.IMAGE_GLSL    -> image = Image()    .setCode(content)
+            FileType.BUFFER_A_GLSL -> bufferA = BufferA().setCode(content)
+            FileType.BUFFER_B_GLSL -> bufferB = BufferB().setCode(content)
+            FileType.BUFFER_C_GLSL -> bufferC = BufferC().setCode(content)
+            FileType.BUFFER_D_GLSL -> bufferD = BufferD().setCode(content)
+            FileType.CUBE_A_GLSL   -> cubeA = CubeA()    .setCode(content)
+            FileType.SOUND_GLSL    -> sound = Sound()    .setCode(content)
+        }
+    }
+
+    // Reads the resource if it exists, returns null otherwise
+    private fun resourceTextOrNull(path: String): String? {
+        return try { resourceText(path) } catch (e: Exception) { null }
     }
 }
 

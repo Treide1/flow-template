@@ -9,7 +9,10 @@ import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.ChannelInput
 import org.openrndr.Program
 import org.openrndr.application
 
-class FluidSimulation(program: Program): ProjectRenderer(program, Importer().fromJson("/generated/fluidSim")) {
+/**
+ *
+ */
+class FluidSimulation(program: Program): ProjectRenderer(program, Importer.fromJson("/generated/fluidSim")) {
 
     // parameters and init
 
@@ -21,7 +24,7 @@ class FluidSimulation(program: Program): ProjectRenderer(program, Importer().fro
 fun main(args: Array<String>) {
     application {
         program {
-            val project =  Importer().fromResourceDirectory("fluidSim", "/fluidSim")
+            val project =  Importer.fromResourceDirectory("fluidSim", "/fluidSim")
             project.bufferA!!.setInput(CHANNEL_0, BUFFER_C_IN)
             project.bufferB!!.setInput(CHANNEL_0, BUFFER_A_IN)
             project.bufferC!!.setInput(CHANNEL_0, BUFFER_B_IN)

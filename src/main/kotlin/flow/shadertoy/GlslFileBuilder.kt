@@ -5,21 +5,29 @@ import flow.shadertoy.FileType.Companion.toFileName
 import flow.shadertoy.ShadertoyProject.ShadertoyTab
 import java.io.File
 
+/**
+ * File creator class for GLSL code generation.
+ *
+ * Takes a [ShadertoyProject] and generates the corresponding GLSL code and a json to reconstruct it later.
+ */
 class GlslFileBuilder(val project: ShadertoyProject) {
 
     /**
-     * Generates the corresponding GLSL code for the given [project] and a json to reconstruct it later.
+     * Generates GLSL code and a project json.
      *
-     * The individual steps are:
-     * * Updating the signature of `mainImage` shadertoy functions
-     * * Add the Filter header
-     *   * For each channel input, add a uniform sampler2D
-     * * Add uniforms for the shadertoy values like iResolution
-     * * Add defines to replace fragCoord and fragColor with the Filter interface
-     * * Add the Common code
-     * * Add the tab-specific code
-     *
-     * Then generates the json file to reconstruct the project later.
+     * Procedure:
+     * * Retrieve common code
+     * * Per Tab
+     *    * Update the signature of the `mainImage` shadertoy function to `main`
+     *    * Add the Shader interface
+     *       * For each channel input, add a uniform sampler2D and define to map channel to texture
+     *       * Add uniforms for the shadertoy values like iResolution
+     *       * Add defines to replace fragCoord and fragColor with the Filter interface
+     *    * Add the common code
+     *    * Add the tab-specific code
+     *    * Write the code to a file
+     * * Build project json
+     * * Write project json
      */
     fun generate() {
         // Read out common code before the others tabs. Then it can be integrated into their code.
