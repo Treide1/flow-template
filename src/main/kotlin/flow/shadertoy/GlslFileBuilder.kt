@@ -18,6 +18,8 @@ class GlslFileBuilder(val project: ShadertoyProject) {
      * * Add defines to replace fragCoord and fragColor with the Filter interface
      * * Add the Common code
      * * Add the tab-specific code
+     *
+     * Then generates the json file to reconstruct the project later.
      */
     fun generate() {
         // Read out common code before the others tabs. Then it can be integrated into their code.
@@ -28,14 +30,16 @@ class GlslFileBuilder(val project: ShadertoyProject) {
 
             // Make the shadertoy code GLSL version 330 compatible
             // This means: Using the correct main signature
-            val updatedCode = tab.code
-                .replace(
-                    "void mainImage( out vec4 fragColor, in vec2 fragCoord )", // TODO: make whitespace-robust
-                    "void main()"
-                )
 
-            // GLSL Code
-            var texCounter = 0
+            // This matches the common shadertoy mainImage signature but with arbitrary whitespace
+            // "void mainImage( out vec4 fragColor, in vec2 fragCoord )"
+            val mainImageSignature = listOf(
+                "void", "mainImage", """\(""", "out", "vec4", "fragColor", ",", "in", "vec2", "fragCoord", """\)"""
+            ).joinToString("""\s*""").toRegex()
+            val updatedCode = tab.code.replace(mainImageSignature, "void main()")
+
+            // GLSL Code (Be careful when changing the indent)
+            var texCounter = 0 // Incremented for each channel to maintain FilterNto1 compatibility
             val channels = tab.getOrderedChannels()
 
             val glslCode = """
@@ -74,7 +78,7 @@ class GlslFileBuilder(val project: ShadertoyProject) {
             updatedCode.trimIndent()
 
             val glslPath = "$GENERATED_RESOURCE_PREFIX/${project.name}/${tab.toFileName()}"
-            println("Saving shader code under /$glslPath")
+            println("Saving shader code at $glslPath")
             val glslFile = File(glslPath)
             // Create parent directories if they don't exist
             glslFile.parentFile.mkdirs()
@@ -94,13 +98,16 @@ class GlslFileBuilder(val project: ShadertoyProject) {
 
         // Write the json to a project file
         val jsonPath = "$GENERATED_RESOURCE_PREFIX/${project.name}/project.json"
-        println("Saving json for /$jsonPath")
+        println("Saving json at $jsonPath")
         val jsonFile = File(jsonPath)
         jsonFile.parentFile.mkdirs() // Ensure parent dir existence
         jsonFile.writeText(gson.toJson(json))
     }
 
     companion object {
+        /**
+         * The relative path from root to the generated resources.
+         */
         const val GENERATED_RESOURCE_PREFIX = "src/main/resources/generated"
     }
 
@@ -113,7 +120,9 @@ class GlslFileBuilder(val project: ShadertoyProject) {
 fun ShadertoyProject.getGlslTabs() = listOfNotNull(image, bufferA, bufferB, bufferC, bufferD, cubeA, sound)
 
 /**
+ * Returns a list of all channels in the [ShadertoyTab.channelSettings], ordered by the channel ordinal.
  *
+ * This ensures the same order of channel inputs when passing to GLSL uniform samplers.
  */
 fun ShadertoyTab.getOrderedChannels(): List<Pair<ShadertoyChannel, ShadertoyChannelInput>> {
     return this.channelSettings.channelsMap.entries.sortedBy { it.key.ordinal }.map { it.toPair() }
