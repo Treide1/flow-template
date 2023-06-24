@@ -10,3 +10,4 @@ gui-parameters/
 /src/main/external/
 /ShaderError.glsl
 /src/main/resources/generated/
+/generated/
