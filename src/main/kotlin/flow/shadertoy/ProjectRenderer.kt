@@ -225,6 +225,7 @@ class ParameterFork {
     /**
      * Gets value from map.
      */
+    @Suppress("UNCHECKED_CAST") // Trusting the user to not use different types intentionally
     operator fun <T: Any> getValue(requester: Any?, property: KProperty<*>): T {
         return map[property.name] as T
     }
