@@ -3,6 +3,7 @@ package flow.shadertoy
 import com.google.gson.GsonBuilder
 import flow.shadertoy.FileType.Companion.toFileName
 import flow.shadertoy.ShadertoyProject.ShadertoyTab
+import mu.KotlinLogging
 import java.io.File
 
 /**
@@ -14,6 +15,8 @@ import java.io.File
  * @param dirPath The path where the generated files should be stored. It will be extended to [generatedPath].
  */
 class GlslFileBuilder(val project: ShadertoyProject, val dirPath: String) {
+
+    private val logger = KotlinLogging.logger {}
 
     /**
      * The directory within [dirPath] that contains the generated files.
@@ -97,7 +100,7 @@ class GlslFileBuilder(val project: ShadertoyProject, val dirPath: String) {
             updatedCode.trimIndent()
 
             val glslPath = "$dirPath/generated/${project.name}/${tab.toFileName()}"
-            println("Saving shader code at $glslPath")
+            logger.info { "Saving shader code at $glslPath" }
             val glslFile = File(glslPath)
             // Create parent directories if they don't exist
             glslFile.parentFile.mkdirs()
@@ -116,7 +119,7 @@ class GlslFileBuilder(val project: ShadertoyProject, val dirPath: String) {
 
         // Write the json to a project file
         val jsonPath = "$generatedPath/project.json"
-        println("Saving json at $jsonPath")
+        logger.info { "Saving json at $jsonPath" }
         val jsonFile = File(jsonPath)
         jsonFile.parentFile.mkdirs() // Ensure parent dir existence
         jsonFile.writeText(gson.toJson(json))
