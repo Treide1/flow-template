@@ -9,8 +9,19 @@ import java.io.File
  * File creator class for GLSL code generation.
  *
  * Takes a [ShadertoyProject] and generates the corresponding GLSL code and a json to reconstruct it later.
+ *
+ * @param project The project to generate the GLSL code for.
+ * @param dirPath The path where the generated files should be stored. It will be extended to [generatedPath].
  */
-class GlslFileBuilder(val project: ShadertoyProject) {
+class GlslFileBuilder(val project: ShadertoyProject, val dirPath: String) {
+
+    /**
+     * The directory within [dirPath] that contains the generated files.
+     *
+     * This subdirectory is named after the project name. It will not collide with other projects.
+     */
+    val generatedPath = "$dirPath/generated/${project.name}"
+
 
     /**
      * Generates GLSL code and a project json.
@@ -85,7 +96,7 @@ class GlslFileBuilder(val project: ShadertoyProject) {
             "// Shadertoy fragment shader code:\n" +
             updatedCode.trimIndent()
 
-            val glslPath = "$GENERATED_RESOURCE_PREFIX/${project.name}/${tab.toFileName()}"
+            val glslPath = "$dirPath/generated/${project.name}/${tab.toFileName()}"
             println("Saving shader code at $glslPath")
             val glslFile = File(glslPath)
             // Create parent directories if they don't exist
@@ -93,11 +104,10 @@ class GlslFileBuilder(val project: ShadertoyProject) {
             glslFile.writeText(glslCode)
         }
 
-        val pathToProject = "/generated/${project.name}"
         val gson = GsonBuilder()
             .setPrettyPrinting()
-            .registerTypeAdapter(ShadertoyProject::class.java, ProjectToJson(pathToProject))
-            .registerTypeAdapter(ShadertoyTab::class.java, TabToJson(pathToProject))
+            .registerTypeAdapter(ShadertoyProject::class.java, ProjectToJson(generatedPath))
+            .registerTypeAdapter(ShadertoyTab::class.java, TabToJson(generatedPath))
             .create()
 
         // Build a json from the project to be able to reconstruct it later
@@ -105,18 +115,11 @@ class GlslFileBuilder(val project: ShadertoyProject) {
         json.remove("common")
 
         // Write the json to a project file
-        val jsonPath = "$GENERATED_RESOURCE_PREFIX/${project.name}/project.json"
+        val jsonPath = "$generatedPath/project.json"
         println("Saving json at $jsonPath")
         val jsonFile = File(jsonPath)
         jsonFile.parentFile.mkdirs() // Ensure parent dir existence
         jsonFile.writeText(gson.toJson(json))
-    }
-
-    companion object {
-        /**
-         * The relative path from root to the generated resources.
-         */
-        const val GENERATED_RESOURCE_PREFIX = "src/main/resources/generated"
     }
 
 }
