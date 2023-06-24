@@ -41,11 +41,13 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     col = vec4(0);
     vec4 lastMouse = texelFetch(iChannel1, ivec2(0,0), 0).xyzw;
 
+    #ifdef MOUSE_ADD
     if (iMouse.z > 1. && lastMouse.z > 1.)
     {
         float str = smoothstep(-.5,1.,length(mo - lastMouse.xy/iResolution.xy));
         col += str*0.0009/(pow(length(uv - mo),1.7)+0.002)*pal2(-iTime*0.7);
     }
+    #endif
 
     #ifndef MOUSE_ONLY
     col += .0025/(0.0005+pow(length(uv - point1(iTime)),1.75))*dt*0.12*pal(iTime*0.05 - .0);
@@ -59,7 +61,9 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     }
 
     col = clamp(col, 0.,5.);
-    col = max(col - (0.0001 + col*0.004)*.5, 0.); //decay
+    float sdf = regionSDF(uv);
+    float colFac = 0.004 * step(0.8, sdf) - 0.006 * (1 - step(0.05, sdf));
+    col = max(col - (0.0001 + col*colFac)*.5, 0.); //decay
 
     if (fragCoord.y < 1. && fragCoord.x < 1.)
     col = iMouse;
