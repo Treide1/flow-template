@@ -1,3 +1,5 @@
+@file:Suppress("CanBeParameter", "MemberVisibilityCanBePrivate")
+
 package flow.shadertoy
 
 import flow.autoupdate.AutoUpdate.autoUpdate
@@ -9,27 +11,29 @@ import org.openrndr.Program
 import org.openrndr.draw.*
 import org.openrndr.math.Vector3
 import org.openrndr.math.Vector4
+import kotlin.reflect.KProperty
 
 /**
  * A renderer for a [ShadertoyProject].
  *
- * Parses the [project] to a renderable procedure. Call [render] to render the project with runtime data.
+ * Parses the [project] to a render procedure. Call [render] to produce the result.
  */
-abstract class ProjectRenderer(val program: Program, val project: ShadertoyProject) {
+abstract class ProjectRenderer(val program: Program) {
 
     /**
-     * color buffer to render to
+     * The function that initializes the [project].
      */
-    val imageBuffer = colorBuffer(
-        program.width,
-        program.height,
-        format = ColorFormat.RGBa,
-        type = ColorType.FLOAT16,
-    )
+    abstract fun importProject(): ShadertoyProject
 
-    // Util
-    val w = program.width.toDouble()
-    val h = program.height.toDouble()
+    /**
+     * The project to render.
+     */
+    val project by lazy { importProject() }
+
+    /**
+     * The fork for the parameters of the project. All set values are passed to every shader.
+     */
+    val parameters = ParameterFork()
 
     // Commons from shadertoy
     /*
@@ -44,19 +48,48 @@ abstract class ProjectRenderer(val program: Program, val project: ShadertoyProje
      * uniform vec3 iChannelResolution[4]; // Currently unsupported
      * uniform samplerXX iChannelY; // Current version only supports sampler2D for color buffers
      */
-    var iResolution = Vector3(w, h, 1.0)
-    var iTime = 0.0
-    var iTimeDelta = 0.0015
-    var iFrame = 0.0
-    var iMouse = Vector4(0.0, 0.0, 0.0, 0.0)
+    /**
+     * Shadertoy uniform: The viewport resolution in pixels (z is pixel aspect, usually 1.0)
+     */
+    var iResolution: Vector3 by parameters
 
     /**
-     *
+     * Shadertoy uniform: The current time in seconds
+     */
+    var iTime: Double by parameters
+
+    /**
+     * Shadertoy uniform: The time difference between current [iTime] and the value from previous frame
+     */
+    var iTimeDelta: Double by parameters
+
+    /**
+     * Shadertoy uniform: The current frame index
+     */
+    var iFrame: Double by parameters
+
+    /**
+     * Shadertoy uniform: The mouse pixel coords. xy: current (if MLB down), zw: click
+     */
+    var iMouse: Vector4 by parameters
+
+    /**
+     * color buffer to render to
+     */
+    val imageBuffer = colorBuffer(
+        program.width,
+        program.height,
+        format = ColorFormat.RGBa,
+        type = ColorType.FLOAT16,
+    )
+
+    /**
+     * A map of all buffers used in the project.
      */
     val bufferMap = mutableMapOf<ShadertoyTab, ColorBuffer>()
 
     /**
-     *
+     * The order in which the passes are rendered.
      */
     val passOrder = mutableListOf<Step>()
 
@@ -69,7 +102,10 @@ abstract class ProjectRenderer(val program: Program, val project: ShadertoyProje
         val channels: Map<Int, ColorBuffer>
     )
 
+    // Init steps and add them to the pass order
+    // This also adds the filters to the parameters fork
     init {
+        // Create buffers for all tabs that are not the image
         val usedTabs = listOfNotNull(
             project.bufferA,
             project.bufferB,
@@ -78,26 +114,55 @@ abstract class ProjectRenderer(val program: Program, val project: ShadertoyProje
             project.cubeA,
             project.sound,
         )
-        // Create other buffers
         usedTabs.forEach { bufferMap[it] = imageBuffer.createEquivalent() }
 
-        // Create steps
-        usedTabs.forEach { tab ->
-            val filter = ShadertoyFilter(tab.code, tab.name, program)
+        // Create steps for (usedTabs + image)
+        (usedTabs + project.image).forEach { tab ->
+            val filter = ShadertoyFilter(tab).also { parameters.addFilter(it) }
             val buffer = bufferMap[tab]!!
             val channels = tab.getOrderedChannels().associate { (channel, channelInput) ->
                 channel.ordinal to channelInput.asColorBuffer()
             }
             passOrder.add(Step(filter, buffer, channels))
         }
-        passOrder.add(Step(
-            ShadertoyFilter(project.image.code, project.image.name, program),
-            imageBuffer,
-            project.image.getOrderedChannels().associate { (channel, channelInput) ->
-                channel.ordinal to channelInput.asColorBuffer()
-            }
-        ))
     }
+
+    // Set the uniforms for all filters
+    init {
+        iResolution = Vector3(program.width.toDouble(), program.height.toDouble(), 1.0)
+        iTime = 0.0
+        iTimeDelta = 0.0015
+        iFrame = 0.0
+        iMouse = Vector4(0.0, 0.0, 0.0, 0.0)
+
+        // Use autoUpdate to update uniforms
+        autoUpdate {
+            // iResolution does not need to be updated
+            iTimeDelta = program.seconds - iTime
+            iTime = program.seconds
+            iFrame = program.frameCount.toDouble()
+            // iMouse updated below
+        }
+
+        // Listen to mouse events and pass to uniform iMouse
+        program.mouse.iMouseListen()
+    }
+
+    /**
+     * Renders the project to the [imageBuffer] and returns it.
+     */
+    fun render(): ColorBuffer {
+        parameters
+
+        passOrder.forEach {
+            val from = it.channels.map { (_, buffer) -> buffer }.toTypedArray()
+            val to = it.buffer
+            it.filter.apply(from, to)
+        }
+        return imageBuffer
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
 
     // Conversion function to map inputs to color buffers
     private fun ShadertoyChannelInput.asColorBuffer(): ColorBuffer {
@@ -110,8 +175,9 @@ abstract class ProjectRenderer(val program: Program, val project: ShadertoyProje
         }
     }
 
+    // Mouse events are converted to iMouse
     private fun MouseEvents.iMouseListen() {
-        fun Double.flipY() = h - this
+        fun Double.flipY() = iResolution.y - this
 
         buttonDown.listen {
             if (it.button != MouseButton.LEFT) return@listen
@@ -138,35 +204,44 @@ abstract class ProjectRenderer(val program: Program, val project: ShadertoyProje
             )
         }
     }
+}
 
-    init {
-        autoUpdate {
-            // iResolution does not need to be updated
-            iTimeDelta = program.seconds - iTime
-            iTime = program.seconds
-            iFrame = program.frameCount.toDouble()
-            // iMouse updated below
-        }
+/**
+ * Tracks parameters just like [Filter.parameters] and can be accessed the same way.
+ * In addition, the values are not set-only anymore, but can be read as well.
+ *
+ * Those parameters are set for all filters that are added to this fork via [addFilter].
+ */
+class ParameterFork {
 
-        program.mouse.iMouseListen()
+    // Map of parameter names to values
+    private val map = mutableMapOf<String, Any>()
+
+    // List of filters that receive the parameters of this fork
+    private val filterList = mutableListOf<Filter>()
+
+    /**
+     * Gets value from map.
+     */
+    operator fun <T: Any> getValue(requester: Any?, property: KProperty<*>): T {
+        return map[property.name] as T
     }
 
     /**
-     * Renders the project to the [imageBuffer] and returns it.
+     * Puts value into map and sets it for all filters.
      */
-    fun render(): ColorBuffer {
-        passOrder.forEach {
-            it.filter.iResolution = iResolution
-            it.filter.iTime = iTime
-            it.filter.iTimeDelta = iTimeDelta
-            it.filter.iFrame = iFrame
-            it.filter.iMouse = iMouse
-
-            val from = it.channels.map { (_, buffer) -> buffer }.toTypedArray()
-            val to = it.buffer
-            it.filter.apply(from, to)
+    operator fun <T: Any> setValue(requester: Any?, property: KProperty<*>, value: T) {
+        map[property.name] = value
+        filterList.forEach {
+            it.parameters[property.name] = value
         }
-        return imageBuffer
+    }
+
+    /**
+     * Adds a [Filter] to receive the parameters of this fork.
+     */
+    fun addFilter(filter: ShadertoyFilter) {
+        filterList.add(filter)
     }
 }
 
@@ -176,25 +251,5 @@ abstract class ProjectRenderer(val program: Program, val project: ShadertoyProje
  * The common shadertoy uniforms are available as parameters.
  */
 class ShadertoyFilter(
-    val convertedCode: String,
-    val name: String,
-    program: Program,
-) : Filter(filterShaderFromCode(convertedCode, name, includeShaderConfiguration = false)) {
-
-    val w = program.width.toDouble()
-    val h = program.height.toDouble()
-
-    var iResolution by parameters
-    var iTime by parameters
-    var iTimeDelta by parameters
-    var iFrame by parameters
-    var iMouse by parameters
-
-    init {
-        iResolution = Vector3(w, h, 1.0)
-        iTime = 0.0
-        iTimeDelta = 0.0015
-        iFrame = 0.0
-        iMouse = Vector4(0.0, 0.0, 0.0, 0.0)
-    }
-}
+    val addedTab: ShadertoyTab
+) : Filter(filterShaderFromCode(addedTab.code, addedTab.name, includeShaderConfiguration = false))
