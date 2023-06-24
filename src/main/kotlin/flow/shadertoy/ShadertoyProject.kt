@@ -9,10 +9,23 @@ import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.ChannelInput
 import org.openrndr.draw.ColorFormat
 import org.openrndr.draw.ColorType
 
+/**
+ * Class to represent a Shadertoy channel.
+ */
 typealias ShadertoyChannel = Channel
+
+/**
+ * Class to represent a Shadertoy channel input.
+ */
 typealias ShadertoyChannelInput = ChannelInput
 
 /**
+ * Class to represent a [Shadertoy](https://www.shadertoy.com) project.
+ *
+ * It models the Shadertoy project as a set of tabs, each tab representing a shader with channels.
+ *
+ * The model is an intermediate representation that can be used to generate OPENRNDR GLSL 330 code.
+ *
  * For Shadertoy import discussion, see:<br>
  * [Discourse](https://openrndr.discourse.group/t/from-shadertoy-to-openrndr/85)
  */
@@ -30,7 +43,7 @@ class ShadertoyProject(
 ) {
 
     /**
-     *
+     * Represents a Shadertoy tab as seen in the Shadertoy editor.
      */
     sealed class ShadertoyTab(
         val name: String,
@@ -53,7 +66,7 @@ class ShadertoyProject(
         }
 
         /**
-         *
+         * Sets the [channel] to use the [input].
          */
         fun setInput(channel: ShadertoyChannel, input: ShadertoyChannelInput): ShadertoyTab {
             channelSettings.channelsMap[channel] = input
@@ -61,15 +74,14 @@ class ShadertoyProject(
         }
 
         /**
-         * 0..3 channels with a possible binding to an input buffers/textures/etc.,
-         * and sampling representation linear, repeated, RGBa, 16B float
+         * Represents the settings for the four channels in a Shadertoy tab.
          */
         data class ChannelSettings(
             val channelsMap: MutableMap<Channel, ChannelInput> = mutableMapOf()
         ) {
 
             /**
-             *
+             * Represents the channels 0 to 4 in a Shadertoy tab.
              */
             enum class Channel {
                 CHANNEL_0,
@@ -81,7 +93,9 @@ class ShadertoyProject(
             }
 
             /**
+             * Represents the input for a channel in a Shadertoy tab.
              *
+             * NOTE: Most inputs are not supported yet. Allowed input cytpes are 'buffer' and 'image'.
              */
             sealed class ChannelInput(val id: Int, val ctype: String = "UNSUPPORTED", var sampler: Sampler = Sampler()) {
                 object KEYBOARD: ChannelInput(-1) // actually (33, "keyboard") but currently unsupported
@@ -133,11 +147,17 @@ class ShadertoyProject(
     }
 }
 
+/**
+ * Convenience function to chain calls on a [ShadertoyProject].
+ */
 fun <T: ShadertoyProject.ShadertoyTab> T.setCode(code: String): T {
     this.code = code
     return this
 }
 
+/**
+ * Convenience function to chain calls on a [ShadertoyProject].
+ */
 fun <T: ShadertoyProject.ShadertoyTab> T.setSettings(settings: ChannelSettings): T {
     this.channelSettings = settings
     return this
