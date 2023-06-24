@@ -10,13 +10,13 @@ import java.util.Date
 internal const val UNSET_STRING = "_"
 
 /**
- *
+ * Json serializer for [ShadertoyProject]s.
  */
-class ProjectToJson(val resourcePath: String): JsonSerializer<ShadertoyProject> {
+class ProjectToJson(val generatedPath: String): JsonSerializer<ShadertoyProject> {
 
     override fun serialize(src: ShadertoyProject, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
 
-        val tabSerializer = TabToJson(resourcePath)
+        val tabSerializer = TabToJson(generatedPath)
 
         val obj = JsonObject()
         obj.add("info", JsonObject().apply {
@@ -50,9 +50,9 @@ class ProjectToJson(val resourcePath: String): JsonSerializer<ShadertoyProject> 
 }
 
 /**
- *
+ * Json serializer for [ShadertoyTab]s. This serializer is used by [ProjectToJson].
  */
-class TabToJson(val resourcePath: String): JsonSerializer<ShadertoyTab> {
+class TabToJson(val generatedPath: String): JsonSerializer<ShadertoyTab> {
 
     override fun serialize(src: ShadertoyTab, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
 
@@ -82,7 +82,7 @@ class TabToJson(val resourcePath: String): JsonSerializer<ShadertoyTab> {
         })
 
         val fileName = src.toFileName()
-        val f = File("src/main/resources/$resourcePath/$fileName")
+        val f = File("$generatedPath/$fileName")
         val code = if (f.exists()) f.readText() else src.code
         obj.add("code", JsonPrimitive(code))
 

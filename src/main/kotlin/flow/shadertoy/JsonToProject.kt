@@ -9,7 +9,7 @@ import flow.shadertoy.ShadertoyProject.ShadertoyTab.*
 import java.lang.reflect.Type
 
 /**
- *
+ * Json deserializer for [ShadertoyProject]s.
  */
 class JsonToProject: JsonDeserializer<ShadertoyProject> {
 
