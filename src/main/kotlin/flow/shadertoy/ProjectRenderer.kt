@@ -86,7 +86,9 @@ abstract class ProjectRenderer(val program: Program) {
     /**
      * A map of all buffers used in the project.
      */
-    val bufferMap = mutableMapOf<ShadertoyTab, ColorBuffer>()
+    val bufferMap = mutableMapOf<ShadertoyTab, ColorBuffer>(
+        project.image to imageBuffer
+    )
 
     /**
      * The order in which the passes are rendered.
