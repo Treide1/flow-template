@@ -1,5 +1,7 @@
 package flow.shadertoy
 
+// TODO: use for ProjectImporter's importFromApi() method
+
 data class ShadertoyApiObject(var shader: Shader = Shader())
 
 data class Shader(
