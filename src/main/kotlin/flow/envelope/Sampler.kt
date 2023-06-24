@@ -21,7 +21,7 @@ data class Sampler(val envelope: Envelope) {
         value = envelope.sample(phase)
     }
 
-    operator fun getValue(requestee: Nothing?, property: KProperty<*>): Double {
+    operator fun getValue(requestee: Any?, property: KProperty<*>): Double {
         return value
     }
 }
