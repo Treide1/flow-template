@@ -5,6 +5,7 @@ import flow.fx.fluidSim.FluidSimulation
 import flow.fx.retroSun.RetroSun
 import flow.shadertoy.ProjectRenderer
 import flow.util.CyclicFlag
+import org.openrndr.Fullscreen
 import org.openrndr.application
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.tint
@@ -14,11 +15,8 @@ import org.openrndr.draw.tint
  */
 fun main() = application {
     configure {
-        //fullscreen = Fullscreen.CURRENT_DISPLAY_MODE
-        width = 1280
-        height = 720
+        fullscreen = Fullscreen.CURRENT_DISPLAY_MODE
         display = displays.last()
-        title = "OPENRNDR ~ Shadertoy Parser"
     }
     flowProgram {
 
