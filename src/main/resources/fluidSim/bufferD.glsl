@@ -54,6 +54,9 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     col += .0025/(0.0005+pow(length(uv - point2(iTime)),1.75))*dt*0.12*pal2(iTime*0.05 + 0.675);
     #endif
 
+    // Adds color in the positive region
+    float sdf = regionSDF(uv);
+    col += .0025/(0.0005+pow(abs(sdf),1.75))*dt*0.12*pal(iTime*0.05 + (1.0-iMouse.x/iResolution.x)*0.675);
 
     if (iFrame < 20)
     {
@@ -61,13 +64,12 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     }
 
     col = clamp(col, 0.,5.);
-    float sdf = regionSDF(uv);
-    float colFac = 0.004 * step(0.8, sdf) - 0.006 * (1 - step(0.05, sdf));
-    col = max(col - (0.0001 + col*colFac)*.5, 0.); //decay
+    col = max(col - (0.0001 + col*0.004)*.5, 0.); //decay
 
     if (fragCoord.y < 1. && fragCoord.x < 1.)
     col = iMouse;
 
-    fragColor = col;
-
+    float blend = 0.95;
+    float colFac = sdf * (1 - blend) + blend;
+    fragColor = col * colFac;
 }
