@@ -6,7 +6,7 @@ import flow.shadertoy.ShadertoyProject
 import org.openrndr.Program
 
 /**
- *
+ * A renderer for the shadertoy project ["Retro Sun"](https://www.shadertoy.com/view/4dcyW7) by FraglessPlayer.
  */
 class RetroSun(program: Program): ProjectRenderer(program) {
 
@@ -16,5 +16,6 @@ class RetroSun(program: Program): ProjectRenderer(program) {
     }
 
     // parameters and init
+    // ...
 
 }
