@@ -14,7 +14,7 @@ import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.ChannelInput
 import org.openrndr.animatable.easing.CubicIn
 
 /**
- * A renderer for the shadertoy project ["Chimera's Breath"](https://www.shadertoy.com/view/4tGfDW) by nimitz.
+ * A renderer for the shadertoy project ["Chimera's Breath" by nimitz](https://www.shadertoy.com/view/4tGfDW).
  *
  * Edited and wired with uniforms to communicate with the [FlowProgram].
  */
