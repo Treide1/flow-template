@@ -35,12 +35,15 @@ class OneEuroFilter(
     var dx = LowPassFilter(alpha(dCutoff), 0.0)
 
 
-    fun alpha(cutoff: Double): Double {
+    private fun alpha(cutoff: Double): Double {
         val te = 1.0 / freq
         val tau = 1.0 / (2 * Math.PI * cutoff)
         return 1.0 / (1.0 + tau / te)
     }
-    
+
+    /**
+     * Pass the current [value] and the time difference [dTime] and get the updated value.
+     */
     fun filter(value: Double, dTime: Double): Double {
         // Update the sampling frequency based on delta time
         freq = 1.0 / dTime

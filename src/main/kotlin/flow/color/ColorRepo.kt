@@ -55,7 +55,7 @@ class ColorRepo<T: ColorModel<T>>(var palette: Map<String, T> = mapOf()) {
         ).mapValues{ (_, hex) -> ColorRGBa.fromHex(hex).toXSVa() }
 
         /**
-         *
+         * Form the given [pairs] of names to hex literals, creates a [ColorRepo] using the [ColorRGBa] color model.
          */
         fun fromHexMapOf(vararg pairs: Pair<String, String>): ColorRepo<ColorRGBa> {
             return ColorRepo(

@@ -18,6 +18,9 @@ import org.openrndr.extra.fx.distort.Perturb
 import org.openrndr.extra.fx.distort.VerticalWave
 import org.openrndr.extra.gui.addTo
 
+/**
+ * A render pipeline that provides buffers and filters for the [render] method.
+ */
 class RenderPipeline(
     width: Int,
     height: Int,
@@ -60,7 +63,7 @@ class RenderPipeline(
     val stencilBuffer by lazy { stencilTarget.colorBuffer(0) }
 
     /**
-     *
+     * Renders the [block] to the [imageBuffer].
      */
     fun render(block: RenderPipeline.() -> Unit = {}) {
 
@@ -69,7 +72,7 @@ class RenderPipeline(
             block()
         }
 
-        flowProgram. drawer.image(imageBuffer)
+        flowProgram.drawer.image(imageBuffer)
     }
 
     /**

@@ -11,7 +11,7 @@ import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.tint
 
 /**
- * Template for "Flow" programs.
+ * Demo 3 of the "Flow" template.
  */
 fun main() = application {
     configure {
