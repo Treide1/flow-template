@@ -1,8 +1,8 @@
 package demos
 
 import flow.FlowProgram.Companion.flowProgram
-import flow.fx.fluidSim.FluidSimulation
-import flow.fx.retroSun.RetroSun
+import flow.shadertoy.projects.fluidSim.FluidSimulation
+import flow.shadertoy.projects.retroSun.RetroSun
 import flow.shadertoy.ProjectRenderer
 import flow.util.CyclicFlag
 import org.openrndr.Fullscreen

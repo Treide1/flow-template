@@ -1,4 +1,4 @@
-package flow.fx.fluidSim
+package flow.shadertoy.projects.fluidSim
 
 import flow.FlowProgram
 import flow.autoupdate.AutoUpdate.autoUpdate

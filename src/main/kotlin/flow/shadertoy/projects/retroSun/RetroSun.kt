@@ -1,4 +1,4 @@
-package flow.fx.retroSun
+package flow.shadertoy.projects.retroSun
 
 import flow.shadertoy.ProjectImporter
 import flow.shadertoy.ProjectRenderer
