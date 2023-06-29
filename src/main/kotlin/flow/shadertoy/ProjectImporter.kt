@@ -35,10 +35,17 @@ object ProjectImporter {
      * Import a project from a directory that contains glsl files.
      * @param projectName The name of the project. This will be included in the project.json under the `name` field.
      * @param dirPath The directory that contains the glsl files.
+     * @throws IllegalArgumentException If the directory does not exist or does not contain an `image.glsl` file.
      */
     fun import(projectName: String, dirPath: String): ShadertoyProject {
 
-        if (!File(dirPath).exists()) throw IllegalArgumentException("Directory '$dirPath' does not exist")
+        val folder = File(dirPath)
+        val imageGlslFile = File("$dirPath/image.glsl")
+
+        // Check if the directory exists
+        if (!folder.exists()) throw IllegalArgumentException("Directory '$dirPath' does not exist")
+        // Check if "image.glsl" is in that folder
+        if (!imageGlslFile.exists()) throw IllegalArgumentException("Directory '$dirPath' does not contain an 'image.glsl' file")
 
         val project = ShadertoyProject(projectName)
         project.loadAllGlslFiles(dirPath)
