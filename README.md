@@ -2,7 +2,7 @@
 
 An OPENRNDR template named "Flow" to jump start a music visualization with the most useful tools prepared.
 
-Run the template demo. <br>
+Run a template demo. <br>
 Adapt it to your liking or start from the empty template. <br>
 Discover useful APIs for working with music, visual content, visual effects and much more.
 
@@ -10,7 +10,7 @@ The result should be stunning visuals - audio reactive and in sync.
 
 ## Intention
 
-I am Lukas, a VJ and creative coder from Germany.
+I am Lukas Henke, a VJ and creative coder from Germany.
 
 This template is my "expansion" of [OPENRNDR](https://openrndr.org/) that suits the needs for live music visualization.
 But I also wanted to share this template, providing the tools and a demo to run for everyone.
@@ -44,11 +44,11 @@ Press `f1` to toggle the available commands. The other keys are used for the dem
 
 👉 Watch the [Full Version](https://youtu.be/IqMl_r1qLPQ) on YouTube
 
-#### Demo: On Startup
+#### Demo 1: On Startup
 
-![Demo: On Startup](images/FlowTemplateDemo-OnStartup.png)
+![Demo 1: On Startup](images/FlowTemplateDemo-OnStartup.png)
 
-#### Demo: Gallery
+#### Demo 1: Gallery
 
 ![FullContent NoFx](images/FlowTemplateDemo-FullContent-NoFx.png)
 
@@ -61,12 +61,14 @@ Press `f1` to toggle the available commands. The other keys are used for the dem
 ### Experiment …
 
 You might notice that this is a GitHub template, not a library.
-This way, you have everything in one file to adapt config or logic.
+This way, you can change everything as you please, even internal workings.
+
+It is recommended to start with the [FlowTemplate_Demo1.kt](src/main/kotlin/demos/FlowTemplate_Demo1.kt).
 
 To experiment with the demo, some starting points might be:
 * Setting the bpm to your favorite song's bpm (See: [songbpm.com](https://songbpm.com/))
 * Changing the color palette
-* Tweaking values
+* Tweaking content values
 * Writing your own visual groups (See: `audioGroup`, `diamondGroup` and `circleGroup`)
 * Writing your own bpm-based envelopes (See: `kick` and `flash`)
 
@@ -153,15 +155,7 @@ In general, you can unbind/untrack keys and dynamically change key bindings duri
 
 ### Render Pipeline and FxRepo
 
-Start with `val renderPipeline = RenderPipeline(widht, height, drawer)` 
-and init a render pipeline with a visual effect repository `fxRepo` and 
-some standard renderTargets/colorBuffers prepared.
-
-Provides a setup for a graphics pipeline, similar to vanilla OPENRNDR `compose { … }` blocks.
-Those seem to be wasteful with resources, however. So I wrote my own wrapper.
-
-Define your effect chain with `fxRepo` and apply during your procedure. 
-Typically at the end, but hey - no on is stopping you to use it in the beginning or the middle. Or multiple times.
+-- Under Reconstruction --
 
 # Appendix
 
@@ -178,7 +172,11 @@ All the other tasks require some more work.
 
 ### Template Progress
 
+- [x] FlowProgram
 - [x] Executable Template
+- [x] Demo 1
+- [x] Demo 2
+- [x] Demo 3
 
 ### Presented APIs
   - [x] `BeatClock`
@@ -186,15 +184,14 @@ All the other tasks require some more work.
   - [x] `ColorRepo`
   - [x] `VisualGroup`
   - [x] `InputScheme`
-  - [x] `FxRepo`
-    - [x] `MirrorFx` 
-    - [x] `GalaxyShadeStyle`
+  - [ ] `FxRepo` (Under Reconstruction)
   - [x] `UiDisplay`
   - [x] `Realtime filters`, currently just OneEuroFilter
 
 ### API Progress
 - [x] BeatClock
   - [x] Beat tracking
+  - [ ] Reintegration: Use orx-delegate-magic to simplify `Envelope`
 - [x] Audio API
   - [x] Audio dispatch logic
   - [ ] Setup based on system settings/ used processors
@@ -207,6 +204,7 @@ All the other tasks require some more work.
   - [x] Color Palette
   - [ ] Color Picker
   - [ ] Sampling, like linear blend or along a color path
+  - [ ] Reintegration: Use orx-palette
 - [x] Content API
   - [x] Visual group for organizing content
   - [x] Inline-object property/function definition and access
@@ -214,9 +212,8 @@ All the other tasks require some more work.
   - [x] Input Scheme definition
   - [ ] Common Devices 
     - [x] Keyboard, by name or key code
-    - [ ] Mouse
-    - [ ] MIDI
-    - [ ] Probably some Hardware Abstraction Layer
+    - [ ] Mouse (use default `program.mouse`)
+    - [ ] MIDI (use orx-midi + orx-osc)
   - [x] Key tracking
     - [x] PIANO style
     - [x] TOGGLE style
@@ -230,21 +227,21 @@ All the other tasks require some more work.
       - [ ] Linear sampling, 2D sampling
       - [ ] As Envelope, binding to animation
 - [x] RenderPipeline API
-  - [x] Chain definition and usage
-  - [x] FxRepo
+  - [ ] Complete Reconstruction
+- [x] Scenes API
+  - [x] Scenes
+  - [x] Transitions
+  - [x] Scene Navigator
+  - [ ] Key Rebinding
 - [x] UiDisplay API
   - [x] Basic UI 
   - [x] Can be hidden
   - [x] Tracking values and displaying them
+  - [ ] Reintegration: Use standard GUI (with orx-gui/orx-panel)
 
 ### Long-Term Goals
 
-* Scenes API
-  * Scene management 
-  * Scene transitions 
-    * Cross-Fading
-    * Key Rebinding
-* FFMPEG Video API
+* FFMPEG Video API (based on OPENRNDR `VideoPlayer`)
   * VisualGroup-based Video player
   * Start, Stop, Move to time, etc.
 * Param Picker
@@ -257,7 +254,7 @@ All the other tasks require some more work.
 ### Framework and Language
 
 #### OPENRNDR
-Visit their [Website](https://openrndr.org/) and run your first program with the help of the [Guide](https://guide.openrndr.org/).
+Visit the [official website](https://openrndr.org/) and run your first program with the help of the [Guide](https://guide.openrndr.org/).
 
 You can also check out their [GitHub](https://github.com/openrndr), where the [Original Template](https://github.com/openrndr/openrndr-template) also resides.
 
@@ -312,9 +309,13 @@ Covers the basics and presents concise examples.
 * [The Book Of Shaders](https://thebookofshaders.com/)
 
 #### Inigo Quilez' Articles
-Archive of articles about shaders and CG in general.
+Archive of articles about shaders and computer graphics in general.
 Easy to understand, highly informative.
 * https://iquilezles.org/articles
+
+#### Shadertoy
+Forum for GLSL-based fragment shaders (and even full render passes). Treasure trove of visual content.
+* https://www.shadertoy.com
 
 ### Music visualizer inspiration
 
