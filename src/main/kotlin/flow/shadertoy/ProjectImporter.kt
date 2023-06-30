@@ -98,14 +98,14 @@ object ProjectImporter {
     // Sets the code of the project according to the file type
     private fun ShadertoyProject.setCodeByFileType(content: String, fileType: FileType) {
         when (fileType) {
-            FileType.COMMON_GLSL   -> common = (common ?: Common())   .setCode(content)
-            FileType.IMAGE_GLSL    -> image = image                   .setCode(content)
+            FileType.COMMON_GLSL   -> common =  (common ?: Common())  .setCode(content)
+            FileType.IMAGE_GLSL    -> image =    image                .setCode(content)
             FileType.BUFFER_A_GLSL -> bufferA = (bufferA ?: BufferA()).setCode(content)
             FileType.BUFFER_B_GLSL -> bufferB = (bufferB ?: BufferB()).setCode(content)
             FileType.BUFFER_C_GLSL -> bufferC = (bufferC ?: BufferC()).setCode(content)
             FileType.BUFFER_D_GLSL -> bufferD = (bufferD ?: BufferD()).setCode(content)
-            FileType.CUBE_A_GLSL   -> cubeA = (cubeA ?: CubeA())      .setCode(content)
-            FileType.SOUND_GLSL    -> sound = (sound ?: Sound())      .setCode(content)
+            FileType.CUBE_A_GLSL   -> cubeA =   (cubeA ?: CubeA())    .setCode(content)
+            FileType.SOUND_GLSL    -> sound =   (sound ?: Sound())    .setCode(content)
         }
     }
 
@@ -124,7 +124,7 @@ object ProjectImporter {
  */
 enum class FileType(val fileName: String) {
     COMMON_GLSL("common.glsl"),
-    IMAGE_GLSL("bufferA.glsl"),
+    IMAGE_GLSL("image.glsl"),
     BUFFER_A_GLSL("bufferA.glsl"),
     BUFFER_B_GLSL("bufferB.glsl"),
     BUFFER_C_GLSL("bufferC.glsl"),
