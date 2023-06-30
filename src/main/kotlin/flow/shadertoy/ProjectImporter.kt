@@ -70,7 +70,7 @@ object ProjectImporter {
         val builder = GlslFileBuilder(original, projectPath)
         builder.generate()
 
-        return importFromJson(projectPath)
+        return importFromJson("$projectPath/generated", true)
     }
 
     /**
