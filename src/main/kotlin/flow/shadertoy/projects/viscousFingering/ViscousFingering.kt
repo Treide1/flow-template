@@ -7,6 +7,8 @@ import flow.shadertoy.ShadertoyProject
 import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.Channel.CHANNEL_0
 import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.ChannelInput.BUFFER_A_IN
 import org.openrndr.extra.parameters.DoubleParameter
+import org.openrndr.extra.parameters.Vector3Parameter
+import org.openrndr.math.Vector3
 
 class ViscousFingering(program: FlowProgram): ProjectRenderer(program){
 
@@ -62,6 +64,25 @@ class ViscousFingering(program: FlowProgram): ProjectRenderer(program){
     @DoubleParameter("diagonal weight", 0.0, 1.0)
     var sq2: Double by parameters
 
+    // Extra parameters
+    @Vector3Parameter("a", 0.0, 1.0)
+    var a: Vector3 by parameters
+
+    @Vector3Parameter("b", 0.0, 1.0)
+    var b: Vector3 by parameters
+
+    @Vector3Parameter("c", 0.0, 1.0)
+    var c: Vector3 by parameters
+
+    @Vector3Parameter("d", 0.0, 1.0)
+    var d: Vector3 by parameters
+
+    fun reset() {
+        reset = true
+    }
+
+    private var reset: Boolean by parameters
+
     init {
         _K0 = -20.0/6.0
         _K1 = 4.0/6.0
@@ -73,5 +94,15 @@ class ViscousFingering(program: FlowProgram): ProjectRenderer(program){
         pwr = 0.2
         amp = 1.0
         sq2 = 0.7
+
+        reset = false
+        a = Vector3(0.5, 0.5, 0.5)
+        b = Vector3(0.5, 0.5, 0.5)
+        c = Vector3(1.0, 1.0, 1.0)
+        d = Vector3(0.0, 0.0, 0.0)
+    }
+
+    override fun afterRender() {
+       reset = false
     }
 }

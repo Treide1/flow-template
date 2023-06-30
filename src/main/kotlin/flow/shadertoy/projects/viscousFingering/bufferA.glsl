@@ -14,11 +14,11 @@ uniform float pwr; // power when deriving rotation angle from curl = 0.2, range 
 uniform float amp; // self-amplification = 1.0, range = [0.9, 1.1]
 uniform float sq2; // diagonal weight = 0.7, range = [0, 1]
 
-// Original: https://www.shadertoy.com/view/ttjXzR
-bool reset() {
-    return iMouse.x < 0.0; // changed to not use iChannel3 = keyboard
-}
+uniform bool reset;
 
+precision mediump float;
+
+// Original: https://www.shadertoy.com/view/Xst3Dj
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     //const float _K0 = -20.0/6.0; // center weight / -20/6
@@ -86,8 +86,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     float b = ta * sin(sc) + tb * cos(sc);
 
     // initialize with noise
-    if(iFrame<10 || reset()) {
-        fragColor = -0.5 + vec4(rand(uv.xy), rand(uv.yz + 34.59), rand(uv.zx + 32.18), 1.0);// Changed to not use: texture(iChannel1, fragCoord.xy / iResolution.xy);
+    if(iFrame<1 || reset) {
+        fragColor = -0.5 + vec4(rand(uv.xy), rand(uv.yx + 34.59), 0.0, 1.0);// Changed to not use: texture(iChannel1, fragCoord.xy / iResolution.xy);
     } else {
         fragColor = clamp(vec4(a,b,div,1), -1., 1.);
     }

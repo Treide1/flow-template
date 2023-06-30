@@ -11,6 +11,7 @@ import flow.fx.Crossfade
 import flow.fx.galaxyShadeStyle
 import flow.input.InputScheme.TrackTypes.TOGGLE
 import flow.rendering.scenes.SceneNavigator
+import flow.shadertoy.projects.retroSunModified.RetroSunModified
 import flow.shadertoy.projects.viscousFingering.ViscousFingering
 import org.openrndr.Fullscreen
 import org.openrndr.application
@@ -92,8 +93,15 @@ fun main() = application {
             val renderer = ViscousFingering(this@flowProgram).addTo(gui, "Viscous Fingering")
 
             override fun Drawer.draw() {
-                val result = renderer.render()
-                image(result)
+                image(renderer.render())
+            }
+        }
+
+        val retroGroup = object: VisualGroup(program) {
+            val renderer = RetroSunModified(this@flowProgram).addTo(gui, "Retro Sun Modified")
+
+            override fun Drawer.draw() {
+                image(renderer.render())
             }
         }
 
@@ -106,7 +114,8 @@ fun main() = application {
                 layer {
                     draw {
                         //galaxyGroup.draw()
-                        viscousGroup.draw()
+                        //viscousGroup.draw()
+                        retroGroup.draw()
                     }
 
                     post(ChromaticAberration()) {
@@ -209,6 +218,7 @@ fun main() = application {
                 "z".bind("Next zoom variation") { galaxyGroup.zoomVariations.next() }
                 "t".bind("Queue transition") { sceneNav.remainingTransitions++ }
                 "f".bind("Next video flicker") { sceneNav.videoFlickerFreq.next() }
+                "r".bind("Reset viscous fingering") { viscousGroup.renderer.reset() }
             }
         }
     }

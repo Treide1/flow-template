@@ -150,17 +150,21 @@ abstract class ProjectRenderer(val program: Program) {
         program.mouse.iMouseListen()
     }
 
+    open fun beforeRender() {}
+    open fun afterRender() {}
+
     /**
      * Renders the project to the [imageBuffer] and returns it.
      */
     fun render(): ColorBuffer {
-        parameters
-
+        beforeRender()
         passOrder.forEach {
             val from = it.channels.map { (_, buffer) -> buffer }.toTypedArray()
             val to = it.buffer
             it.filter.apply(from, to)
         }
+        afterRender()
+
         return imageBuffer
     }
 
