@@ -23,12 +23,12 @@ abstract class ProjectRenderer(val program: Program) {
     /**
      * The function that initializes the [project].
      */
-    abstract fun importProject(): ShadertoyProject
+    abstract fun ProjectImporter.importProject(): ShadertoyProject
 
     /**
      * The project to render.
      */
-    val project by lazy { importProject() }
+    val project by lazy { ProjectImporter.importProject() }
 
     /**
      * The fork for the parameters of the project. All set values are passed to every shader.

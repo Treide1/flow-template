@@ -13,17 +13,19 @@ import java.io.File
  *
  * @param project The project to generate the GLSL code for.
  * @param dirPath The path where the generated files should be stored. It will be extended to [generatedPath].
+ * @param addProjectNameAsPath If true, the project name will be added as a subdirectory to [dirPath].
  */
-class GlslFileBuilder(val project: ShadertoyProject, val dirPath: String) {
+class GlslFileBuilder(val project: ShadertoyProject, val dirPath: String, val addProjectNameAsPath: Boolean = false) {
 
     private val logger = KotlinLogging.logger {}
 
     /**
      * The directory within [dirPath] that contains the generated files.
      *
-     * This subdirectory is named after the project name. It will not collide with other projects.
+     * If [addProjectNameAsPath] is true, the subdirectory is named after the project name.
+     * Then, it will not collide with other projects.
      */
-    val generatedPath = "$dirPath/generated/${project.name}"
+    val generatedPath = "$dirPath/generated" + if (addProjectNameAsPath) "/${project.name}" else ""
 
 
     /**
@@ -99,7 +101,7 @@ class GlslFileBuilder(val project: ShadertoyProject, val dirPath: String) {
             "// Shadertoy fragment shader code:\n" +
             updatedCode.trimIndent()
 
-            val glslPath = "$dirPath/generated/${project.name}/${tab.toFileName()}"
+            val glslPath = "$generatedPath/${tab.toFileName()}"
             logger.info { "Saving shader code at $glslPath" }
             val glslFile = File(glslPath)
             // Create parent directories if they don't exist

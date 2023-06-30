@@ -13,6 +13,11 @@ import java.io.File
 object ProjectImporter {
 
     /**
+     * The path to the folder that contains the shadertoy projects.
+     */
+    val projectsPath = "src/main/kotlin/flow/shadertoy/projects"
+
+    /**
      * Import a project from a directory that contains a project.json file.
      * @param dirPath The directory that contains the project.json file.
      * @param reloadCode If true, the GLSL code is reloaded from the files in the directory.
@@ -54,15 +59,18 @@ object ProjectImporter {
     }
 
     /**
-     * Generate glsl files and a project.json and then imports the project.
-     * @param original The original project needs to be converted to glsl files.
-     * @param generateTargetPath The path where the generated files should be stored.
+     * Given the project from [projectPath] with a [projectName], imports a project without input bindings.
+     * The specified [setup] step is applied onto it and new project files are generated.
+     * Those are imported and returned.
      */
-    fun generateAndImport(original: ShadertoyProject, generateTargetPath: String): ShadertoyProject {
-        val builder = GlslFileBuilder(original, generateTargetPath)
+    fun buildAndImport(projectPath: String, projectName: String, setup: ShadertoyProject.() -> Unit): ShadertoyProject {
+        val original = import(projectName, projectPath)
+        original.setup()
+
+        val builder = GlslFileBuilder(original, projectPath)
         builder.generate()
 
-        return importFromJson(builder.generatedPath)
+        return importFromJson(projectPath)
     }
 
     /**
@@ -116,7 +124,7 @@ object ProjectImporter {
  */
 enum class FileType(val fileName: String) {
     COMMON_GLSL("common.glsl"),
-    IMAGE_GLSL("image.glsl"),
+    IMAGE_GLSL("bufferA.glsl"),
     BUFFER_A_GLSL("bufferA.glsl"),
     BUFFER_B_GLSL("bufferB.glsl"),
     BUFFER_C_GLSL("bufferC.glsl"),

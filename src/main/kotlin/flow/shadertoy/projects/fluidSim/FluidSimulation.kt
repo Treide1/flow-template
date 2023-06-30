@@ -25,15 +25,15 @@ class FluidSimulation(program: FlowProgram): ProjectRenderer(program) {
      * Then sets the channel inputs that project.
      * Then generates files and imports the used project from those.
      */
-    override fun importProject(): ShadertoyProject {
-        val original =  ProjectImporter.import("fluidSim", "src/main/resources/fluidSim")
-        original.bufferA!!.setInput(CHANNEL_0, BUFFER_C_IN)
-        original.bufferB!!.setInput(CHANNEL_0, BUFFER_A_IN)
-        original.bufferC!!.setInput(CHANNEL_0, BUFFER_B_IN)
-        original.bufferD!!.setInput(CHANNEL_0, BUFFER_A_IN).setInput(CHANNEL_1, BUFFER_D_IN)
-        original.image    .setInput(CHANNEL_0, BUFFER_D_IN)
+    override fun ProjectImporter.importProject(): ShadertoyProject {
 
-        return ProjectImporter.generateAndImport(original, ".")
+        return buildAndImport("$projectsPath/fluidSim", "fluidSim") {
+            bufferA!!.setInput(CHANNEL_0, BUFFER_C_IN)
+            bufferB!!.setInput(CHANNEL_0, BUFFER_A_IN)
+            bufferC!!.setInput(CHANNEL_0, BUFFER_B_IN)
+            bufferD!!.setInput(CHANNEL_0, BUFFER_A_IN).setInput(CHANNEL_1, BUFFER_D_IN)
+            image    .setInput(CHANNEL_0, BUFFER_D_IN)
+        }
     }
 
     /**

@@ -10,13 +10,12 @@ import org.openrndr.extra.parameters.DoubleParameter
 
 class ViscousFingering(program: FlowProgram): ProjectRenderer(program){
 
-    override fun importProject(): ShadertoyProject {
-        val pathToThisFolder = "src/main/kotlin/flow/shadertoy/projects/viscousFingering"
-        val original =  ProjectImporter.import("viscousFingering", "$pathToThisFolder/shaders")
-            original.image.setInput(CHANNEL_0, BUFFER_A_IN)
-            original.bufferA!!.setInput(CHANNEL_0, BUFFER_A_IN)
+    override fun ProjectImporter.importProject(): ShadertoyProject {
 
-        return ProjectImporter.generateAndImport(original, "$pathToThisFolder/generated")
+        return buildAndImport("$projectsPath/viscousFingering", "Viscous Fingering") {
+            bufferA!!.setInput(CHANNEL_0, BUFFER_A_IN)
+            image.setInput(CHANNEL_0, BUFFER_A_IN)
+        }
     }
 
     // parameters

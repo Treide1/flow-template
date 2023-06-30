@@ -10,9 +10,9 @@ import org.openrndr.Program
  */
 class RetroSun(program: Program): ProjectRenderer(program) {
 
-    override fun importProject(): ShadertoyProject {
-        val original = ProjectImporter.import("retroSun", "src/main/resources/retroSun")
-        return ProjectImporter.generateAndImport(original, ".")
+    override fun ProjectImporter.importProject(): ShadertoyProject {
+
+        return buildAndImport("$projectsPath/retroSun", "retroSun") {}
     }
 
     // parameters and init

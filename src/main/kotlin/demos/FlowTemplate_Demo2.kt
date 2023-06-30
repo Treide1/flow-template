@@ -11,6 +11,7 @@ import flow.fx.Crossfade
 import flow.fx.galaxyShadeStyle
 import flow.input.InputScheme.TrackTypes.TOGGLE
 import flow.rendering.scenes.SceneNavigator
+import flow.shadertoy.projects.viscousFingering.ViscousFingering
 import org.openrndr.Fullscreen
 import org.openrndr.application
 import org.openrndr.color.ColorRGBa
@@ -25,6 +26,8 @@ import flow.util.TWO_PI
 import org.openrndr.draw.tint
 import org.openrndr.extra.fx.color.ChromaticAberration
 import org.openrndr.extra.fx.distort.VerticalWave
+import org.openrndr.extra.gui.GUI
+import org.openrndr.extra.gui.addTo
 import kotlin.math.exp
 import kotlin.math.floor
 import kotlin.math.pow
@@ -43,6 +46,8 @@ fun main() = application {
             initialBpm = 125.0, // <- Play your favorite song. Set its bpm here.
         )
     ) {
+
+        val gui = GUI()
 
         // Define beat-based values
         val kick by beatClock.bindEnvelope(1.0) { phase ->
@@ -83,6 +88,15 @@ fun main() = application {
             }
         }
 
+        val viscousGroup = object : VisualGroup(program) {
+            val renderer = ViscousFingering(this@flowProgram).addTo(gui, "Viscous Fingering")
+
+            override fun Drawer.draw() {
+                val result = renderer.render()
+                image(result)
+            }
+        }
+
         // Define scenes and transitions
         val sceneNav = object: SceneNavigator(program) {
 
@@ -91,7 +105,8 @@ fun main() = application {
             val compositeS = compositeScene {
                 layer {
                     draw {
-                        galaxyGroup.draw()
+                        //galaxyGroup.draw()
+                        viscousGroup.draw()
                     }
 
                     post(ChromaticAberration()) {
@@ -162,6 +177,8 @@ fun main() = application {
             trackValue("Kick") { kick.toString() }
             trackValue("Kick Fac") { kickFac.toString() }
         }
+
+        extend(gui)
 
         // Main draw loop
         extend {
