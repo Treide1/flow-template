@@ -6,8 +6,8 @@ out
 video/
 screenshots/
 gui-parameters/
-/src/main/kotlin/generated/
 /src/main/external/
 /ShaderError.glsl
-/src/main/resources/generated/
+/src/main/resources/**/generated/
 /generated/
+/src/main/kotlin/**/generated/
