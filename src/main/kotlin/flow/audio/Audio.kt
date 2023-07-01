@@ -87,11 +87,9 @@ class Audio(
 
     /**
      * Creates a [VolumeProcessor] and adds it to the audio chain.
-     *
-     * @param eventBufferSize The size of the buffer for the [VolumeProcessor] to store audio events.
      */
-    fun createVolumeProcessor(eventBufferSize: Int = 40): VolumeProcessor {
-        return VolumeProcessor(sampleRate, bufferSize, eventBufferSize).also { audioCloneList.add(it) }
+    fun createVolumeProcessor(): VolumeProcessor {
+        return VolumeProcessor().also { audioCloneList.add(it) }
     }
 
     /**

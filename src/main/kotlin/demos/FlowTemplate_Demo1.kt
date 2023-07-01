@@ -12,21 +12,17 @@ import flow.envelope.keyAutoUpdate
 import flow.fx.MirrorFilter.LookupFunctions.*
 import flow.input.InputScheme.TrackTypes.PIANO
 import flow.input.InputScheme.TrackTypes.TOGGLE
+import flow.realtime.DynamicRange
 import flow.rendering.image
+import flow.util.*
 import org.openrndr.Fullscreen
 import org.openrndr.KEY_SPACEBAR
 import org.openrndr.application
 import org.openrndr.draw.Drawer
 import org.openrndr.draw.isolated
 import org.openrndr.draw.isolatedWithTarget
-import org.openrndr.math.Vector2
-import org.openrndr.math.map
-import org.openrndr.math.smootherstep
+import org.openrndr.math.*
 import org.openrndr.panel.elements.round
-import flow.util.CyclicFlag
-import flow.util.TWO_PI
-import flow.util.createTriangleContour
-import flow.util.lerp
 import kotlin.math.*
 
 /**
@@ -53,7 +49,24 @@ fun main() = application {
 
         // Specify audio processors
         val volProcessor = audio.createVolumeProcessor()
+        val volumeFilter = volProcessor.createSmoothingFilter()
+        var filteredVolume = Audio.LOWEST_SPL
         val constantQ = audio.createConstantQProcessor(2, Audio.DEFAULT_RANGES, 40)
+
+        volProcessor.onProcessedVolume { vol ->
+            val relVol = vol.map(Audio.LOWEST_SPL .. Audio.HIGHEST_SPL, 0.0 .. 1.0)
+            filteredVolume = volumeFilter.filter(relVol, audio.bufferSize * 1.0/audio.sampleRate).saturate()
+        }
+
+        // Unused, but needs to function
+        val volQueue = QueueCache(40, listOf(0.0))
+        val dynRange = DynamicRange(Audio.LOWEST_SPL, Audio.HIGHEST_SPL, 0.02)
+        volProcessor.onProcessedVolume { vol ->
+            volQueue.add(vol)
+            dynRange.update(vol)
+        }
+
+        // Start audio processing
         audio.start()
 
         // Specify beat-based values
@@ -223,7 +236,7 @@ fun main() = application {
 
             // Draws a rectangle for the overall volume on top.
             fun Drawer.drawSoundPressureLevel() {
-                val baseVol = volProcessor.filteredLastVolume
+                val baseVol = filteredVolume
 
                 fill = colorRepo[SECONDARY].opacify(0.2 * alphaFac).toRGBa()
                 stroke = null
@@ -330,7 +343,7 @@ fun main() = application {
 
                 // Set fx values
                 perturb.phase = seconds * 0.01
-                perturb.decay = + volProcessor.filteredLastVolume.map(0.3, 0.7, 1.0, 0.0)
+                perturb.decay = + filteredVolume.map(0.3, 0.7, 1.0, 0.0)
                 perturb.gain = 0.8
 
                 // Repeat 0 to 3 perturbs
