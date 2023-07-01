@@ -11,7 +11,7 @@ import flow.fx.Crossfade
 import flow.fx.galaxyShadeStyle
 import flow.input.InputScheme.TrackTypes.TOGGLE
 import flow.rendering.scenes.SceneNavigator
-import flow.shadertoy.projects.retroSunModified.RetroSunModified
+import flow.shadertoy.projects.jaszUniverse.JaszUniverse
 import flow.shadertoy.projects.viscousFingering.ViscousFingering
 import org.openrndr.Fullscreen
 import org.openrndr.application
@@ -98,7 +98,7 @@ fun main() = application {
         }
 
         val retroGroup = object: VisualGroup(program) {
-            val renderer = RetroSunModified(this@flowProgram).addTo(gui, "Retro Sun Modified")
+            val renderer = JaszUniverse(this@flowProgram).addTo(gui, "Retro Sun Modified")
 
             override fun Drawer.draw() {
                 image(renderer.render())
