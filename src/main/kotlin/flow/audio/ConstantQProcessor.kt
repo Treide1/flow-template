@@ -53,7 +53,8 @@ class ConstantQProcessor(
     /**
      * The cached list of magnitudes. Size is [eventBufferSize]. Latest event is at the end of the list.
      */
-    val magnitudesCache by _magnitudesCache
+    val magnitudesCache: List<FloatArray>
+        get() = _magnitudesCache.cache
 
     // (Magnitude -> Db) Filtered
     /**
@@ -90,7 +91,8 @@ class ConstantQProcessor(
     /**
      * The cached list of banded passed volumes.
      */
-    val bandedVolumeCache by _bandedVolumeCache
+    val bandedVolumeCache: List<List<Double>>
+        get() = _bandedVolumeCache.cache
 
     // (Freq Band -> Db) Filtered
     private val rangedVolumeFilterList = List(freqBands.size) {
