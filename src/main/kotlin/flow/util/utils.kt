@@ -133,7 +133,10 @@ class Pool<T>(
  * Performs the [function] on the mapped [value] and returns the result mapped back.
  * Example:
  * ```
- * withMapping(0.5, 0.0, 1.0, 2*PI, 4*PI) { sin(it) * 0.5 + 0.5 } // sin(3*PI) * 0.5 + 0.5 = 1.0
+ * val result = withMapping(0.5, 0.0, 1.0, 2*PI, 4*PI) {
+ *    sin(it) * PI + PI
+ * }
+ * println(result) // 0.5 --map--> it = 3*PI, sin(3*PI) * PI + PI = 2*PI --map--> 0.0
  * ```
  */
 fun withMapping(value: Double, loA: Double, hiA: Double, loB: Double, hiB: Double, function: (Double) -> Double): Double {
@@ -145,7 +148,10 @@ fun withMapping(value: Double, loA: Double, hiA: Double, loB: Double, hiB: Doubl
  * Performs the [function] on the mapped [value] and returns the result mapped back.
  * Example:
  * ```
- * withMapping(0.5, 0.0 .. 1.0, 2*PI .. 4*PI) { sin(it) * 0.5 + 0.5 } // sin(3*PI) * 0.5 + 0.5 = 1.0
+ * val result = withMapping(0.5, 0.0, 1.0, 2*PI, 4*PI) {
+ *    sin(it) * PI + PI
+ * }
+ * println(result) // 0.5 --map--> it = 3*PI, sin(3*PI) * PI + PI = 2*PI --map--> 0.0
  * ```
  */
 fun withMapping(value: Double, A: ClosedFloatingPointRange<Double>, B: ClosedFloatingPointRange<Double>, function: (Double) -> Double): Double {
