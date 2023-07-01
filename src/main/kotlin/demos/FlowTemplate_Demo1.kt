@@ -3,6 +3,7 @@ package demos
 import flow.FlowProgram.Companion.flowProgram
 import flow.FlowProgramConfig
 import flow.audio.Audio
+import flow.audio.getValue
 import flow.bpm.toIntervalCount
 import flow.color.ColorRepo
 import flow.color.ColorRepo.ColorRoles.*
@@ -49,14 +50,9 @@ fun main() = application {
 
         // Specify audio processors
         val volProcessor = audio.createVolumeProcessor()
-        val volumeFilter = volProcessor.createSmoothingFilter()
-        var filteredVolume = Audio.LOWEST_SPL
+        val volumeFilter = audio.createSmoothingFilter(volProcessor)
+        val filteredVolume by volumeFilter
         val constantQ = audio.createConstantQProcessor(2, Audio.DEFAULT_RANGES, 40)
-
-        volProcessor.onProcessedVolume { vol ->
-            val relVol = vol.map(Audio.LOWEST_SPL .. Audio.HIGHEST_SPL, 0.0 .. 1.0)
-            filteredVolume = volumeFilter.filter(relVol, audio.bufferSize * 1.0/audio.sampleRate).saturate()
-        }
 
         // Unused, but needs to function
         val volQueue = QueueCache(40, listOf(0.0))

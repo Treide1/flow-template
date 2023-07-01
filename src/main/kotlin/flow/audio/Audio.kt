@@ -5,8 +5,12 @@ package flow.audio
 import be.tarsos.dsp.AudioDispatcher
 import be.tarsos.dsp.AudioProcessor
 import be.tarsos.dsp.io.jvm.AudioDispatcherFactory
+import flow.realtime.filters.OneEuroFilter
 import kotlinx.coroutines.*
+import org.openrndr.math.map
+import org.openrndr.math.saturate
 import kotlin.math.log10
+import kotlin.reflect.KProperty
 
 /**
  * Audio extension.
@@ -92,6 +96,15 @@ class Audio(
         return VolumeProcessor().also { audioCloneList.add(it) }
     }
 
+    fun createSmoothingFilter(volumeProcessor: VolumeProcessor): OneEuroFilter {
+        val filter =  OneEuroFilter(minCutoff = 1.0, beta = 0.01, dCutoff = 1.0)
+        volumeProcessor.onProcessedVolume { vol ->
+            val relVol = vol.map(LOWEST_SPL .. HIGHEST_SPL, 0.0 .. 1.0)
+            filter.filter(relVol, bufferSize * 1.0/sampleRate).saturate()
+        }
+        return filter
+    }
+
     /**
      * Creates a [ConstantQProcessor] and adds it to the audio chain.
      */
@@ -142,4 +155,11 @@ class Audio(
 fun Double.toDb(): Double {
     if (this <= 0) return Audio.LOWEST_SPL
     return (20 * log10(this)).coerceAtLeast(Audio.LOWEST_SPL)
+}
+
+/**
+ * Delegation for [OneEuroFilter] to get its current value.
+ */
+operator fun OneEuroFilter.getValue(nothing: Any?, property: KProperty<*>): Double {
+    return this.value
 }

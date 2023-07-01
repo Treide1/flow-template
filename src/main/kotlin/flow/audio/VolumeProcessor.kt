@@ -6,7 +6,6 @@ import be.tarsos.dsp.AudioEvent
 import be.tarsos.dsp.AudioProcessor
 import flow.audio.Audio.Companion.HIGHEST_SPL
 import flow.audio.Audio.Companion.LOWEST_SPL
-import flow.realtime.filters.OneEuroFilter
 import org.openrndr.math.clamp
 
 /**
@@ -39,6 +38,4 @@ class VolumeProcessor internal constructor(): AudioProcessor {
     }
 
     override fun processingFinished() {}
-
-    fun createSmoothingFilter() = OneEuroFilter(minCutoff = 1.0, beta = 0.01, dCutoff = 1.0)
 }

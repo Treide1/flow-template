@@ -34,6 +34,10 @@ class OneEuroFilter(
     var x = LowPassFilter(alpha(minCutoff), initVal)
     var dx = LowPassFilter(alpha(dCutoff), 0.0)
 
+    /**
+     * The current filtered value.
+     */
+    var value = initVal
 
     private fun alpha(cutoff: Double): Double {
         val te = 1.0 / freq
@@ -56,7 +60,8 @@ class OneEuroFilter(
         val cutoff = minCutoff + beta * abs(edValue)
         
         // Filter the given value
-        return x.filterWithAlpha(value, alpha(cutoff))
+        this.value = x.filterWithAlpha(value, alpha(cutoff))
+        return this.value
     }
 
     class LowPassFilter(alpha: Double, initVal: Double = 0.0) {
