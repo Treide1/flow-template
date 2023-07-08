@@ -2,7 +2,6 @@
 
 package flow
 
-import flow.audio.Audio
 import flow.autoupdate.AutoUpdate
 import flow.bpm.BeatClock
 import flow.envelope.LinearCapacitor
@@ -10,7 +9,10 @@ import flow.envelope.keyAutoUpdate
 import flow.input.InputScheme
 import flow.rendering.RenderPipeline
 import flow.ui.UiDisplay
-import org.openrndr.*
+import org.openrndr.ApplicationBuilder
+import org.openrndr.KEY_ESCAPE
+import org.openrndr.KEY_SPACEBAR
+import org.openrndr.ProgramImplementation
 import org.openrndr.extra.gui.GUI
 
 /**

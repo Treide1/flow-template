@@ -1,7 +1,6 @@
 package demos
 
 import be.tarsos.dsp.AudioEvent
-import be.tarsos.dsp.filters.BandPass
 import flow.FlowProgram.Companion.flowProgram
 import flow.FlowProgramConfig
 import flow.audio.*
@@ -18,15 +17,20 @@ import flow.realtime.DynamicRange
 import flow.realtime.OneEuroMultiFilter
 import flow.realtime.oneEuroFilter.OneEuroFilter
 import flow.rendering.image
-import flow.util.*
+import flow.util.CyclicFlag
+import flow.util.TWO_PI
+import flow.util.createTriangleContour
+import flow.util.lerp
 import org.openrndr.Fullscreen
 import org.openrndr.KEY_SPACEBAR
 import org.openrndr.application
 import org.openrndr.draw.Drawer
 import org.openrndr.draw.isolated
 import org.openrndr.draw.isolatedWithTarget
-import org.openrndr.extra.gui.addTo
-import org.openrndr.math.*
+import org.openrndr.math.Vector2
+import org.openrndr.math.clamp
+import org.openrndr.math.map
+import org.openrndr.math.smootherstep
 import org.openrndr.panel.elements.round
 import kotlin.math.*
 
