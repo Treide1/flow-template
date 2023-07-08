@@ -1,4 +1,4 @@
-package flow.realtime.filters
+package flow.realtime.oneEuroFilter
 
 import kotlin.math.abs
 
