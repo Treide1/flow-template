@@ -1,9 +1,10 @@
 package demos
 
+import be.tarsos.dsp.AudioEvent
+import be.tarsos.dsp.filters.BandPass
 import flow.FlowProgram.Companion.flowProgram
 import flow.FlowProgramConfig
-import flow.audio.Audio
-import flow.audio.getValue
+import flow.audio.*
 import flow.bpm.toIntervalCount
 import flow.color.ColorRepo
 import flow.color.ColorRepo.ColorRoles.*
@@ -14,6 +15,8 @@ import flow.fx.MirrorFilter.LookupFunctions.*
 import flow.input.InputScheme.TrackTypes.PIANO
 import flow.input.InputScheme.TrackTypes.TOGGLE
 import flow.realtime.DynamicRange
+import flow.realtime.OneEuroMultiFilter
+import flow.realtime.oneEuroFilter.OneEuroFilter
 import flow.rendering.image
 import flow.util.*
 import org.openrndr.Fullscreen
@@ -22,6 +25,7 @@ import org.openrndr.application
 import org.openrndr.draw.Drawer
 import org.openrndr.draw.isolated
 import org.openrndr.draw.isolatedWithTarget
+import org.openrndr.extra.gui.addTo
 import org.openrndr.math.*
 import org.openrndr.panel.elements.round
 import kotlin.math.*
@@ -36,33 +40,51 @@ fun main() = application {
     }
 
     val config = FlowProgramConfig(
-        initialBpm = 125.0, // <- Play your favorite song. Set its bpm here.
-        audio = Audio(
-            sampleRate = 44100,
-            bufferSize = 4096,
-            overlap = 4096 - 1024,
-        ),
+        initialBpm = 125.0 // <- Play your favorite song. Set its bpm here.
     )
     flowProgram(config) {
 
         // Init colors
         val colorRepo = ColorRepo(ColorRepo.DEMO_PALETTE)
 
-        // Specify audio processors
-        val volProcessor = audio.createVolumeProcessor()
-        val volumeFilter = audio.createSmoothingFilter(volProcessor)
-        val filteredVolume by volumeFilter
-        val constantQ = audio.createConstantQProcessor(2, Audio.DEFAULT_RANGES, 40)
+        // Init audio
+        val audio = object: Audio(flowProgram, bufferSize = 4096, overlap = 4096 - 1024) {
 
-        // Unused, but needs to function
-        val volQueue = QueueCache(40, listOf(0.0))
-        val dynRange = DynamicRange(Audio.LOWEST_SPL, Audio.HIGHEST_SPL, 0.02)
-        volProcessor.onProcessedVolume { vol ->
-            volQueue.add(vol)
-            dynRange.update(vol)
+            private val volumeProcessor = VolumeProcessor()
+            private val relVolSmoother = OneEuroFilter(1.0, 0.5, 1.0, 0.0)
+            val relVolSmoothed by relVolSmoother
+
+            val numberOfBins = 64
+            val bandRanges = DEFAULT_RANGES
+            private val magnitudeProcessor = MagnitudeProcessor(numberOfBins, sampleRate, bufferSize)
+            private val magsSmoother = OneEuroMultiFilter(1.0, 0.5, 1.0, List(numberOfBins) { 0.0 } )
+            val magnitudesSmoothed by magsSmoother
+            private val bandPassProcessors = bandRanges.map { createBandPass(it, sampleRate * 1.0) }
+            private val bandsSmoother = OneEuroMultiFilter(1.0, 0.5, 1.0, List(bandRanges.size) { 0.0 } )
+            val bandsSmoothed by bandsSmoother
+
+            val dynRange = DynamicRange(LOWEST_SPL, HIGHEST_SPL, 0.02)
+
+            // Specify audio process
+            override fun setProcess(audioEvent: AudioEvent, dt: Double) {
+                volumeProcessor.process(audioEvent)
+                val relVol = volumeProcessor.volume.toRelativeVolume()
+                relVolSmoother.filter(relVol, dt)
+
+                magnitudeProcessor.process(audioEvent)
+                val mags = magnitudeProcessor.magnitudes
+                magsSmoother.filter(mags.map { it.toDb().toRelativeVolume() }, dt)
+
+                val bandPassedMags = bandPassProcessors.map { bandPass ->
+                    bandPass.process(audioEvent)
+                    audioEvent.getdBSPL().clamp(LOWEST_SPL, HIGHEST_SPL).toRelativeVolume()
+                }
+                bandsSmoother.filter(bandPassedMags, dt)
+
+                dynRange.update(volumeProcessor.volume)
+            }
         }
-
-        // Start audio processing
+        // Also start the audio immediately
         audio.start()
 
         // Specify beat-based values
@@ -200,9 +222,9 @@ fun main() = application {
 
             // Draws bands for the ranges of frequencies.
             fun Drawer.drawBands() {
-                val bandedVolList = constantQ.filteredBandedVolumes
+                val bandedVolList = audio.bandsSmoothed
                 bandedVolList.forEachIndexed { i, vol ->
-                    val freqBand = constantQ.freqBands[i]
+                    val freqBand = audio.bandRanges[i]
 
                     val x0 = log2(freqBand.start)
                         .map(log2(Audio.LOWEST_FQ), log2(Audio.HIGHEST_FQ), loX, hiX)
@@ -218,7 +240,7 @@ fun main() = application {
 
             // Visualizes the raw magnitudes of the audio.
             fun Drawer.drawMagnitudes() {
-                val volList = constantQ.filteredMagnitudes
+                val volList = audio.magnitudesSmoothed
                 volList.forEachIndexed { i, vol ->
                     val x0 = (i+0.1) / volList.size * (hiX - loX) + loX
                     val x1 = (i+0.9) / volList.size * (hiX - loX) + loX
@@ -232,7 +254,7 @@ fun main() = application {
 
             // Draws a rectangle for the overall volume on top.
             fun Drawer.drawSoundPressureLevel() {
-                val baseVol = filteredVolume
+                val baseVol = audio.relVolSmoothed
 
                 fill = colorRepo[SECONDARY].opacify(0.2 * alphaFac).toRGBa()
                 stroke = null
@@ -324,6 +346,7 @@ fun main() = application {
             trackValue("Phase") { "${beatClock.phase.round(2)}" }
             trackValue("Audio mode") { audioGroup.audioMode.value }
             trackValue("Perturbations") { "${perturbAmount.value}" }
+            trackValue("Volume") { "${audio.relVolSmoothed.round(2)}" }
         }
 
         // Draw loop
@@ -339,7 +362,7 @@ fun main() = application {
 
                 // Set fx values
                 perturb.phase = seconds * 0.01
-                perturb.decay = + filteredVolume.map(0.3, 0.7, 1.0, 0.0)
+                perturb.decay = + audio.relVolSmoothed.map(0.3, 0.7, 1.0, 0.0)
                 perturb.gain = 0.8
 
                 // Repeat 0 to 3 perturbs

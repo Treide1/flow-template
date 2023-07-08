@@ -17,12 +17,10 @@ import org.openrndr.extra.gui.GUI
  *
  * @param initialBpm
  * @param isWithGui
- * @param audio
  */
 data class FlowProgramConfig(
     val initialBpm: Double = 125.0,
     val isWithGui: Boolean = false,
-    val audio: Audio? = null,
 )
 
 /**
@@ -56,11 +54,6 @@ open class FlowProgram private constructor(
      * [RenderPipeline] instance. Used to render the final image.
      */
     val renderPipeline by lazy { RenderPipeline(width, height, flowProgram) }
-
-    /**
-     * [Audio] instance. Can be configured in [config].
-     */
-    val audio by lazy { config.audio ?: Audio() }
 
     /**
      * [InputScheme] instance. Uses [keyboard] by default.
@@ -105,8 +98,14 @@ open class FlowProgram private constructor(
         if (config.isWithGui) extend(gui)
     }
 
+    private val exitListeners = mutableListOf<() -> Unit>()
+
+    fun registerOnExit(block: () -> Unit) {
+        exitListeners.add(block)
+    }
+
     fun exit() {
-        audio.stop()
+        exitListeners.forEach { it() }
         application.exit()
     }
 
