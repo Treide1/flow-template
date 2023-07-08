@@ -3,12 +3,14 @@
 package flow.audio
 
 import be.tarsos.dsp.AudioDispatcher
+import be.tarsos.dsp.AudioEvent
 import be.tarsos.dsp.AudioProcessor
+import be.tarsos.dsp.filters.BandPass
 import be.tarsos.dsp.io.jvm.AudioDispatcherFactory
-import flow.realtime.filters.OneEuroFilter
+import flow.FlowProgram
+import flow.realtime.oneEuroFilter.OneEuroFilter
 import kotlinx.coroutines.*
 import org.openrndr.math.map
-import org.openrndr.math.saturate
 import kotlin.math.log10
 import kotlin.reflect.KProperty
 
@@ -25,7 +27,8 @@ import kotlin.reflect.KProperty
  * @param sampleRate Sample rate of the audio. Default is 44100. Deviations from system device *will* cause problems.
  */
 // TODO: Refactor to make more clear + provide sampleRate/bufferSize resolution strategy
-class Audio(
+open class Audio(
+    flowProgram: FlowProgram,
     val bufferSize: Int = 1024,
     val overlap: Int = 0,
     val sampleRate: Int = 44100,
@@ -37,17 +40,17 @@ class Audio(
     // Actual dispatcher running the audio process chain
     private lateinit var dispatcher: AudioDispatcher
 
-    // List of processors for which the audio events should be cloned
-    private val audioCloneList = mutableListOf<AudioProcessor>()
-    // Processor pair for cloning audio events
-    private lateinit var resetProcessorPair: ResetProcessorPair
     // Audio thread. Sometimes a little bitch (not closing audio stream).
     private lateinit var audioThread: Thread
+
+    init {
+        flowProgram.registerOnExit { this.stop() }
+    }
 
     /**
      * Does setup of immutable audio chain and starts digital signal processing (DSP) on a separate thread.
      *
-     * Gracefully terminate with [stop].
+     * Don't forget to gracefully terminate with [stop].
      */
     fun start() {
         if (isStarted) return
@@ -55,23 +58,25 @@ class Audio(
 
         // Setup
         dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate, bufferSize, overlap)
-        resetProcessorPair = ResetProcessorPair(bufferSize)
 
-        // Cloning and processing procedure
-        // - Clone the raw audio event
-        // - For each processor, process the audio event. Then clone it back to the current audioEvent.
-        // This is necessary, as some processors (namely IIRFilters) alter the audio data. This serves as a rollback.
-        dispatcher.addAudioProcessor(resetProcessorPair.read)
-        audioCloneList.forEach {
-            dispatcher.addAudioProcessor(it)
-            dispatcher.addAudioProcessor(resetProcessorPair.write)
+        val ap = object: AudioProcessor {
+            override fun process(audioEvent: AudioEvent?): Boolean {
+                setProcess(audioEvent!!, (bufferSize - overlap) / sampleRate.toDouble())
+                return true
+            }
+
+            override fun processingFinished() {}
         }
+
+        dispatcher.addAudioProcessor(ap)
         audioThread = Thread(dispatcher)
         audioThread.start()
     }
 
     /**
-     * Stops the audio chain and (attempts to) gracefully terminate the DSP process. Only makes sense after [start].
+     * Stops the audio chain and (attempts to) gracefully terminate the DSP process.
+     *
+     * Only makes sense after [start].
      */
     fun stop() {
         if (isStarted.not()) return
@@ -89,34 +94,7 @@ class Audio(
         }
     }
 
-    /**
-     * Creates a [VolumeProcessor] and adds it to the audio chain.
-     */
-    fun createVolumeProcessor(): VolumeProcessor {
-        return VolumeProcessor().also { audioCloneList.add(it) }
-    }
-
-    fun createSmoothingFilter(volumeProcessor: VolumeProcessor): OneEuroFilter {
-        val filter =  OneEuroFilter(minCutoff = 1.0, beta = 0.01, dCutoff = 1.0)
-        volumeProcessor.onProcessedVolume { vol ->
-            val relVol = vol.map(LOWEST_SPL .. HIGHEST_SPL, 0.0 .. 1.0)
-            filter.filter(relVol, bufferSize * 1.0/sampleRate).saturate()
-        }
-        return filter
-    }
-
-    /**
-     * Creates a [ConstantQProcessor] and adds it to the audio chain.
-     */
-    fun createConstantQProcessor(
-        binsPerOctave: Int,
-        rangeList: List<ClosedFloatingPointRange<Double>>,
-        eventBufferSize: Int = 40,
-    ): ConstantQProcessor {
-        return ConstantQProcessor(binsPerOctave, rangeList, sampleRate, eventBufferSize).also {
-            audioCloneList.add(it)
-        }
-    }
+    // TODO OPT: allow for remembering and reset of audio event buffer (for processes that alter the audio event)
 
     // Common values across all audio processors
     companion object {
@@ -144,6 +122,10 @@ class Audio(
         const val HIGHEST_SPL = 0.0
     }
 
+    /**
+     * Specify the process to perform everytime a new audio event is received.
+     */
+    open fun setProcess(audioEvent: AudioEvent, dt: Double) {}
 }
 
 /**
@@ -158,8 +140,24 @@ fun Double.toDb(): Double {
 }
 
 /**
+ *
+ */
+fun Float.toDb(): Double = this.toDouble().toDb()
+
+/**
+ * Convert [this] SPL volume to relative volume (in range 0.0 .. 1.0).
+ */
+fun Double.toRelativeVolume(): Double = this.map(Audio.LOWEST_SPL .. Audio.HIGHEST_SPL, 0.0 .. 1.0)
+
+/**
  * Delegation for [OneEuroFilter] to get its current value.
  */
 operator fun OneEuroFilter.getValue(nothing: Any?, property: KProperty<*>): Double {
     return this.value
+}
+
+fun createBandPass(range: ClosedFloatingPointRange<Double>, sampleRate: Double): BandPass {
+    val mid = (range.start + range.endInclusive) / 2
+    val bandWidth = range.endInclusive - range.start
+    return BandPass(mid.toFloat(), bandWidth.toFloat(), sampleRate.toFloat())
 }
