@@ -21,7 +21,7 @@ private val logger = KotlinLogging.logger {}
  * @param numberOfBins Number of bins that hold the magnitudes.
  * @param sampleRate Sample rate of the audio. Deviations from system device *will* cause problems.
  * @param bufferSize Size of the audio buffer. This matches the [ConstantQ.fftLength]. If the value can not be enforced, an exception is thrown.
- * @param kernelThreshold Truncates the FFT kernel. Requires finding a setup sweet spot.
+ * @param kernelThreshold Truncates the FFT kernel. Requires finding a setup-specific sweet spot.
  * @throws IllegalArgumentException if the param combination would lead to an invalid constantQ configuration.
  */
 class MagnitudeProcessor(
@@ -38,7 +38,7 @@ class MagnitudeProcessor(
 
     private val loFq = 20.0
     private val hiFq = 20000.0
-    val threshold = kernelThreshold.toFloat()
+    private val threshold = kernelThreshold.toFloat()
 
     /**
      * Creates a constantQ processor with the right values for q, numberOfBins and fftLength.
@@ -146,7 +146,6 @@ class MagnitudeProcessor(
     override fun process(audioEvent: AudioEvent?): Boolean {
 
         constantQ.process(audioEvent)
-
         magnitudes = constantQ.magnitudes!!.clone()
 
         return true
