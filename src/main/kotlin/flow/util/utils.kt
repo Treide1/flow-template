@@ -6,6 +6,7 @@ import org.openrndr.math.Vector2
 import org.openrndr.math.map
 import org.openrndr.shape.ShapeContour
 import org.openrndr.shape.contour
+import kotlin.math.sqrt
 
 // This file is a dump for common utility functions and data structures.
 // It is not meant to be included in the final build.
@@ -175,3 +176,17 @@ const val HALF_PI = 0.5 * Math.PI
 const val QUARTER_PI = 0.25 * Math.PI
 
 annotation class Unstable(val reason: String = "Unstable API")
+
+/**
+ * Calculates the root-mean-square of the values in [this] list.
+ */
+fun List<Double>.rootMeanSquare(): Double = sqrt(sumOf { it * it } / size)
+
+/**
+ * Returns true if [this] is a power of [base].
+ */
+fun Int.isPowerOf(base: Int): Boolean {
+    var n = this
+    while (n % base == 0)  n /= base
+    return n == 1
+}
