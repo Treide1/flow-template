@@ -11,6 +11,7 @@ import org.openrndr.Program
 import org.openrndr.draw.*
 import org.openrndr.math.Vector3
 import org.openrndr.math.Vector4
+import java.nio.ByteBuffer
 import kotlin.reflect.KProperty
 
 /**
@@ -74,7 +75,7 @@ abstract class ProjectRenderer(val program: Program) {
     var iMouse: Vector4 by parameters
 
     /**
-     * color buffer to render to
+     * The color buffer to render to.
      */
     val imageBuffer = colorBuffer(
         program.width,
@@ -89,6 +90,41 @@ abstract class ProjectRenderer(val program: Program) {
     val bufferMap = mutableMapOf<ShadertoyTab, ColorBuffer>(
         project.image to imageBuffer
     )
+
+    /**
+     * A buffer for the microphone input.
+     */
+    val micBuffer by lazy {
+        colorBuffer(512, 2, format = ColorFormat.R, type = ColorType.FLOAT32)
+    }
+
+    private val micByteBuffer by lazy {
+        ByteBuffer.allocateDirect(512 * 2 * 4)
+    }
+
+    /**
+     * Write the [fftMagnitudes] and [waveForm] to the [micBuffer].
+     * By default, a [waveformIncrement] of 0.5 is applied to match the values from shadertoy.
+     * @param fftMagnitudes The magnitudes of the fft.
+     * @param waveForm The wave form values.
+     * @param waveformIncrement The increment to add to the wave form values.
+     */
+    fun writeToMicBuffer(fftMagnitudes: FloatArray, waveForm: FloatArray, waveformIncrement: Float = 0.5f) {
+        if (fftMagnitudes.size != 512)
+            throw IllegalArgumentException("fftMagnitudes must have size 512. Got ${fftMagnitudes.size}.")
+        if (waveForm.size != 512)
+            throw IllegalArgumentException("waveForm must have size 512. Got ${waveForm.size}.")
+
+        for (i in 0 until 512) {
+            waveForm[i] += waveformIncrement
+        }
+
+        val fb = micByteBuffer.asFloatBuffer()
+        fb.put(fftMagnitudes)
+        fb.put(waveForm)
+        micByteBuffer.rewind()
+        micBuffer.write(micByteBuffer)
+    }
 
     /**
      * The order in which the passes are rendered.
@@ -177,6 +213,7 @@ abstract class ProjectRenderer(val program: Program) {
             is BUFFER_B_IN -> bufferMap[project.bufferB as ShadertoyTab]!!
             is BUFFER_C_IN -> bufferMap[project.bufferC as ShadertoyTab]!!
             is BUFFER_D_IN -> bufferMap[project.bufferD as ShadertoyTab]!!
+            is MICROPHONE -> micBuffer
             else -> TODO("Not implemented for non-buffer inputs")
         }
     }

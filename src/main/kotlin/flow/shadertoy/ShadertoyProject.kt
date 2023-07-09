@@ -100,7 +100,7 @@ class ShadertoyProject(
             sealed class ChannelInput(val id: Int, val ctype: String = "UNSUPPORTED", var sampler: Sampler = Sampler()) {
                 object KEYBOARD: ChannelInput(-1) // actually (33, "keyboard") but currently unsupported
                 object WEBCAM: ChannelInput(-1)
-                object MICROPHONE: ChannelInput(-1)
+                object MICROPHONE: ChannelInput(32)
                 object SOUNDCLOUD: ChannelInput(-1)
                 object BUFFER_A_IN: ChannelInput(257, "buffer")
                 object BUFFER_B_IN: ChannelInput(258, "buffer")
@@ -134,6 +134,7 @@ class ShadertoyProject(
                 companion object {
                     fun getById(id: Int): ChannelInput {
                         return when (id) {
+                            32 -> MICROPHONE
                             257 -> BUFFER_A_IN
                             258 -> BUFFER_B_IN
                             259 -> BUFFER_C_IN
