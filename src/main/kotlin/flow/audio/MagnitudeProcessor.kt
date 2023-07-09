@@ -80,7 +80,8 @@ class MagnitudeProcessor(
 
         val bpo = nob / log2(maxF/minF)
         val q = L * minF / r
-        val s = (1 / (Math.pow(2.0, 1.0 / bpo) - 1) / q).toFloat() * 1.0001f // +0.1% to avoid rounding errors
+        var s = (1 / (Math.pow(2.0, 1.0 / bpo) - 1) / q).toFloat()
+        s *= 1.0001f // Slightly increased to avoid rounding errors during log2/pow(2, *)
 
         logger.info { "Creating ConstantQ audio processor with configuration:" }
         logger.info { "  sample rate: $r" }
@@ -101,6 +102,7 @@ class MagnitudeProcessor(
         return constantQ
     }
 
+    // Calculate the actual values *exactly* like ConstantQ does. Log them for debugging purposes.
     private fun logConstantQCalculation(sampleRate: Float, minFreq: Float, maxFreq: Float, binsPerOctave: Float, spread: Float) {
         val r = sampleRate
         val minF = minFreq
@@ -108,7 +110,6 @@ class MagnitudeProcessor(
         val bpo = binsPerOctave.toInt()
         val s = spread
 
-        // Calculate the actual values, just like ConstantQ does.
         logger.debug { "  (calculated) bins per octave: $bpo" }
         val q = 1.0 / (Math.pow(2.0, 1.0 / bpo) - 1.0) / s
         logger.debug { "  (calculated) q: $q" }
