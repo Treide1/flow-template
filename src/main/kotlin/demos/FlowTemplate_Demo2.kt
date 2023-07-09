@@ -1,7 +1,9 @@
 package demos
 
+import be.tarsos.dsp.AudioEvent
 import flow.FlowProgram.Companion.flowProgram
 import flow.FlowProgramConfig
+import flow.audio.*
 import flow.autoupdate.AutoUpdate.autoUpdate
 import flow.color.ColorRepo
 import flow.content.VisualGroup
@@ -10,29 +12,30 @@ import flow.envelope.keyAutoUpdate
 import flow.fx.Crossfade
 import flow.fx.galaxyShadeStyle
 import flow.input.InputScheme.TrackTypes.TOGGLE
+import flow.realtime.oneEuroFilter.OneEuroFilter
 import flow.rendering.scenes.SceneNavigator
 import flow.shadertoy.projects.jaszUniverse.JaszUniverse
 import flow.shadertoy.projects.viscousFingering.ViscousFingering
+import flow.util.CyclicFlag
+import flow.util.TWO_PI
 import org.openrndr.Fullscreen
 import org.openrndr.application
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.Drawer
-import org.openrndr.extra.compositor.*
+import org.openrndr.draw.isolated
+import org.openrndr.draw.tint
+import org.openrndr.extra.compositor.draw
+import org.openrndr.extra.compositor.layer
+import org.openrndr.extra.compositor.post
+import org.openrndr.extra.fx.color.ChromaticAberration
+import org.openrndr.extra.fx.distort.VerticalWave
+import org.openrndr.extra.gui.addTo
 import org.openrndr.ffmpeg.PlayMode
 import org.openrndr.ffmpeg.VideoPlayerFFMPEG
 import org.openrndr.math.map
+import org.openrndr.math.saturate
 import org.openrndr.math.smoothstep
-import flow.util.CyclicFlag
-import flow.util.TWO_PI
-import org.openrndr.draw.tint
-import org.openrndr.extra.fx.color.ChromaticAberration
-import org.openrndr.extra.fx.distort.VerticalWave
-import org.openrndr.extra.gui.GUI
-import org.openrndr.extra.gui.addTo
-import kotlin.math.exp
-import kotlin.math.floor
-import kotlin.math.pow
-import kotlin.math.sin
+import kotlin.math.*
 
 /**
  * Demo 2 of the "Flow" template.
@@ -47,8 +50,6 @@ fun main() = application {
             initialBpm = 125.0, // <- Play your favorite song. Set its bpm here.
         )
     ) {
-
-        val gui = GUI()
 
         // Define beat-based values
         val kick by beatClock.bindEnvelope(1.0) { phase ->
@@ -72,6 +73,26 @@ fun main() = application {
             "270" to "#E0C18D",
         )
 
+        val audio = object: Audio(flowProgram, bufferSize = 1024, overlap = 512) {
+            val waveformBuffer = FloatArray(512)
+            val fftBuffer = FloatArray(512)
+            val fftProcessor = FftProcessor(512)
+
+            val volProcessor = VolumeProcessor()
+            val volSmoother = OneEuroFilter(1.0, 0.1, 1.0, 0.0)
+            val smoothedVol by volSmoother
+
+            override fun setProcess(audioEvent: AudioEvent, dt: Double) {
+                fftProcessor.process(audioEvent)
+                fftProcessor.magnitudes.copyInto(fftBuffer, endIndex = 512)
+                audioEvent.floatBuffer.copyInto(waveformBuffer, endIndex = 512)
+
+                volProcessor.process(audioEvent)
+                volSmoother.filter(volProcessor.volume.toRelativeVolume(), dt)
+            }
+        }
+        audio.start()
+
         // Define visual groups
         val galaxyGroup = object: VisualGroup(program) {
 
@@ -90,17 +111,20 @@ fun main() = application {
         }
 
         val viscousGroup = object : VisualGroup(program) {
-            val renderer = ViscousFingering(this@flowProgram).addTo(gui, "Viscous Fingering")
+            val renderer = ViscousFingering(flowProgram).addTo(gui, "Viscous Fingering")
 
             override fun Drawer.draw() {
                 image(renderer.render())
             }
         }
 
-        val retroGroup = object: VisualGroup(program) {
-            val renderer = JaszUniverse(this@flowProgram).addTo(gui, "Retro Sun Modified")
+        val jaszGroup = object: VisualGroup(program) {
+            val renderer = JaszUniverse(flowProgram).addTo(gui, "Jasz Universe")
 
             override fun Drawer.draw() {
+                renderer.writeToMicBuffer(audio.fftBuffer, audio.waveformBuffer)
+                renderer.musicVolume = audio.smoothedVol.map(0.7, 0.85, 0.0, 1.0).pow(3).saturate()
+
                 image(renderer.render())
             }
         }
@@ -113,9 +137,10 @@ fun main() = application {
             val compositeS = compositeScene {
                 layer {
                     draw {
+                        // TODO: move into separate scenes, (add color buffer based transitions)
                         //galaxyGroup.draw()
                         //viscousGroup.draw()
-                        retroGroup.draw()
+                        jaszGroup.draw()
                     }
 
                     post(ChromaticAberration()) {
@@ -127,7 +152,7 @@ fun main() = application {
                 }
             }
 
-            val videoFlickerFreq = CyclicFlag(null, 1, 2, 4)
+            val flickerFreq = CyclicFlag(null, 1, 2, 4, 8)
 
             val videoS = videoScene {
                 VideoPlayerFFMPEG.fromFile(
@@ -142,16 +167,7 @@ fun main() = application {
                 val frac = relAngle - i
 
                 val mix = colorRepo[i].mix(colorRepo[j], frac)
-                val p = beatClock.phase
-                val v = when (videoFlickerFreq.value) {
-                    null -> 1.0
-                    1 -> (p%1        - 1).pow(2) * 1.5 + 0.5
-                    2 -> ((p%0.50)*2 - 1).pow(2) * 2.0 + 0.25
-                    4 -> ((p%0.25)*4 - 1).pow(2) * 2.5
-                    else -> 1.0
-                }
-                val valuedMix = mix.toXSVa().copy(v=v).toRGBa()
-                tint = tint(valuedMix)
+                tint = tint(mix)
             }
 
             var remainingTransitions = 0
@@ -185,9 +201,8 @@ fun main() = application {
             trackValue("Remaining transitions") { "${sceneNav.remainingTransitions}" }
             trackValue("Kick") { kick.toString() }
             trackValue("Kick Fac") { kickFac.toString() }
+            trackValue("Volume") { audio.smoothedVol.toString() }
         }
-
-        extend(gui)
 
         // Main draw loop
         extend {
@@ -206,7 +221,17 @@ fun main() = application {
             }
 
             val img = sceneNav.render(drawer)
+
             drawer.image(img)
+
+            // TODO: remove from here -> turn into post effect (probably for sceneNavigator)
+            drawer.isolated {
+                val p = beatClock.phase
+                val f = sceneNav.flickerFreq.value?.toDouble() ?: return@isolated
+                val v = ((p % (1/f)) * f - 1).pow(2) * (1.0 + log2(f) * 0.5) + 0.75 - log2(f) * 0.25
+                fill = ColorRGBa.BLACK.opacify(1-v)
+                rectangle(drawer.bounds)
+            }
 
             uiDisplay.displayOnDrawer(drawer)
         }
@@ -215,9 +240,17 @@ fun main() = application {
             track(TOGGLE, "k", "Controls kickFac")
 
             keyDown {
+                "+".bind("BPM +1") { beatClock.bpm += 1 }
+                "-".bind("BPM -1") { beatClock.bpm -= 1 }
                 "z".bind("Next zoom variation") { galaxyGroup.zoomVariations.next() }
                 "t".bind("Queue transition") { sceneNav.remainingTransitions++ }
-                "f".bind("Next video flicker") { sceneNav.videoFlickerFreq.next() }
+                // Binds 1, 2, ... to the flicker frequency options
+                sceneNav.flickerFreq.options.forEachIndexed { index, flickerValue ->
+                    "${index+1}".bind("Set flicker frequency (${flickerValue})") {
+                        sceneNav.flickerFreq.index = index
+                    }
+                }
+                "c".bind("Change colors") { jaszGroup.renderer.changeColors() }
                 "r".bind("Reset viscous fingering") { viscousGroup.renderer.reset() }
             }
         }
