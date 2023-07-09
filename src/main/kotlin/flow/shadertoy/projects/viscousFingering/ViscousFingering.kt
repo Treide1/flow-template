@@ -6,10 +6,12 @@ import flow.shadertoy.ProjectRenderer
 import flow.shadertoy.ShadertoyProject
 import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.Channel.CHANNEL_0
 import flow.shadertoy.ShadertoyProject.ShadertoyTab.ChannelSettings.ChannelInput.BUFFER_A_IN
+import org.openrndr.extra.parameters.Description
 import org.openrndr.extra.parameters.DoubleParameter
 import org.openrndr.extra.parameters.Vector3Parameter
 import org.openrndr.math.Vector3
 
+@Description("Viscous Fingering")
 class ViscousFingering(program: FlowProgram): ProjectRenderer(program){
 
     override fun ProjectImporter.importProject(): ShadertoyProject {
