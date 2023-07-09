@@ -17,17 +17,16 @@ import kotlin.reflect.KProperty
 /**
  * Audio extension.
  *
- * Start with `val audio = Audio()` and create processors using your system's default microphone.
+ * Start with `val audio = Audio(flowProgram)` and create processors using your system's default microphone.
  *
  * Performs audio processing (called 'Digital Signal Processing' or 'DSP')
  * with [TarsosDSP](https://github.com/JorenSix/TarsosDSP).
  *
  * @param bufferSize Size of the audio buffer. Default is 1024. Larger buffers are more accurate, but increase lag.
  * @param overlap Size of the overlap between audio buffers. Default is 0.
- * @param sampleRate Sample rate of the audio. Default is 44100. Deviations from system device *will* cause problems.
+ * @param sampleRate Sample rate of the audio. Default is 44100. **Deviations from system device will cause problems.**
  */
-// TODO: Refactor to make more clear + provide sampleRate/bufferSize resolution strategy
-open class Audio(
+abstract class Audio(
     flowProgram: FlowProgram,
     val bufferSize: Int = 1024,
     val overlap: Int = 0,
@@ -94,8 +93,6 @@ open class Audio(
         }
     }
 
-    // TODO OPT: allow for remembering and reset of audio event buffer (for processes that alter the audio event)
-
     // Common values across all audio processors
     companion object {
         // Human hearing range in Hz
@@ -124,8 +121,10 @@ open class Audio(
 
     /**
      * Specify the process to perform everytime a new audio event is received.
+     * @param audioEvent The audio event received from the audio stream.
+     * @param dt The time between two audio events in seconds.
      */
-    open fun setProcess(audioEvent: AudioEvent, dt: Double) {}
+    abstract fun setProcess(audioEvent: AudioEvent, dt: Double)
 }
 
 /**
@@ -140,12 +139,12 @@ fun Double.toDb(): Double {
 }
 
 /**
- *
+ * Converts a magnitude value (usually from FFTs) to decibels. See [Double.toDb].
  */
 fun Float.toDb(): Double = this.toDouble().toDb()
 
 /**
- * Convert [this] SPL volume to relative volume (in range 0.0 .. 1.0).
+ * Convert [this] sound pressure level (i.e. volume in Db) to relative volume (in range 0.0 .. 1.0).
  */
 fun Double.toRelativeVolume(): Double = this.map(Audio.LOWEST_SPL .. Audio.HIGHEST_SPL, 0.0 .. 1.0)
 
@@ -156,6 +155,9 @@ operator fun OneEuroFilter.getValue(nothing: Any?, property: KProperty<*>): Doub
     return this.value
 }
 
+/**
+ * Creates a [BandPass] filter with the given [range] and [sampleRate].
+ */
 fun createBandPass(range: ClosedFloatingPointRange<Double>, sampleRate: Double): BandPass {
     val mid = (range.start + range.endInclusive) / 2
     val bandWidth = range.endInclusive - range.start

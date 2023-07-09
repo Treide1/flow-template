@@ -16,9 +16,9 @@ import org.openrndr.ProgramImplementation
 import org.openrndr.extra.gui.GUI
 
 /**
- *
- * @param initialBpm
- * @param isWithGui
+ * Config class for the initialization of a [FlowProgram].
+ * @param initialBpm The initial bpm of the [BeatClock].
+ * @param isWithGui Whether to initialize display the standard [GUI] instance.
  */
 data class FlowProgramConfig(
     val initialBpm: Double = 125.0,
@@ -102,10 +102,16 @@ open class FlowProgram private constructor(
 
     private val exitListeners = mutableListOf<() -> Unit>()
 
+    /**
+     * Registers a block to be executed just before exiting the application.
+     */
     fun registerOnExit(block: () -> Unit) {
         exitListeners.add(block)
     }
 
+    /**
+     * Exits the application.
+     */
     fun exit() {
         exitListeners.forEach { it() }
         application.exit()
