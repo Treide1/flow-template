@@ -1,3 +1,7 @@
+// -- Added by me
+uniform float musicVolume;
+
+// -- Original
 //License: CC BY 3.0
 //Author: Jan Mróz (jaszunio15)
 
@@ -68,7 +72,7 @@ vec3 fogMarch(vec3 rayStart, vec3 rayDirection, float time, float disMod)
     {
         point += rayDirection *stepLength;
         fog += volumetricFog(point, disMod) //intensity
-        * mix(COLOR1, COLOR2 * (1.0 + disMod * 0.5), getNoiseFromVec3((point + vec3(12.51, 52.167, 1.146)) * 0.5)) //coloring
+        * mix(color1, color2 * (1.0 + disMod * 0.5), getNoiseFromVec3((point + vec3(12.51, 52.167, 1.146)) * 0.5)) //coloring
         * mix(1.0, getNoiseFromVec3(point * 40.0) * 2.0, DITHER)	//Dithering
         * getNoiseFromVec3(point * 0.2 + 20.0) * 2.0;	//Cutting big holes
 
@@ -83,6 +87,7 @@ vec3 fogMarch(vec3 rayStart, vec3 rayDirection, float time, float disMod)
 }
 
 //Getting kick volume from spectrum
+/*
 float getBeat()
 {
     float sum = 0.0;
@@ -90,13 +95,14 @@ float getBeat()
     {
         sum += texture(iChannel0, vec2(i * 0.001 + 0.0, 0.0)).r;
     }
-    return smoothstep(0.6, 0.9, pow(sum * 0.06, 2.0));
+    return smoothstep(2.0, 20.0, pow(sum * 0.06, 2.0)); // ss(0.6, 0.9, pow(sum * 0.06, 2.0));
 }
+*/ // now a uniform
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     float time = iTime;
-    float musicVolume = getBeat();
+    // float musicVolume = getBeat(); // now a uniform
     vec2 res = iResolution.xy;
     vec2 uv = (2.0 * fragCoord - res) / res.x;
 
@@ -127,7 +133,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
     //postprocess
     fog *= 2.5 * BRIGHTNESS;
-    fog += 0.07 * mix(COLOR1, COLOR2, 0.5);	//Colouring the darkness
+    fog += 0.07 * mix(color1, color2, 0.5);	//Colouring the darkness
     fog = sqrt(smoothstep(0.0, 1.5, fog)); //Dealing with too bright areas (sometimes it happen)
 
     fragColor = vec4(fog * smoothstep(0.0, 10.0, iTime), 1.0);

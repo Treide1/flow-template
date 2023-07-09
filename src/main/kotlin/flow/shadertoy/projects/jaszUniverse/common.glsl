@@ -1,3 +1,8 @@
+// -- Added by me
+uniform vec3 color1;
+uniform vec3 color2;
+
+// -- Original
 //Generation settings
 #define NOISE_ALPHA_MULTIPLIER 0.5
 #define NOISE_SIZE_MULTIPLIER 1.8
@@ -8,10 +13,10 @@
 //Rendering settings
 
 //Uncoment to get high quality version (if you have good PC)
-//#define HIGH_QUALITY
+#define HIGH_QUALITY // // #define HIGH_QUALITY
 
 #ifdef HIGH_QUALITY
-#define RAYS_COUNT 16
+#define RAYS_COUNT 8 // 16
 #define STEP_MODIFIER 1.007
 #define SHARPNESS 0.009
 #define NOISE_LAYERS_COUNT 5.0
@@ -30,8 +35,8 @@
 
 //Colors
 #define BRIGHTNESS 5.0
-#define COLOR1 vec3(0.0, 1.0, 1.0)
-#define COLOR2 vec3(1.0, 0.0, 0.9)
+//#define COLOR1 vec3(0.0, 1.0, 1.0) // now a uniform
+//#define COLOR2 vec3(1.0, 0.0, 0.9) // now a uniform
 
 //Camera and time
 #define TIME_SCALE 1.0
