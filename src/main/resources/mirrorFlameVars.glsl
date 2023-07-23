@@ -8,9 +8,9 @@ out vec4 o_color;
 // ----------------------------------------------
 // Parameters:
 // Takes a stencil buffer that represents the id for the function to be applied
-// NOTE: It is sampled as a uint (that has a fixed 32 bit precision) into which float values are written.
+// NOTE: It is sampled as a 32-bit float with independent of precision.
 //       This is done to retrieve them as bit-perfect floats 0.0, 1.0, 2.0, etc.
-uniform usampler2D stencil;
+uniform sampler2D stencil;
 // Takes the number of iterations to run
 uniform int iterCount;
 // Takes a y scale parameter, assuming width to go from -1 to 1
@@ -35,7 +35,7 @@ vec2 toUvCoords(vec2 mathCoords) {
 }
 
 float getStencilValue(vec2 mathCoords) {
-    return uintBitsToFloat(texture(stencil, toUvCoords(mathCoords)).r);
+    return texture(stencil, toUvCoords(mathCoords)).r;
 }
 
 #define PI 3.14159265359
@@ -179,6 +179,7 @@ vec2 fisheye(vec2 uv) {
     return vec2(uv.y, uv.x) * 2.0 / (r + 1.0);
 }
 
+// ----------------------------------------------
 // Iterative lookup function
 vec4 iterativeLookup(vec2 uv) {
     vec2 mathCoords = toMathCoords(uv);
