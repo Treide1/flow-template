@@ -377,8 +377,8 @@ fun main() = application {
                 drawBuffer.copyTo(imageBuffer)
                 // Apply mirror effect
                 mirrorFx.apply(imageBuffer, useCopyBuffer = tmpBuffer)
-                // Apply 3x3 median denoise to reduce salt-and-pepper noise
-                medianDenoise.apply(imageBuffer)
+                // Apply denoise to reduce salt-and-pepper noise
+                denoise.apply(imageBuffer, useCopyBuffer = tmpBuffer)
             }
 
             // Draw the result to screen
