@@ -54,7 +54,7 @@ class RenderPipeline(
      * Stencil target for effects. (Currently only MirrorFx)
      */
     val stencilTarget by lazy { renderTarget(width, height) {
-        colorBuffer(ColorFormat.R, ColorType.UINT8)
+        colorBuffer(ColorFormat.R, ColorType.UINT32_INT)
     } }
 
     /**

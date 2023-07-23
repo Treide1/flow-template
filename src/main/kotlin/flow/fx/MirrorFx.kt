@@ -3,9 +3,7 @@
 package flow.fx
 
 import org.openrndr.color.ColorRGBa
-import org.openrndr.draw.ColorBuffer
-import org.openrndr.draw.Filter1to1
-import org.openrndr.draw.filterShaderFromCode
+import org.openrndr.draw.*
 import org.openrndr.resourceText
 import kotlin.math.max
 
@@ -44,17 +42,17 @@ class MirrorFilter(
     /**
      * The stencil buffer to use for the mirror effect. Has to be of format ColorFormat.R, type ColorType.UINT8 !
      */
-    private var stencil by parameters
+    private var stencil: ColorBuffer by parameters
 
     /**
      * y scale of the stencil buffer. Defaults to the width / height ratio of the stencil buffer.
      */
-    private var yScl by parameters
+    private var yScl: Double by parameters
 
     /**
      * The maximum number of iterations to perform. Higher values result in more detailed images.
      */
-    private var iterCount by parameters
+    private var iterCount: Int by parameters
 
     /**
      * Accessor for [iterCount].
@@ -111,4 +109,4 @@ class MirrorFilter(
 /**
  * Convert an integer to a ColorRGBa with [this] as the red channel for UINT8 color buffers.
  */
-private fun Int.toR(): ColorRGBa = ColorRGBa(r = this / 256.0, g = 0.0, b = 0.0)
+private fun Int.toR(): ColorRGBa = ColorRGBa(r = this.toDouble(), g = 0.0, b = 0.0)

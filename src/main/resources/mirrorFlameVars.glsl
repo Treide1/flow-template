@@ -5,14 +5,18 @@ in vec2 v_texCoord0;
 uniform sampler2D tex0;
 out vec4 o_color;
 
+// ----------------------------------------------
 // Parameters:
-// Takes a stencil buffer where 0 is identity lookup
+// Takes a stencil buffer that represents the id for the function to be applied
+// NOTE: It is sampled as a uint (that has a fixed 32 bit precision) into which float values are written.
+//       This is done to retrieve them as bit-perfect floats 0.0, 1.0, 2.0, etc.
 uniform usampler2D stencil;
 // Takes the number of iterations to run
 uniform int iterCount;
 // Takes a y scale parameter, assuming width to go from -1 to 1
 uniform float yScl;
 
+// ----------------------------------------------
 // Helper functions
 vec2 lerp(vec2 first, vec2 second, float perc) {
     return first * (1.0 - perc) + second * perc;
@@ -30,13 +34,13 @@ vec2 toUvCoords(vec2 mathCoords) {
     return vec2((mathCoords.x + 1.0) / 2.0, (mathCoords.y * yScl + 1.0) / 2.0);
 }
 
-uint getStencilValue(vec2 mathCoords) {
-    return texture(stencil, toUvCoords(mathCoords)).r; // equivalent to below for offset = 0
-    // return texelFetch(stencil, ivec2(uv * textureSize(stencil, 0) + vec2(0.0, 0.0)), 0).r;
+float getStencilValue(vec2 mathCoords) {
+    return uintBitsToFloat(texture(stencil, toUvCoords(mathCoords)).r);
 }
 
 #define PI 3.14159265359
 
+// ----------------------------------------------
 // Custom functions
 // Custom 1
 vec2 flipX(vec2 uv) {
@@ -63,6 +67,7 @@ vec2 rotateAndScale(vec2 uv, float base, float scale) {
     return vec2(cos(_theta), sin(_theta)) * _r;
 }
 
+// ----------------------------------------------
 // Flame variation functions (are offset by 128)
 // Flame var 1
 vec2 sinusoidal(vec2 uv) {
@@ -177,39 +182,39 @@ vec2 fisheye(vec2 uv) {
 // Iterative lookup function
 vec4 iterativeLookup(vec2 uv) {
     vec2 mathCoords = toMathCoords(uv);
-    uint stencilValue = getStencilValue(mathCoords);
+    float stencilValue = getStencilValue(mathCoords);
 
     int i = iterCount;
 
     while (i > 0) {
         // Custom functions
-        if (stencilValue < 128u) {
-            if (stencilValue == 0u) break;
-            if (stencilValue == 1u) mathCoords = flipX(mathCoords);
-            if (stencilValue == 2u) mathCoords = flipY(mathCoords);
-            if (stencilValue == 3u) mathCoords = flipXY(mathCoords);
-            if (stencilValue == 4u) mathCoords = rotateAndScale(mathCoords, 1.25, 1.25);
+        if (stencilValue < 128.0) {
+            if (stencilValue == 0.0) break;
+            if (stencilValue == 1.0) mathCoords = flipX(mathCoords);
+            if (stencilValue == 2.0) mathCoords = flipY(mathCoords);
+            if (stencilValue == 3.0) mathCoords = flipXY(mathCoords);
+            if (stencilValue == 4.0) mathCoords = rotateAndScale(mathCoords, 1.25, 1.25);
         }
         // Flame vars
-        else if (stencilValue >= 128u) {
-            stencilValue -= 128u; // Domain update
-            if (stencilValue == 0u) break; // Zero is skipped for consistency with original flam3 paper
-            if (stencilValue == 1u) mathCoords = sinusoidal(mathCoords);
-            if (stencilValue == 2u) mathCoords = spherical(mathCoords);
-            if (stencilValue == 3u) mathCoords = swirl(mathCoords);
-            if (stencilValue == 4u) mathCoords = horseshoe(mathCoords);
-            if (stencilValue == 5u) mathCoords = polar(mathCoords);
-            if (stencilValue == 6u) mathCoords = handkerchief(mathCoords);
-            if (stencilValue == 7u) mathCoords = heart(mathCoords);
-            if (stencilValue == 8u) mathCoords = disc(mathCoords);
-            if (stencilValue == 9u) mathCoords = spiral(mathCoords);
-            if (stencilValue == 10u) mathCoords = hyperbolic(mathCoords);
-            if (stencilValue == 11u) mathCoords = diamond(mathCoords);
-            if (stencilValue == 12u) mathCoords = ex(mathCoords);
-            if (stencilValue == 13u) mathCoords = julia(mathCoords);
-            if (stencilValue == 14u) mathCoords = bent(mathCoords);
-            if (stencilValue == 15u) mathCoords = waves(mathCoords);
-            if (stencilValue == 16u) mathCoords = fisheye(mathCoords);
+        else if (stencilValue >= 128.0) {
+            stencilValue -= 128.0; // Domain update
+            if (stencilValue == 0.0) break; // Zero is skipped for consistency with original flam3 paper
+            if (stencilValue == 1.0) mathCoords = sinusoidal(mathCoords);
+            if (stencilValue == 2.0) mathCoords = spherical(mathCoords);
+            if (stencilValue == 3.0) mathCoords = swirl(mathCoords);
+            if (stencilValue == 4.0) mathCoords = horseshoe(mathCoords);
+            if (stencilValue == 5.0) mathCoords = polar(mathCoords);
+            if (stencilValue == 6.0) mathCoords = handkerchief(mathCoords);
+            if (stencilValue == 7.0) mathCoords = heart(mathCoords);
+            if (stencilValue == 8.0) mathCoords = disc(mathCoords);
+            if (stencilValue == 9.0) mathCoords = spiral(mathCoords);
+            if (stencilValue == 10.0) mathCoords = hyperbolic(mathCoords);
+            if (stencilValue == 11.0) mathCoords = diamond(mathCoords);
+            if (stencilValue == 12.0) mathCoords = ex(mathCoords);
+            if (stencilValue == 13.0) mathCoords = julia(mathCoords);
+            if (stencilValue == 14.0) mathCoords = bent(mathCoords);
+            if (stencilValue == 15.0) mathCoords = waves(mathCoords);
+            if (stencilValue == 16.0) mathCoords = fisheye(mathCoords);
         }
         // Not supposed to happen. Just break the loop.
         else break;
